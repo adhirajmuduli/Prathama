@@ -1,0 +1,14 @@
+# Ruff configuration for Trendsmapp (Python 3.10).
+target-version = "py310"
+line-length = 120
+# The rebuilt backend and frontend own their own lint configuration:
+# backend/pyproject.toml and frontend/eslint.config.mjs.
+extend-exclude = [".venv", "scripts", "benchmarks", "backend", "frontend"]
+
+[lint]
+select = ["E", "F", "W", "I", "B"]
+# B008: FastAPI's dependency-injection idiom requires calls in argument defaults.
+ignore = ["B008"]
+
+[lint.per-file-ignores]
+"tests/*" = ["E501"]

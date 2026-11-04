@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use Trendsmapp, please cite the software and the associated article when available."
+title: "Trendsmapp: publication-grade environmental spatial analysis, temporal animation, and reproducible machine learning"
+type: software
+authors:
+  - family-names: Muduli
+    given-names: Adhiraj
+license: MIT
+version: 0.1.0
+date-released: 2026-10-27
+repository-code: "https://github.com/OWNER/REPOSITORY"
+abstract: "A containerized FastAPI and worker backend with a Next.js frontend for validated environmental monitoring data: content-addressed ingestion, canonical normalization with preserved raw values, explicit quality control, projected spatial interpolation, leakage-resistant regression, and checksum-verified reproducibility bundles."
+keywords:
+  - environmental monitoring
+  - spatial interpolation
+  - reproducibility
+  - machine learning
+  - provenance

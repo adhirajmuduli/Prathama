@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trendsmapp Data Entry</title>
+    <!-- Vendored and project styles (checksummed where vendored, via scripts/verify_assets.py) -->
+    <link rel="stylesheet" href="{{ url_for('static', path='vendor/ag-grid-community/styles/ag-grid.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='vendor/ag-grid-community/styles/ag-theme-alpine.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='vendor/bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/data-entry.css') }}">
+</head>
+<body>
+    <div class="toolbar">
+        <a href="/" class="btn btn-info">← Back to Map</a>
+        <span id="status" style="flex: 1; margin-left: 12px; font-weight: 500;">Loading table editor...</span>
+        <div class="actions">
+            <button id="btn-add-param" class="btn btn-success" title="Add a new parameter column group">+ Parameter</button>
+            <button id="btn-add-timestamp" class="btn btn-info" title="Add a date column to all parameters">+ Timestamp</button>
+            <button id="btn-add-coordinate" class="btn btn-secondary" title="Add a new coordinate row">+ Coordinate</button>
+            <select id="density-toggle" class="btn" style="padding: 8px 12px; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; cursor: pointer; font-size: 14px;" title="Adjust cell padding for readability">
+              <option value="compact">Density: Compact</option>
+              <option value="cozy">Density: Cozy</option>
+            </select>
+            <button id="btn-save" class="btn btn-primary" title="Save data and return to map for analysis">Save &amp; Return</button>
+            <button id="btn-cancel" class="btn btn-danger" title="Return to map without saving">Cancel</button>
+        </div>
+    </div>
+
+    <div id="data-grid" class="ag-theme-alpine"></div>
+
+    <dialog id="timestamp-dialog" aria-labelledby="timestamp-dialog-title">
+        <form method="dialog" class="timestamp-form">
+            <h2 id="timestamp-dialog-title">Add timestamp</h2>
+            <label for="timestamp-value">Date</label>
+            <input id="timestamp-value" type="date" required>
+            <fieldset>
+                <legend>Apply to parameters</legend>
+                <div id="timestamp-parameters"></div>
+            </fieldset>
+            <div class="dialog-actions">
+                <button id="timestamp-cancel" type="button" class="btn btn-secondary">Cancel</button>
+                <button id="timestamp-add" type="button" class="btn btn-primary">Add timestamp</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- AG Grid JS (vendored locally; checksummed by scripts/verify_assets.py) -->
+    <script src="{{ url_for('static', path='vendor/ag-grid-community/dist/ag-grid-community.min.noStyle.js') }}"></script>
+    <script src="{{ url_for('static', path='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', path='js/data_entry.js') }}?v=4.0.0"></script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+[project]
+name = "trendsmapp"
+version = "0.1.0"
+description = "Publication-grade backend for validated environmental spatial analysis, temporal animation, and leakage-resistant machine learning."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = { text = "MIT" }
+authors = [{ name = "Trendsmapp contributors" }]
+keywords = ["environmental-monitoring", "spatial-interpolation", "kriging", "machine-learning", "reproducibility"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+
+dependencies = [
+    "alembic>=1.14,<2.0",
+    "asyncpg>=0.30,<1.0",
+    "boto3>=1.35,<2.0",
+    "fastapi>=0.115,<1.0",
+    "geopandas>=1.0,<2.0",
+    "httpx>=0.28,<1.0",
+    "imageio>=2.36,<3.0",
+    "imageio-ffmpeg>=0.5,<1.0",
+    "matplotlib>=3.9,<4.0",
+    "numpy>=2.1,<3.0",
+    "openpyxl>=3.1,<4.0",
+    "pandas>=2.2,<3.0",
+    "pint>=0.24,<1.0",
+    "pydantic>=2.9,<3.0",
+    "pydantic-settings>=2.6,<3.0",
+    "pyarrow>=17,<22",
+    "pykrige>=1.6,<2.0",
+    "pyproj>=3.7,<4.0",
+    "python-multipart>=0.0.12,<1.0",
+    "rasterio>=1.4,<2.0",
+    "scikit-learn>=1.6,<2.0",
+    "scipy>=1.14,<2.0",
+    "shap>=0.46,<1.0",
+    "shapely>=2.0,<3.0",
+    "sqlalchemy[asyncio]>=2.0.36,<3.0",
+    "structlog>=24.4,<26.0",
+    "typer>=0.15,<1.0",
+    "uvicorn[standard]>=0.34,<1.0",
+    "xgboost>=2.1,<4.0",
+]
+
+[dependency-groups]
+dev = [
+    "aiosqlite>=0.20,<1.0",
+    "coverage[toml]>=7.6,<8.0",
+    "hypothesis>=6.122,<7.0",
+    "mypy>=1.13,<2.0",
+    "pytest>=8.3,<10.0",
+    "pytest-asyncio>=0.24,<2.0",
+    "pytest-cov>=6.0,<8.0",
+    "ruff>=0.8,<1.0",
+]
+
+[project.scripts]
+trendsmapp = "trendsmapp.cli.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/trendsmapp"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "migrations", "scripts", "README.md", "pyproject.toml"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["src", "tests"]
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "PT", "RUF", "TID", "SIM", "N", "ASYNC", "BLE"]
+ignore = [
+    "B008", # FastAPI dependency injection uses calls in argument defaults.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501", "N802", "N803", "N806"]
+"scripts/*" = ["T201"]
+# The test-data generator embeds CSV fixture literals whose lines are longer
+# than the code limit; the content is data, not prose.
+"scripts/make_testdata.py" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["trendsmapp"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unreachable = true
+mypy_path = "src"
+files = ["src", "scripts"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+# These dependencies ship no ``py.typed`` marker, so their own annotations are
+# not analyzed. The values they produce are converted at the ingestion
+# boundary and validated by our own code.
+module = [
+    "shap.*",
+    "pykrige.*",
+    "xgboost.*",
+    "rasterio.*",
+    "geopandas.*",
+    "imageio_ffmpeg.*",
+    "boto3.*",
+    "botocore.*",
+    "pyarrow.*",
+    "pandas.*",
+    "openpyxl.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+
+[tool.coverage.run]
+branch = true
+source = ["src/trendsmapp"]
+omit = ["src/trendsmapp/cli/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@abstractmethod",
+]

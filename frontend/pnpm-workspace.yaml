@@ -1,0 +1,10 @@
+# The frontend is its own pnpm workspace so that its lockfile stays inside the
+# repository and is never merged with an unrelated workspace on the machine.
+packages:
+  - "."
+
+# `unrs-resolver` ships a native resolver that the type-aware ESLint rules
+# need. The build script is approved explicitly so that an install is
+# reproducible and does not fail on an unapproved script.
+allowBuilds:
+  unrs-resolver: true

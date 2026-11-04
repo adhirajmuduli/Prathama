@@ -1,0 +1,7 @@
+{
+  "components": {
+    "database": "ok",
+    "object_store": "ok"
+  },
+  "status": "ready"
+}

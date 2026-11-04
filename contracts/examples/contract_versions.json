@@ -1,0 +1,15 @@
+{
+  "api_major": 1,
+  "application_version": "0.1.0",
+  "artifact_schema_version": "1.0.0",
+  "recipe_schema_version": "1.0.0",
+  "supported_api_majors": [
+    1
+  ],
+  "supported_artifact_schema_versions": [
+    "1.0.0"
+  ],
+  "supported_recipe_schema_versions": [
+    "1.0.0"
+  ]
+}

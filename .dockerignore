@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+__pycache__
+.pytest_cache
+*.py[cod]
+*.db
+.env
+oink.env
+uploads/*
+static/data/uploads/*
+tests
+benchmarks
+trendsmapp_rebuild_and_publication_grade_plan.md

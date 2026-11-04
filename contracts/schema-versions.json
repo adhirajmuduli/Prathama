@@ -1,0 +1,21 @@
+{
+  "api_major_versions": [
+    1
+  ],
+  "application_version": "0.1.0",
+  "artifact_schema_versions": [
+    "1.0.0"
+  ],
+  "current_api_major": 1,
+  "current_artifact_schema_version": "1.0.0",
+  "current_recipe_schema_version": "1.0.0",
+  "manifest_schema_versions": [
+    "1.0.0"
+  ],
+  "recipe_schema_versions": [
+    "1.0.0"
+  ],
+  "result_schema_versions": [
+    "1.0.0"
+  ]
+}

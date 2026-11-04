@@ -1,0 +1,31 @@
+# Normalize text in the repository and keep generated files out of language stats.
+* text=auto eol=lf
+
+*.py text diff=python
+*.ts text diff=typescript
+*.tsx text diff=typescript
+*.md text
+*.json text
+*.yml text
+*.yaml text
+*.toml text
+*.geojson text
+*.csv text
+*.svg text
+
+# Binary and large research fixtures. Git LFS is used only for fixtures that are
+# genuinely too large to review as text; the tracked research datasets in this
+# repository are small enough to stay as ordinary Git objects.
+*.parquet filter=lfs diff=lfs merge=lfs -text
+*.arrow filter=lfs diff=lfs merge=lfs -text
+*.npy filter=lfs diff=lfs merge=lfs -text
+*.npz filter=lfs diff=lfs merge=lfs -text
+*.h5 filter=lfs diff=lfs merge=lfs -text
+*.xlsx filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+
+# Generated artifacts.
+backend/contracts/openapi.generated.json linguist-generated=true
+frontend/src/lib/contracts/generated.ts linguist-generated=true
+frontend/pnpm-lock.yaml linguist-generated=true
+backend/uv.lock linguist-generated=true

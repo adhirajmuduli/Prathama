@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Node and Next.js
+node_modules/
+.pnpm-store/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+.secret
+*.pem
+*.key
+
+# Local databases and object-store data
+*.db
+*.sqlite
+*.sqlite3
+data/
+objects/
+uploads/
+!uploads/.gitkeep
+
+# Generated reports and caches
+reports/
+generated/
+.playwright/
+playwright-report/
+test-results/
+.netlify/
+
+# Editor and operating-system noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

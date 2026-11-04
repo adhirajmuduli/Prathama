@@ -1,0 +1,126 @@
+/* Guided tour overlay. All styling lives here so the CSP stays free of inline styles. */
+
+#tour-root[hidden] { display: none; }
+#tour-root { position: fixed; inset: 0; z-index: 1000; }
+
+.tour-click-catcher {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+}
+
+.tour-spotlight {
+  position: fixed;
+  border-radius: .85rem;
+  box-shadow: 0 0 0 9999px rgba(9, 20, 16, .62);
+  pointer-events: none;
+  transition: all .18s ease;
+}
+
+.tour-card {
+  position: fixed;
+  width: min(360px, calc(100vw - 24px));
+  padding: 1rem 1.1rem;
+  background: var(--surface, #ffffff);
+  color: inherit;
+  border: 1px solid var(--line, #d9e2dd);
+  border-radius: .8rem;
+  box-shadow: 0 12px 34px rgba(9, 20, 16, .35);
+}
+
+.tour-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .3rem;
+}
+
+.tour-counter {
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent, #087f5b);
+}
+
+.tour-close,
+.tour-nav,
+.tour-skip {
+  width: auto !important;
+}
+
+.tour-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted, #617069);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: .15rem .45rem;
+  cursor: pointer;
+}
+.tour-close:hover { background: rgba(8, 127, 91, .1); }
+
+.tour-card h3 {
+  margin: .1rem 0 .5rem;
+  font-size: 1.02rem;
+}
+
+.tour-body p {
+  margin: .45rem 0;
+  font-size: .84rem;
+  line-height: 1.5;
+}
+
+.tour-body pre {
+  margin: .6rem 0;
+  padding: .6rem .7rem;
+  overflow-x: auto;
+  font-size: .72rem;
+  line-height: 1.45;
+  background: #f2f7f4;
+  border: 1px solid var(--line, #d9e2dd);
+  border-radius: .5rem;
+}
+
+.tour-link {
+  display: inline-block;
+  margin-top: .35rem;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--accent-dark, #075f46);
+}
+
+.tour-muted {
+  display: inline-block;
+  margin-top: .35rem;
+  font-size: .8rem;
+  color: var(--muted, #617069);
+  font-style: italic;
+}
+
+.tour-footer {
+  display: flex;
+  gap: .55rem;
+  margin-top: .85rem;
+}
+.tour-footer button { flex: 1; }
+
+.tour-skip {
+  width: auto !important;
+  margin-top: .6rem;
+  padding: .35rem .6rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted, #617069);
+  cursor: pointer;
+  font-size: .78rem;
+  text-decoration: underline;
+  align-self: flex-start;
+}
+.tour-skip:hover { color: var(--ink, #15251f); }
+
+.tour-skip.hidden { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-spotlight { transition: none; }
+}

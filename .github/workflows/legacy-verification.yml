@@ -1,0 +1,67 @@
+name: legacy-prototype-verification
+
+# The prototype at the repository root is frozen: it is the behavioral
+# reference for the rebuild and stays verifiable, but it receives no new
+# features. The rebuilt stack is verified by the rebuild-verification workflow.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: legacy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10.14"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: python -m pip install --requirement requirements.lock.txt
+      - run: python -m pip install ruff==0.8.4 pip-audit==2.7.3
+      - run: python scripts/check_requirements_sync.py
+      - run: python -m ruff check . --output-format concise
+      - run: python -m pip_audit -r requirements.lock.txt --progress-spinner off
+      - run: python scripts/verify_example.py
+      - run: python scripts/verify_assets.py
+      - run: python -m pytest -q
+      - run: node --check static/js/app.js
+      - run: node --check static/js/data_entry.js
+      - run: node --check static/js/tour.js
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: trendsmapp:ci
+      - run: docker run --detach --name trendsmapp-ci --publish 8000:8000 trendsmapp:ci
+      - run: |
+          for attempt in $(seq 1 30); do
+            curl --fail http://127.0.0.1:8000/api/health && exit 0
+            sleep 2
+          done
+          docker logs trendsmapp-ci
+          exit 1
+      - run: docker exec trendsmapp-ci python scripts/verify_example.py
+      - run: docker exec trendsmapp-ci python scripts/verify_assets.py
+      - if: always()
+        run: docker rm --force trendsmapp-ci || true

@@ -1,0 +1,64 @@
+{
+  "api_major": 1,
+  "application_version": "0.1.0",
+  "artifact_schema_version": "1.0.0",
+  "configuration": {
+    "analysis_crs": "EPSG:32644",
+    "database_dialect": "sqlite",
+    "environment": "development",
+    "ingestion_accept_cached_formula_values": false,
+    "object_store_backend": "local"
+  },
+  "file_formats": [],
+  "hard_ceilings": {
+    "grid_cell_limits": [
+      1000,
+      250000
+    ],
+    "ingestion_max_columns": 2000,
+    "ingestion_max_rows": 5000000,
+    "max_animation_frames": 900,
+    "max_candidate_models": 8,
+    "max_search_trials_per_model": 40,
+    "max_shap_rows": 2000,
+    "max_timestamps_per_run": 500,
+    "max_workbook_cells": 5000000,
+    "max_workbook_sheets": 20,
+    "preview_row_limit": 200,
+    "upload_chunk_bytes": 5242880,
+    "upload_max_bytes": 104857600
+  },
+  "limits": {
+    "ingestion_max_columns": 2000,
+    "ingestion_max_rows": 5000000,
+    "max_animation_frames": 900,
+    "max_candidate_models": 8,
+    "max_grid_cells": 250000,
+    "max_search_trials_per_model": 40,
+    "max_shap_rows": 2000,
+    "max_timestamps_per_run": 500,
+    "max_workbook_cells": 5000000,
+    "max_workbook_sheets": 20,
+    "preview_row_limit": 200,
+    "upload_chunk_bytes": 5242880,
+    "upload_chunk_size_bounds": [
+      1048576,
+      16777216
+    ],
+    "upload_max_bytes": 104857600,
+    "upload_session_ttl_seconds": 86400
+  },
+  "model_families": [],
+  "recipe_schema_version": "1.0.0",
+  "spatial_methods": [],
+  "supported_api_majors": [
+    1
+  ],
+  "supported_artifact_schema_versions": [
+    "1.0.0"
+  ],
+  "supported_recipe_schema_versions": [
+    "1.0.0"
+  ],
+  "temporal_methods": []
+}

@@ -1,0 +1,13 @@
+station,latitude,longitude,sampled_at,parameter,value,unit,qualifier,depth_m,notes
+St. A,19.7350,85.4700,2024-01-15T09:30:00Z,dissolved_oxygen,6.8,mg/L,,0.5,
+St. A,19.7350,85.4700,2024-01-15T09:30:00Z,salinity,12.4,psu,,0.5,
+St. B,19.8100,85.5200,2024-01-15T10:05:00Z,dissolved_oxygen,<0.01,mg/L,below_detection_limit,1.0,calibrated on site
+St. B,19.8100,85.5200,2024-01-15T10:05:00Z,salinity,,psu,,1.0,
+St. A,19.7350,85.4700,2024-02-12T09:15:00Z,dissolved_oxygen,25.0,mg/L,,0.5,flagged by the range check
+St. A,19.7350,85.4700,2024-02-12T09:15:00Z,salinity,14.2,psu,,0.5,
+St. B,19.8100,85.5200,2024-02-12T10:20:00Z,dissolved_oxygen,5.9,mg/L,,1.0,
+St. B,19.8100,85.5200,2024-02-12T10:20:00Z,salinity,13.8,psu,,1.0,
+St. A,19.7350,85.4700,2024-03-10T09:00:00Z,dissolved_oxygen,7.2,mg/L,,0.5,
+St. A,19.7350,85.4700,2024-03-10T09:00:00Z,salinity,11.9,psu,,0.5,
+St. B,19.8100,85.5200,2024-03-10T09:45:00Z,dissolved_oxygen,6.1,mg/L,,1.0,
+St. B,19.8100,85.5200,2024-03-10T09:45:00Z,salinity,nan,psu,,1.0,

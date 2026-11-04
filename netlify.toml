@@ -1,0 +1,44 @@
+[build]
+base = "frontend"
+command = "pnpm run build"
+
+[build.environment]
+NODE_VERSION = "22.17.0"
+PNPM_VERSION = "11.22.0"
+NPM_FLAGS = "--version"
+
+[dev]
+command = "pnpm run dev"
+targetPort = 3000
+port = 3000
+autoLaunch = false
+
+[context.production.environment]
+NODE_ENV = "production"
+
+[context.deploy-preview.environment]
+NODE_ENV = "production"
+
+# Netlify provisions the Next.js adapter automatically. The frontend never
+# serves scientific output: it renders artifacts produced by the backend and
+# links to them through the API.
+[[headers]]
+for = "/*"
+[headers.values]
+X-Content-Type-Options = "nosniff"
+X-Frame-Options = "DENY"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https:; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+[[headers]]
+for = "/api/*"
+[headers.values]
+Cache-Control = "no-store"
+
+[[redirects]]
+from = "/home"
+to = "/"
+status = 301
+force = true

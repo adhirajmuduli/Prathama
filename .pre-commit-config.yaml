@@ -1,0 +1,65 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/(src|scripts|tests)/.*\.py$
+      - id: ruff-format
+        files: ^backend/(src|scripts|tests)/.*\.py$
+
+      - id: ruff-repository-scripts
+        name: ruff (repository scripts)
+        args: [--fix, --exit-non-zero-on-fix, --config, backend/pyproject.toml]
+        files: ^scripts/(check_no_stubs|hash_lockfiles|verify_contract_examples|check_contract_compatibility)\.py$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+        exclude: ^(backend/uv\.lock|frontend/pnpm-lock\.yaml|contracts/openapi\.v1\.json)$
+      - id: trailing-whitespace
+        exclude: ^(backend/uv\.lock|frontend/pnpm-lock\.yaml|contracts/openapi\.v1\.json)$
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: detect-private-key
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: no-production-stubs
+        name: no production stubs or placeholder execution branches
+        entry: python scripts/check_no_stubs.py
+        language: system
+        pass_filenames: false
+        files: ^(backend/src|backend/scripts|frontend/src)/
+
+      - id: contract-examples
+        name: contract examples match the running API
+        entry: bash -c 'cd backend && uv run python ../scripts/verify_contract_examples.py'
+        language: system
+        pass_filenames: false
+        files: ^(backend/src/trendsmapp/api|contracts/examples)/
+
+      - id: contract-compatibility
+        name: compatibility note matches the contract snapshot
+        entry: python scripts/check_contract_compatibility.py
+        language: system
+        pass_filenames: false
+        files: ^contracts/(openapi\.v1\.json|COMPATIBILITY\.md)$
+
+      - id: lockfile-hashes
+        name: dependency lockfile hashes are recorded
+        entry: python scripts/hash_lockfiles.py --write
+        language: system
+        pass_filenames: false
+        files: ^(backend/uv\.lock|frontend/pnpm-lock\.yaml)$

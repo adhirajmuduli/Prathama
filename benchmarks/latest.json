@@ -1,0 +1,74 @@
+{
+  "schema_version": 2,
+  "measured_at_utc": "2026-08-22T17:58:25.288915+00:00",
+  "environment": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "python": "3.10.6",
+    "logical_cpus": 16
+  },
+  "demo_validation": {
+    "repeats": 3,
+    "seconds_min": 0.015374000009614974,
+    "seconds_median": 0.017969499982427806,
+    "seconds_max": 0.23350420000497252,
+    "normalized_observations": 395
+  },
+  "scientific_surfaces_160x160": {
+    "idw": {
+      "100": {
+        "repeats": 3,
+        "seconds_min": 0.10782050000852905,
+        "seconds_median": 0.11455440000281669,
+        "seconds_max": 0.11483939999016002,
+        "grid_cells": 25600
+      },
+      "500": {
+        "repeats": 3,
+        "seconds_min": 0.5662020000163466,
+        "seconds_median": 0.566558199992869,
+        "seconds_max": 0.7556288000196218,
+        "grid_cells": 25600
+      },
+      "1000": {
+        "repeats": 3,
+        "seconds_min": 1.765592599986121,
+        "seconds_median": 1.7911821999878157,
+        "seconds_max": 1.8271050000039395,
+        "grid_cells": 25600
+      }
+    },
+    "kde": {
+      "100": {
+        "repeats": 3,
+        "seconds_min": 0.17198849999113008,
+        "seconds_median": 0.17756910002208315,
+        "seconds_max": 0.182122199999867,
+        "grid_cells": 25600
+      },
+      "500": {
+        "repeats": 3,
+        "seconds_min": 0.8608926000015344,
+        "seconds_median": 0.8724375999881886,
+        "seconds_max": 0.8744821999862324,
+        "grid_cells": 25600
+      },
+      "1000": {
+        "repeats": 3,
+        "seconds_min": 1.7898543999763206,
+        "seconds_median": 1.8040713000227697,
+        "seconds_max": 1.8438641999964602,
+        "grid_cells": 25600
+      }
+    }
+  },
+  "mp4_export": {
+    "repeats": 3,
+    "seconds_min": 8.903671700012637,
+    "seconds_median": 9.03640219999943,
+    "seconds_max": 9.101027600001544,
+    "duration_seconds": 10.11111111111111,
+    "frames": 91,
+    "bytes": 250547
+  }
+}

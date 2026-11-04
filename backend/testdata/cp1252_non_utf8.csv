@@ -1,0 +1,3 @@
+station,sampled_at,parameter,value,unit
+St. A,2024-01-15T09:30:00Z,temperature,21.4,°C
+St. B,2024-01-15T10:05:00Z,phosphat,0.03,µg/l

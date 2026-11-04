@@ -1,0 +1,178 @@
+name: rebuild-verification
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rebuild-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "true"
+  UV_VERSION: "0.13.5"
+
+jobs:
+  backend:
+    name: backend lint, types, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: install dependencies
+        run: uv sync --frozen --all-groups
+      - name: lint
+        run: uv run ruff check .
+      - name: format check
+        run: uv run ruff format --check .
+      - name: type check
+        run: uv run mypy
+      - name: tests with coverage
+        run: uv run pytest --cov --cov-report=term --cov-report=xml
+      - name: test fixtures match their recorded digests
+        run: uv run python scripts/make_testdata.py --check
+      - name: upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+          if-no-files-found: error
+
+  contracts:
+    name: contract drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: install dependencies
+        run: uv sync --frozen --all-groups
+      - name: openapi snapshot is current
+        run: uv run python scripts/export_openapi.py --check ../contracts/openapi.v1.json
+      - name: schema versions are current
+        run: uv run python scripts/export_schema_versions.py --check ../contracts/schema-versions.json
+      - name: committed examples match the API
+        run: uv run python ../scripts/verify_contract_examples.py
+      - name: compatibility note is current
+        run: uv run --no-project python ../scripts/check_contract_compatibility.py
+
+  repository:
+    name: repository invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.13"
+      - name: no placeholder execution branches
+        run: uv run --no-project python scripts/check_no_stubs.py
+      - name: lockfile hashes are recorded
+        run: uv run --no-project python scripts/hash_lockfiles.py --check
+      - name: lint repository scripts
+        working-directory: backend
+        run: >
+          uv run ruff check --config pyproject.toml
+          ../scripts/check_no_stubs.py
+          ../scripts/hash_lockfiles.py
+          ../scripts/verify_contract_examples.py
+          ../scripts/check_contract_compatibility.py
+
+  frontend:
+    name: frontend lint, types, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: lint
+        run: pnpm run lint
+      - name: type check
+        run: pnpm run typecheck
+      - name: generated contract types are current
+        run: pnpm run check:api-types
+      - name: tests
+        run: pnpm run test
+      - name: production build
+        run: pnpm run build
+
+  backend-image:
+    name: backend container
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: false
+          load: true
+          tags: trendsmapp-backend:ci
+      - name: start the container
+        run: |
+          docker run --detach --name trendsmapp-backend \
+            --publish 8000:8000 \
+            --env TRENDSMAPP_ENVIRONMENT=development \
+            --env "TRENDSMAPP_DATABASE_URL=sqlite+aiosqlite:////tmp/trendsmapp/trendsmapp.db" \
+            --env TRENDSMAPP_LOCAL_STORAGE_ROOT=/tmp/trendsmapp/objects \
+            trendsmapp-backend:ci
+      - name: wait for the liveness probe
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/api/v1/health/live; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs trendsmapp-backend
+          exit 1
+      - name: wait for the readiness probe
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/api/v1/health/ready; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs trendsmapp-backend
+          exit 1
+      - name: read the contract version endpoint
+        run: curl --fail --silent http://127.0.0.1:8000/api/v1/contracts/versions
+      - if: always()
+        run: docker rm --force trendsmapp-backend || true
