@@ -1,0 +1,120 @@
+# Versioned parameter registry for the rebuilt Trendsmapp backend.
+#
+# Every parameter the canonical dataset can carry is declared here with its
+# canonical unit and its pint dimensionality. The loader validates the unit and
+# the dimension against the unit registry at load time, so a document that
+# disagrees with the physics cannot be loaded at all.
+#
+# Aliases are matched after normalization (case-insensitive, punctuation
+# collapsed). A label that matches no id, label, or alias is reported as an
+# unknown parameter by the normalizer; it is never silently mapped.
+#
+# unit_aliases maps a unit spelling that pint does not know (for example psu or
+# NTU) to the pint-parseable expression it means. Without such an entry those
+# spellings are unknown units, which is a recorded QC flag, not a guess.
+schema_version: "1.0.0"
+description: >-
+  Parameters recognized in the first release of the rebuilt ingestion pipeline.
+  Ranges and detection limits live in qc_ranges.v1.yaml.
+parameters:
+  - id: dissolved_oxygen
+    label: Dissolved oxygen
+    display_name: Dissolved oxygen (DO)
+    aliases:
+      - DO
+      - dissolved oxygen
+      - dissolved_oxygen
+      - oxygen dissolved
+      - O2
+      - DO mg/L
+    canonical_unit: mg/L
+    dimension: "[mass] / [length] ** 3"
+    unit_aliases: {}
+  - id: salinity
+    label: Salinity
+    display_name: Practical salinity
+    aliases:
+      - salinity
+      - sal
+      - practical salinity
+      - practical_salinity_unit
+      - PSU
+      - ppt
+      - "‰"
+    canonical_unit: "1"
+    dimension: dimensionless
+    unit_aliases:
+      psu: "1"
+      ppt: "1"
+      "‰": "1"
+  - id: water_temperature
+    label: Water temperature
+    display_name: Water temperature
+    aliases:
+      - temperature
+      - water temperature
+      - water_temperature
+      - temp
+      - SST
+    canonical_unit: degC
+    dimension: "[temperature]"
+    # Only spellings pint cannot parse belong here. degF, celsius, and °C are
+    # native pint units and are converted by dimensionality, never aliased.
+    unit_aliases: {}
+  - id: ph
+    label: pH
+    display_name: pH
+    aliases:
+      - pH
+      - ph
+      - acidity
+    canonical_unit: "1"
+    dimension: dimensionless
+    unit_aliases: {}
+  - id: turbidity
+    label: Turbidity
+    display_name: Turbidity
+    aliases:
+      - turbidity
+      - turb
+      - NTU
+    canonical_unit: "1"
+    dimension: dimensionless
+    unit_aliases:
+      NTU: "1"
+      ntu: "1"
+  - id: chlorophyll_a
+    label: Chlorophyll a
+    display_name: Chlorophyll-a
+    aliases:
+      - chlorophyll
+      - chlorophyll a
+      - chlorophyll_a
+      - chl-a
+      - chla
+    canonical_unit: ug/L
+    dimension: "[mass] / [length] ** 3"
+    unit_aliases: {}
+  - id: phosphat
+    label: Phosphate
+    display_name: Phosphate (as PO4)
+    aliases:
+      - phosphat
+      - phosphate
+      - phosphate phosphorus
+      - PO4
+      - PO4-P
+    canonical_unit: mg/L
+    dimension: "[mass] / [length] ** 3"
+    unit_aliases: {}
+  - id: nitrate
+    label: Nitrate
+    display_name: Nitrate (as NO3)
+    aliases:
+      - nitrate
+      - NO3
+      - NO3-N
+      - nitrate nitrogen
+    canonical_unit: mg/L
+    dimension: "[mass] / [length] ** 3"
+    unit_aliases: {}

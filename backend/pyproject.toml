@@ -33,6 +33,7 @@ dependencies = [
     "pydantic-settings>=2.6,<3.0",
     "pyarrow>=17,<22",
     "pykrige>=1.6,<2.0",
+    "pyyaml>=6.0,<7.0",
     "pyproj>=3.7,<4.0",
     "python-multipart>=0.0.12,<1.0",
     "rasterio>=1.4,<2.0",
@@ -118,6 +119,7 @@ module = [
     "pyarrow.*",
     "pandas.*",
     "openpyxl.*",
+    "yaml.*",
 ]
 ignore_missing_imports = true
 

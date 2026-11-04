@@ -76,6 +76,7 @@ class Observation:
     is_excluded: bool
     exclusion_reason: str | None
     provenance_ids: tuple[str, ...]
+    conversion_factor: float | None = None
 
     def __post_init__(self) -> None:
         if self.source_row < 0:

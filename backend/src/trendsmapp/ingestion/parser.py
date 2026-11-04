@@ -696,6 +696,8 @@ _ROLE_TO_LONG_FIELD: Final[dict[ColumnRole, str]] = {
     ColumnRole.QUALIFIER: "qualifier",
     ColumnRole.LATITUDE: "latitude",
     ColumnRole.LONGITUDE: "longitude",
+    ColumnRole.EASTING: "easting",
+    ColumnRole.NORTHING: "northing",
     ColumnRole.DEPTH: "depth_m",
     ColumnRole.SECTOR: "sector",
 }

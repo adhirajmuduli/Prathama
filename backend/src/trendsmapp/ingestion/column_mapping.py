@@ -372,7 +372,6 @@ def _validate_wide(mapping: ColumnMapping, role_counts: dict[ColumnRole, list[st
             details={"errors": errors},
         )
     return []
-    return errors
 
 
 def _require_exactly_one(

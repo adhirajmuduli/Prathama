@@ -1,0 +1,16 @@
+# Provenance of the default lagoon boundary resource.
+#
+# The loader refuses to use default_boundary.geojson unless the SHA-256 of the
+# file matches the digest recorded here, so the boundary can never be replaced
+# without a visible change to this document.
+schema_version: "1.0.0"
+resource: default_boundary.geojson
+sha256: "6a18811f70f56e4f4b3455b6e376470da447483821faeaef93147fc0100b9775"
+source: "https://www.openstreetmap.org/relation/1917079"
+description: >-
+  OpenStreetMap relation 1917079, name=Chilika Lake, natural=water,
+  type=multipolygon, retrieved through overpass-turbo.
+license: "ODbL 1.0"
+license_url: "https://opendatacommons.org/licenses/odbl/1-0/"
+attribution: "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+retrieved_at: "2025-07-03T11:02:23Z"

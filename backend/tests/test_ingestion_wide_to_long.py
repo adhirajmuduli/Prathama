@@ -76,6 +76,8 @@ def test_long_schema_columns_are_stable() -> None:
         "qualifier",
         "latitude",
         "longitude",
+        "easting",
+        "northing",
         "depth_m",
         "sector",
         "source_row",
@@ -94,10 +96,70 @@ def test_conversion_resolves_station_labels_from_the_mapping() -> None:
     batches = list(iterator)
     assert count_rows(batches) == 4
     rows = [row for batch in batches for row in batch.rows]
-    assert rows[0] == ("St. A", "2024-01-15", "salinity", "12,4", "", "", "", "", "", "", "2", "")
-    assert rows[1] == ("St. B", "2024-01-15", "salinity", "9,8", "", "", "", "", "", "", "2", "")
-    assert rows[2] == ("St. A", "2024-02-12", "salinity", "14,2", "", "", "", "", "", "", "3", "")
-    assert rows[3] == ("St. B", "2024-02-12", "salinity", "", "", "", "", "", "", "", "3", "")
+    assert rows[0] == (
+        "St. A",
+        "2024-01-15",
+        "salinity",
+        "12,4",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2",
+        "",
+    )
+    assert rows[1] == (
+        "St. B",
+        "2024-01-15",
+        "salinity",
+        "9,8",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "2",
+        "",
+    )
+    assert rows[2] == (
+        "St. A",
+        "2024-02-12",
+        "salinity",
+        "14,2",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "3",
+        "",
+    )
+    assert rows[3] == (
+        "St. B",
+        "2024-02-12",
+        "salinity",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "3",
+        "",
+    )
 
 
 def test_conversion_marks_missing_cells_and_ignored_roles() -> None:
@@ -112,9 +174,7 @@ def test_conversion_marks_missing_cells_and_ignored_roles() -> None:
 
     value_index = LONG_SCHEMA_FIELDS.index("value")
     missing_values = [
-        batch.missing[index][value_index]
-        for batch in batches
-        for index in range(batch.row_count)
+        batch.missing[index][value_index] for batch in batches for index in range(batch.row_count)
     ]
     assert missing_values == [False, False, False, True]
 
@@ -237,6 +297,8 @@ def test_conversion_supports_the_parameter_axis_with_a_station_column() -> None:
         "2024-01-15",
         "salinity",
         "12,4",
+        "",
+        "",
         "",
         "",
         "",

@@ -1,0 +1,27 @@
+# Versioned quality-control ranges and detection limits.
+#
+# Plausibility ranges are physical bounds, not statistical ones: a dissolved
+# oxygen reading of 95 mg/L is impossible in natural water and is flagged, but
+# never deleted. Detection limits are expressed in the parameter's canonical
+# unit from parameters.v1.yaml.
+#
+# The QC loader cross-checks every key against the parameter registry, so a
+# range for a parameter that does not exist fails at load time.
+schema_version: "1.0.0"
+description: >-
+  Physical plausibility ranges and laboratory detection limits per parameter,
+  in canonical units.
+plausibility_ranges:
+  dissolved_oxygen: [0.0, 30.0]
+  salinity: [0.0, 45.0]
+  water_temperature: [-5.0, 45.0]
+  ph: [0.0, 14.0]
+  turbidity: [0.0, 1000.0]
+  chlorophyll_a: [0.0, 500.0]
+  phosphat: [0.0, 10.0]
+  nitrate: [0.0, 100.0]
+detection_limits:
+  dissolved_oxygen: 0.01
+  chlorophyll_a: 0.1
+  phosphat: 0.005
+  nitrate: 0.01

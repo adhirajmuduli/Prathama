@@ -33,7 +33,9 @@ __all__ = [
 
 #: The canonical long schema every parser produces and normalization consumes.
 #: The order is fixed: a stored dataset can be traced to a schema version, and
-#: a reader of the Parquet artifact can rely on this column order.
+#: a reader of the Parquet artifact can rely on this column order. Projected
+#: source coordinates have their own columns so they survive the round trip;
+#: the canonical observation derives WGS84 from either form.
 LONG_SCHEMA_FIELDS: tuple[str, ...] = (
     "station",
     "sampled_at",
@@ -43,6 +45,8 @@ LONG_SCHEMA_FIELDS: tuple[str, ...] = (
     "qualifier",
     "latitude",
     "longitude",
+    "easting",
+    "northing",
     "depth_m",
     "sector",
     "source_row",
@@ -190,6 +194,8 @@ class WideToLongIterator:
                         wide_row[longitude_index] if longitude_index is not None else "",
                         "",
                         "",
+                        "",
+                        "",
                         str(physical_row),
                         self._source_sheet,
                     )
@@ -204,6 +210,8 @@ class WideToLongIterator:
                         True,
                         (wide_missing[latitude_index] if latitude_index is not None else True),
                         (wide_missing[longitude_index] if longitude_index is not None else True),
+                        True,
+                        True,
                         True,
                         True,
                         False,
