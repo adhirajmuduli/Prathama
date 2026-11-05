@@ -21,11 +21,38 @@ from trendsmapp.domain.enums import (
 )
 
 __all__ = [
+    "FAIL_FLAGS",
     "CensoringPolicySpec",
     "DuplicatePolicySpec",
     "ExclusionPolicySpec",
     "ExtrapolationPolicySpec",
+    "status_for_flags",
 ]
+
+#: Flags that make an observation unusable as a measurement. Everything else is
+#: a warning: the observation stays usable and the flag records the finding.
+FAIL_FLAGS: frozenset[QcFlagCode] = frozenset(
+    {
+        QcFlagCode.NON_FINITE_VALUE,
+        QcFlagCode.INVALID_VALUE,
+        QcFlagCode.MISSING_TIMESTAMP,
+        QcFlagCode.IMPOSSIBLE_TIMESTAMP,
+        QcFlagCode.INVALID_COORDINATE,
+        QcFlagCode.COORDINATE_OUT_OF_RANGE,
+        QcFlagCode.UNKNOWN_PARAMETER,
+        QcFlagCode.UNKNOWN_UNIT,
+        QcFlagCode.INCOMPATIBLE_UNIT,
+    }
+)
+
+
+def status_for_flags(flags: frozenset[QcFlagCode] | tuple[QcFlagCode, ...]) -> QcStatus:
+    """Return the aggregate QC status implied by a set of flags."""
+    if any(flag in FAIL_FLAGS for flag in flags):
+        return QcStatus.FAIL
+    if flags:
+        return QcStatus.WARNING
+    return QcStatus.PASS
 
 
 @dataclass(frozen=True, slots=True)

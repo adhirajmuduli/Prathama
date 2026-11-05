@@ -105,6 +105,7 @@ class QcFlagCode(StrEnum):
     OUTSIDE_BOUNDARY = "outside_boundary"
     COORDINATE_OUT_OF_RANGE = "coordinate_out_of_range"
     NON_FINITE_VALUE = "non_finite_value"
+    INVALID_VALUE = "invalid_value"
     VALUE_BELOW_PHYSICAL_RANGE = "value_below_physical_range"
     VALUE_ABOVE_PHYSICAL_RANGE = "value_above_physical_range"
     MISSING_VALUE = "missing_value"

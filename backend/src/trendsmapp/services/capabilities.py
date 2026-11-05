@@ -46,8 +46,9 @@ __all__ = [
     "build_capabilities",
 ]
 
-#: File formats this build can ingest. Populated when the readers exist.
-IMPLEMENTED_FILE_FORMATS: tuple[str, ...] = ()
+#: File formats this build can ingest. Every entry is backed by a reader in
+#: :mod:`trendsmapp.ingestion` and by the end-to-end ingest test.
+IMPLEMENTED_FILE_FORMATS: tuple[str, ...] = ("csv", "tsv", "xlsx", "parquet")
 
 #: Spatial interpolation methods this build can execute.
 IMPLEMENTED_SPATIAL_METHODS: tuple[str, ...] = ()

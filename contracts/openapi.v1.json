@@ -1,4 +1,1479 @@
 {
+  "components": {
+    "schemas": {
+      "AbortUploadResponse": {
+        "additionalProperties": false,
+        "description": "The response of aborting an upload session.",
+        "properties": {
+          "status": {
+            "const": "cancelled",
+            "default": "cancelled",
+            "title": "Status",
+            "type": "string"
+          },
+          "upload_id": {
+            "pattern": "^upl_[0-9a-f]{32}$",
+            "title": "Upload Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id"
+        ],
+        "title": "AbortUploadResponse",
+        "type": "object"
+      },
+      "ArtifactRef": {
+        "additionalProperties": false,
+        "description": "A reference to one immutable stored artifact.",
+        "properties": {
+          "artifact_id": {
+            "pattern": "^art_[0-9a-f]{32}$",
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "raw_upload",
+              "normalized_dataset",
+              "qc_report",
+              "parse_report",
+              "normalization_report",
+              "provenance",
+              "raster",
+              "figure",
+              "video",
+              "model",
+              "metrics",
+              "predictions",
+              "explanations",
+              "export_bundle",
+              "boundary",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "media_type_detail": {
+            "additionalProperties": true,
+            "title": "Media Type Detail",
+            "type": "object"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "kind",
+          "sha256",
+          "size_bytes",
+          "content_type",
+          "created_at"
+        ],
+        "title": "ArtifactRef",
+        "type": "object"
+      },
+      "CancelJobResponse": {
+        "additionalProperties": false,
+        "description": "The acknowledgement of a cancellation request.",
+        "properties": {
+          "cancel_requested": {
+            "title": "Cancel Requested",
+            "type": "boolean"
+          },
+          "job_id": {
+            "pattern": "^job_[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "cancel_requested"
+        ],
+        "title": "CancelJobResponse",
+        "type": "object"
+      },
+      "ColumnMapping": {
+        "additionalProperties": false,
+        "description": "The versioned, confirmed mapping of one source table.\n\nThe document is deliberately explicit about every convention that a value\nparser would otherwise have to guess: the date order, the timezone policy,\nand how duplicates are treated. Nothing in the canonical pipeline infers\nwhat this document can state.",
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/MappedColumn"
+            },
+            "minItems": 1,
+            "title": "Columns",
+            "type": "array"
+          },
+          "date_order": {
+            "$ref": "#/components/schemas/DateOrder",
+            "default": "day_first"
+          },
+          "default_parameter": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Parameter"
+          },
+          "default_unit": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Unit"
+          },
+          "duplicate_policy": {
+            "$ref": "#/components/schemas/DuplicatePolicy",
+            "default": "flag_all"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/LayoutKind"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_crs": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Crs"
+          },
+          "timezone_name": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone Name"
+          },
+          "timezone_policy": {
+            "$ref": "#/components/schemas/TimezonePolicy",
+            "default": "assume_utc"
+          },
+          "wide_axis": {
+            "anyOf": [
+              {
+                "enum": [
+                  "stations",
+                  "parameters"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wide Axis"
+          }
+        },
+        "required": [
+          "layout",
+          "columns"
+        ],
+        "title": "ColumnMapping",
+        "type": "object"
+      },
+      "ColumnRole": {
+        "description": "The canonical role a source column plays in the observation model.\n\nA role is a claim the analyst confirms, never a guess the parser makes.\n``IGNORED`` marks a column that is read for the parse report but excluded\nfrom the canonical dataset.",
+        "enum": [
+          "station",
+          "latitude",
+          "longitude",
+          "easting",
+          "northing",
+          "timestamp",
+          "parameter",
+          "value",
+          "unit",
+          "qualifier",
+          "depth",
+          "sector",
+          "ignored"
+        ],
+        "title": "ColumnRole",
+        "type": "string"
+      },
+      "CompleteUploadResponse": {
+        "additionalProperties": false,
+        "description": "The response of completing an upload: the raw artifact and the ingest job.",
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ArtifactRef"
+          },
+          "job_id": {
+            "pattern": "^job_[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "completed",
+            "default": "completed",
+            "title": "Status",
+            "type": "string"
+          },
+          "upload_id": {
+            "pattern": "^upl_[0-9a-f]{32}$",
+            "title": "Upload Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "artifact",
+          "job_id"
+        ],
+        "title": "CompleteUploadResponse",
+        "type": "object"
+      },
+      "CreateDatasetRequest": {
+        "additionalProperties": false,
+        "description": "The body of ``POST /api/v1/datasets``: an upload plus its confirmed mapping.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4096,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "mapping": {
+            "$ref": "#/components/schemas/ColumnMapping"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "upload_id": {
+            "pattern": "^upl_[0-9a-f]{32}$",
+            "title": "Upload Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "name",
+          "mapping"
+        ],
+        "title": "CreateDatasetRequest",
+        "type": "object"
+      },
+      "CreateDatasetResponse": {
+        "additionalProperties": false,
+        "description": "The 202 response of creating a dataset version and its ingest job.",
+        "properties": {
+          "dataset_id": {
+            "pattern": "^ds_[0-9a-f]{32}$",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^job_[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "accepted",
+            "default": "accepted",
+            "title": "Status",
+            "type": "string"
+          },
+          "version_id": {
+            "pattern": "^dsv_[0-9a-f]{32}$",
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_id",
+          "version_id",
+          "job_id"
+        ],
+        "title": "CreateDatasetResponse",
+        "type": "object"
+      },
+      "CreateUploadRequest": {
+        "additionalProperties": false,
+        "description": "The body of ``POST /api/v1/uploads``.",
+        "properties": {
+          "chunk_size_bytes": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Size Bytes"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "dataset_id": {
+            "anyOf": [
+              {
+                "pattern": "^ds_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Id"
+          },
+          "filename": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Filename",
+            "type": "string"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "size_bytes": {
+            "exclusiveMinimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "filename",
+          "size_bytes"
+        ],
+        "title": "CreateUploadRequest",
+        "type": "object"
+      },
+      "DatasetResponse": {
+        "additionalProperties": false,
+        "description": "One dataset with its current version.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current_version_id": {
+            "anyOf": [
+              {
+                "pattern": "^dsv_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Version Id"
+          },
+          "dataset_id": {
+            "pattern": "^ds_[0-9a-f]{32}$",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_id",
+          "name",
+          "description",
+          "current_version_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DatasetResponse",
+        "type": "object"
+      },
+      "DatasetVersionListResponse": {
+        "additionalProperties": false,
+        "description": "The versions of one dataset.",
+        "properties": {
+          "dataset_id": {
+            "pattern": "^ds_[0-9a-f]{32}$",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetVersionResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dataset_id",
+          "items"
+        ],
+        "title": "DatasetVersionListResponse",
+        "type": "object"
+      },
+      "DatasetVersionResponse": {
+        "additionalProperties": false,
+        "description": "One dataset version with its artifacts.",
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactRef"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "boundary_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundary Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "dataset_id": {
+            "pattern": "^ds_[0-9a-f]{32}$",
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "first_sampled_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Sampled At"
+          },
+          "last_sampled_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sampled At"
+          },
+          "normalized_artifact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtifactRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parameter_count": {
+            "title": "Parameter Count",
+            "type": "integer"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sealed": {
+            "title": "Sealed",
+            "type": "boolean"
+          },
+          "sealed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sealed At"
+          },
+          "station_count": {
+            "title": "Station Count",
+            "type": "integer"
+          },
+          "version_id": {
+            "pattern": "^dsv_[0-9a-f]{32}$",
+            "title": "Version Id",
+            "type": "string"
+          },
+          "version_number": {
+            "title": "Version Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version_id",
+          "dataset_id",
+          "version_number",
+          "schema_version",
+          "sealed",
+          "row_count",
+          "parameter_count",
+          "station_count",
+          "first_sampled_at",
+          "last_sampled_at",
+          "boundary_id",
+          "normalized_artifact",
+          "artifacts",
+          "created_at",
+          "sealed_at"
+        ],
+        "title": "DatasetVersionResponse",
+        "type": "object"
+      },
+      "DateOrder": {
+        "description": "The declared order of day, month, and year in a numeric date.\n\nISO 8601 dates are unambiguous and unaffected. A numeric date such as\n``03/04/2024`` means different days under different conventions, so the\nconvention is declared in the column mapping instead of being guessed.",
+        "enum": [
+          "day_first",
+          "month_first",
+          "year_first"
+        ],
+        "title": "DateOrder",
+        "type": "string"
+      },
+      "DuplicatePolicy": {
+        "description": "How exact and semantic duplicates are resolved.",
+        "enum": [
+          "flag_all",
+          "keep_first",
+          "keep_last",
+          "keep_most_complete",
+          "error"
+        ],
+        "title": "DuplicatePolicy",
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "JobResponse": {
+        "additionalProperties": false,
+        "description": "One durable job as seen by a client.",
+        "properties": {
+          "attempts": {
+            "minimum": 0.0,
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "cancel_requested": {
+            "default": false,
+            "title": "Cancel Requested",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "heartbeat_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeat At"
+          },
+          "job_id": {
+            "pattern": "^job_[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "job_type": {
+            "title": "Job Type",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "progress": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "type": "number"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "pattern": "^run_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "worker_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Id"
+          }
+        },
+        "required": [
+          "job_id",
+          "job_type",
+          "status",
+          "progress",
+          "attempts",
+          "created_at"
+        ],
+        "title": "JobResponse",
+        "type": "object"
+      },
+      "LayoutKind": {
+        "description": "The detected table layout.",
+        "enum": [
+          "long",
+          "wide",
+          "unknown"
+        ],
+        "title": "LayoutKind",
+        "type": "string"
+      },
+      "MappedColumn": {
+        "additionalProperties": false,
+        "description": "One column of the source table and the role it plays.",
+        "properties": {
+          "column": {
+            "minLength": 1,
+            "title": "Column",
+            "type": "string"
+          },
+          "parameter_label": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameter Label"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ColumnRole"
+          },
+          "station_label": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station Label"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "column",
+          "role"
+        ],
+        "title": "MappedColumn",
+        "type": "object"
+      },
+      "PartPlanResponse": {
+        "additionalProperties": false,
+        "description": "One planned part of an upload.",
+        "properties": {
+          "end_byte": {
+            "minimum": 0.0,
+            "title": "End Byte",
+            "type": "integer"
+          },
+          "part_number": {
+            "minimum": 1.0,
+            "title": "Part Number",
+            "type": "integer"
+          },
+          "size_bytes": {
+            "exclusiveMinimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "start_byte": {
+            "minimum": 0.0,
+            "title": "Start Byte",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "part_number",
+          "start_byte",
+          "end_byte",
+          "size_bytes"
+        ],
+        "title": "PartPlanResponse",
+        "type": "object"
+      },
+      "PartUploadResponse": {
+        "additionalProperties": false,
+        "description": "The acknowledgement of one stored part.",
+        "properties": {
+          "part_number": {
+            "title": "Part Number",
+            "type": "integer"
+          },
+          "received": {
+            "const": true,
+            "default": true,
+            "title": "Received",
+            "type": "boolean"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "upload_id": {
+            "pattern": "^upl_[0-9a-f]{32}$",
+            "title": "Upload Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "part_number",
+          "size_bytes",
+          "sha256"
+        ],
+        "title": "PartUploadResponse",
+        "type": "object"
+      },
+      "PreviewResponse": {
+        "additionalProperties": false,
+        "description": "The first rows of a normalized dataset version.",
+        "properties": {
+          "artifact_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Artifact Sha256",
+            "type": "string"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "version_id": {
+            "pattern": "^dsv_[0-9a-f]{32}$",
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version_id",
+          "artifact_sha256",
+          "columns",
+          "rows",
+          "row_count",
+          "limit"
+        ],
+        "title": "PreviewResponse",
+        "type": "object"
+      },
+      "ProbeResponse": {
+        "additionalProperties": false,
+        "description": "What the first rows of an upload look like, with a proposed mapping.",
+        "properties": {
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "date_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Date Fields",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "decimal_style": {
+            "title": "Decimal Style",
+            "type": "string"
+          },
+          "delimiter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delimiter"
+          },
+          "encoding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Encoding"
+          },
+          "extension": {
+            "title": "Extension",
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "file_format": {
+            "title": "File Format",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "has_header": {
+            "title": "Has Header",
+            "type": "boolean"
+          },
+          "layout": {
+            "title": "Layout",
+            "type": "string"
+          },
+          "layout_confidence": {
+            "title": "Layout Confidence",
+            "type": "number"
+          },
+          "layout_evidence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Layout Evidence",
+            "type": "array"
+          },
+          "layout_warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Layout Warnings",
+            "type": "array"
+          },
+          "numeric_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Numeric Fields",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "proposal_warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Proposal Warnings",
+            "type": "array"
+          },
+          "proposed_mapping": {
+            "$ref": "#/components/schemas/ColumnMapping"
+          },
+          "sheet_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sheet Names",
+            "type": "array"
+          },
+          "sniff_warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sniff Warnings",
+            "type": "array"
+          },
+          "upload_id": {
+            "pattern": "^upl_[0-9a-f]{32}$",
+            "title": "Upload Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "filename",
+          "extension",
+          "file_format",
+          "content_type",
+          "encoding",
+          "delimiter",
+          "has_header",
+          "fields",
+          "decimal_style",
+          "layout",
+          "layout_confidence",
+          "layout_evidence",
+          "layout_warnings",
+          "sniff_warnings",
+          "sheet_names",
+          "numeric_fields",
+          "date_fields",
+          "proposed_mapping",
+          "proposal_warnings"
+        ],
+        "title": "ProbeResponse",
+        "type": "object"
+      },
+      "ProvenanceListResponse": {
+        "additionalProperties": false,
+        "description": "The provenance events of a dataset version.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProvenanceRef"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "version_id": {
+            "pattern": "^dsv_[0-9a-f]{32}$",
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version_id",
+          "items"
+        ],
+        "title": "ProvenanceListResponse",
+        "type": "object"
+      },
+      "ProvenanceRef": {
+        "additionalProperties": false,
+        "description": "A reference to one provenance event.",
+        "properties": {
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "parent_artifact_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Parent Artifact Ids",
+            "type": "array"
+          },
+          "provenance_id": {
+            "pattern": "^prv_[0-9a-f]{32}$",
+            "title": "Provenance Id",
+            "type": "string"
+          },
+          "transformations": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Transformations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "provenance_id",
+          "event_type",
+          "occurred_at"
+        ],
+        "title": "ProvenanceRef",
+        "type": "object"
+      },
+      "TimezonePolicy": {
+        "description": "How a timestamp without an explicit offset is interpreted.",
+        "enum": [
+          "assume_utc",
+          "require_offset",
+          "named"
+        ],
+        "title": "TimezonePolicy",
+        "type": "string"
+      },
+      "UploadSessionResponse": {
+        "additionalProperties": false,
+        "description": "The response of creating an upload session.",
+        "properties": {
+          "chunk_size_bytes": {
+            "title": "Chunk Size Bytes",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "extension": {
+            "title": "Extension",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "part_count": {
+            "title": "Part Count",
+            "type": "integer"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/PartPlanResponse"
+            },
+            "title": "Parts",
+            "type": "array"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "status": {
+            "const": "open",
+            "default": "open",
+            "title": "Status",
+            "type": "string"
+          },
+          "upload_id": {
+            "pattern": "^upl_[0-9a-f]{32}$",
+            "title": "Upload Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "filename",
+          "extension",
+          "size_bytes",
+          "chunk_size_bytes",
+          "part_count",
+          "parts",
+          "expires_at",
+          "created_at"
+        ],
+        "title": "UploadSessionResponse",
+        "type": "object"
+      },
+      "UploadStatusResponse": {
+        "additionalProperties": false,
+        "description": "The current state of an upload session.",
+        "properties": {
+          "artifact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtifactRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "extension": {
+            "title": "Extension",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^job_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "missing_parts": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Missing Parts",
+            "type": "array"
+          },
+          "parts_received": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Parts Received",
+            "type": "array"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "completed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "upload_id": {
+            "pattern": "^upl_[0-9a-f]{32}$",
+            "title": "Upload Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_id",
+          "status",
+          "filename",
+          "extension",
+          "size_bytes",
+          "sha256",
+          "parts_received",
+          "missing_parts",
+          "expires_at",
+          "created_at"
+        ],
+        "title": "UploadStatusResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
   "info": {
     "description": "The Trendsmapp scientific API.\n\nUploads are chunked and content-addressed, datasets are normalized into a\ncanonical observation model, and every analysis runs in the worker process.\nRoute handlers validate and delegate; they never perform scientific\ncomputation.",
     "summary": "Validated environmental spatial analysis and machine learning.",
@@ -7,6 +1482,90 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/artifacts/{artifact_id}": {
+      "get": {
+        "description": "Return one artifact reference.",
+        "operationId": "get_artifact_api_v1_artifacts__artifact_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactRef"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Artifact",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/v1/artifacts/{artifact_id}/content": {
+      "get": {
+        "description": "Stream the bytes of one stored artifact.",
+        "operationId": "download_artifact_api_v1_artifacts__artifact_id__content_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Artifact",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
     "/api/v1/capabilities": {
       "get": {
         "description": "Return the formats, methods, versions, and limits of this deployment.",
@@ -52,6 +1611,334 @@
         "summary": "Contract Versions",
         "tags": [
           "capabilities"
+        ]
+      }
+    },
+    "/api/v1/dataset-versions/{version_id}": {
+      "get": {
+        "description": "Return one dataset version with its artifacts.",
+        "operationId": "get_version_api_v1_dataset_versions__version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetVersionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Version",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/v1/dataset-versions/{version_id}/preview": {
+      "get": {
+        "description": "Return the first rows of a normalized dataset version.",
+        "operationId": "preview_version_api_v1_dataset_versions__version_id__preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 5000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Version",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/v1/dataset-versions/{version_id}/provenance": {
+      "get": {
+        "description": "Return the provenance events of a dataset version.",
+        "operationId": "get_provenance_api_v1_dataset_versions__version_id__provenance_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvenanceListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Provenance",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/v1/dataset-versions/{version_id}/reports/{kind}": {
+      "get": {
+        "description": "Return one stored JSON report of a dataset version.",
+        "operationId": "get_report_api_v1_dataset_versions__version_id__reports__kind__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "parse",
+                "normalization",
+                "qc"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Report Api V1 Dataset Versions  Version Id  Reports  Kind  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/v1/datasets": {
+      "post": {
+        "description": "Create a dataset version from an upload and a confirmed mapping.",
+        "operationId": "create_dataset_api_v1_datasets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDatasetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateDatasetResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Dataset",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/v1/datasets/{dataset_id}": {
+      "get": {
+        "description": "Return one dataset.",
+        "operationId": "get_dataset_api_v1_datasets__dataset_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Dataset",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/api/v1/datasets/{dataset_id}/versions": {
+      "get": {
+        "description": "Return every version of a dataset, oldest first.",
+        "operationId": "list_versions_api_v1_datasets__dataset_id__versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetVersionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Versions",
+        "tags": [
+          "datasets"
         ]
       }
     },
@@ -102,6 +1989,402 @@
         "summary": "Readiness",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "get": {
+        "description": "Return one job by identifier.",
+        "operationId": "get_job_api_v1_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_id}/cancel": {
+      "post": {
+        "description": "Request cancellation of a queued or running job.",
+        "operationId": "cancel_job_api_v1_jobs__job_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelJobResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/uploads": {
+      "post": {
+        "description": "Create an upload session and return its part plan.",
+        "operationId": "create_upload_api_v1_uploads_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Upload",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/api/v1/uploads/{upload_id}": {
+      "get": {
+        "description": "Return the current state of an upload session.",
+        "operationId": "get_upload_api_v1_uploads__upload_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "upload_id",
+            "required": true,
+            "schema": {
+              "title": "Upload Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Upload",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/api/v1/uploads/{upload_id}/abort": {
+      "post": {
+        "description": "Cancel an open upload session and delete its stored parts.",
+        "operationId": "abort_upload_api_v1_uploads__upload_id__abort_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "upload_id",
+            "required": true,
+            "schema": {
+              "title": "Upload Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbortUploadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Abort Upload",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/api/v1/uploads/{upload_id}/complete": {
+      "post": {
+        "description": "Assemble, verify, and store the upload, then enqueue the ingest job.",
+        "operationId": "complete_upload_api_v1_uploads__upload_id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "upload_id",
+            "required": true,
+            "schema": {
+              "title": "Upload Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteUploadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Upload",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/api/v1/uploads/{upload_id}/parts/{part_number}": {
+      "put": {
+        "description": "Store one part of an upload after range and size validation.",
+        "operationId": "put_part_api_v1_uploads__upload_id__parts__part_number__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "upload_id",
+            "required": true,
+            "schema": {
+              "title": "Upload Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "part_number",
+            "required": true,
+            "schema": {
+              "title": "Part Number",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Content-Range",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Content-Range"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "contentMediaType": "application/octet-stream",
+                "title": "Payload",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartUploadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Part",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/api/v1/uploads/{upload_id}/probe": {
+      "post": {
+        "description": "Describe the first rows of a completed upload and propose a mapping.",
+        "operationId": "probe_upload_api_v1_uploads__upload_id__probe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "upload_id",
+            "required": true,
+            "schema": {
+              "title": "Upload Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Probe Upload",
+        "tags": [
+          "datasets"
         ]
       }
     }

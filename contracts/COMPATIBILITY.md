@@ -7,7 +7,7 @@ whether the change is compatible.
 The digest below pins the snapshot that this note describes. CI fails when the
 snapshot changes without an updated note.
 
-OpenAPI snapshot SHA-256: `2d37f8508428b640be40276e5b14250c121667a2c11064df316cf6b0dbe0c2cd`
+OpenAPI snapshot SHA-256: `4b03843cc9944ef1b7ac15389964ceb98adfaf232545a27f5cae378d56774211`
 
 ## API major version 1
 
@@ -21,6 +21,23 @@ The first published contract of the rebuilt API.
 | GET | `/api/v1/health/ready` | Readiness of the process, including the database and the object store. Answers `503` when a dependency is unavailable. |
 | GET | `/api/v1/capabilities` | The formats, methods, model families, versions, limits, and configuration of this deployment. |
 | GET | `/api/v1/contracts/versions` | The contract versions this deployment speaks. |
+| POST | `/api/v1/uploads` | Create a chunked upload session and return its part plan. |
+| GET | `/api/v1/uploads/{upload_id}` | The state of an upload session, including received and missing parts. |
+| PUT | `/api/v1/uploads/{upload_id}/parts/{part_number}` | Store one part, validated against its declared range and size. |
+| POST | `/api/v1/uploads/{upload_id}/complete` | Assemble, verify, and store the raw upload, then enqueue the ingest job. |
+| POST | `/api/v1/uploads/{upload_id}/abort` | Cancel an open session and delete its stored parts. |
+| GET | `/api/v1/jobs/{job_id}` | One durable job as seen by a client. |
+| POST | `/api/v1/jobs/{job_id}/cancel` | Request cancellation of a queued or running job. |
+| POST | `/api/v1/uploads/{upload_id}/probe` | Describe the first rows of a completed upload and propose a mapping. |
+| POST | `/api/v1/datasets` | Create a dataset version from an upload and a confirmed mapping, and enqueue the ingest job. |
+| GET | `/api/v1/datasets/{dataset_id}` | One dataset with its current version. |
+| GET | `/api/v1/datasets/{dataset_id}/versions` | Every version of a dataset, oldest first. |
+| GET | `/api/v1/dataset-versions/{version_id}` | One dataset version with its artifacts. |
+| GET | `/api/v1/dataset-versions/{version_id}/preview?limit=` | The first rows of a normalized dataset version. |
+| GET | `/api/v1/dataset-versions/{version_id}/reports/{kind}` | One stored JSON report (`parse`, `normalization`, `qc`). |
+| GET | `/api/v1/dataset-versions/{version_id}/provenance` | The provenance events of a dataset version. |
+| GET | `/api/v1/artifacts/{artifact_id}` | One artifact reference. |
+| GET | `/api/v1/artifacts/{artifact_id}/content` | Stream the bytes of one stored artifact. |
 
 ### Conventions
 

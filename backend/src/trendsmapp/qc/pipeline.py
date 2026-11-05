@@ -12,10 +12,10 @@ from __future__ import annotations
 import dataclasses
 from collections import defaultdict
 from collections.abc import Sequence
-from typing import Final
 
 from trendsmapp.domain.enums import QcFlagCode, QcStatus
 from trendsmapp.domain.models import Observation
+from trendsmapp.domain.policies import FAIL_FLAGS, status_for_flags
 from trendsmapp.qc.completeness import CompletenessSummary, check_completeness
 from trendsmapp.qc.coordinates import Boundary, check_coordinates, load_boundary
 from trendsmapp.qc.detection_limits import check_detection_limits
@@ -30,20 +30,6 @@ __all__ = [
     "QcPipeline",
     "QcResult",
 ]
-
-#: Flags that make an observation unusable as a measurement.
-FAIL_FLAGS: Final[frozenset[QcFlagCode]] = frozenset(
-    {
-        QcFlagCode.NON_FINITE_VALUE,
-        QcFlagCode.MISSING_TIMESTAMP,
-        QcFlagCode.IMPOSSIBLE_TIMESTAMP,
-        QcFlagCode.INVALID_COORDINATE,
-        QcFlagCode.COORDINATE_OUT_OF_RANGE,
-        QcFlagCode.UNKNOWN_PARAMETER,
-        QcFlagCode.UNKNOWN_UNIT,
-        QcFlagCode.INCOMPATIBLE_UNIT,
-    }
-)
 
 
 class QcResult:
@@ -86,6 +72,13 @@ class QcPipeline:
         rules_skipped: list[str] = []
         warnings: list[str] = []
 
+        # Flags already on the observations (set at canonicalization) are part
+        # of the report too: the report must account for every flag, not only
+        # the ones this run produced.
+        for index, observation in enumerate(observations):
+            for flag in observation.qc_flags:
+                findings.append((index, flag, None))
+
         findings.extend((index, flag, None) for index, flag in check_ranges(observations, ranges))
         rules_applied.append("ranges")
 
@@ -124,6 +117,18 @@ class QcPipeline:
         rules_applied.append("temporal")
         warnings.extend(temporal_notes)
 
+        # One (observation, flag) pair is counted once, whether it came from
+        # canonicalization or from a rule run here.
+        seen: set[tuple[int, QcFlagCode]] = set()
+        deduplicated: list[tuple[int, QcFlagCode, str | None]] = []
+        for finding in findings:
+            key = (finding[0], finding[1])
+            if key in seen:
+                continue
+            seen.add(key)
+            deduplicated.append(finding)
+        findings = deduplicated
+
         observations_with_flags = self._apply(observations, findings)
         report = self._build_report(
             observations_with_flags,
@@ -158,11 +163,7 @@ class QcPipeline:
 
     def _status_for(self, flags: tuple[QcFlagCode, ...]) -> QcStatus:
         """Return the status implied by a set of flags."""
-        if any(flag in FAIL_FLAGS for flag in flags):
-            return QcStatus.FAIL
-        if flags:
-            return QcStatus.WARNING
-        return QcStatus.PASS
+        return status_for_flags(flags)
 
     def _build_report(
         self,

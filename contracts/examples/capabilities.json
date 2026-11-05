@@ -9,7 +9,12 @@
     "ingestion_accept_cached_formula_values": false,
     "object_store_backend": "local"
   },
-  "file_formats": [],
+  "file_formats": [
+    "csv",
+    "tsv",
+    "xlsx",
+    "parquet"
+  ],
   "hard_ceilings": {
     "grid_cell_limits": [
       1000,

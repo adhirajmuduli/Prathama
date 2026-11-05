@@ -219,7 +219,8 @@ def test_canonicalize_reports_unknown_parameters_without_dropping_the_row() -> N
     assert result.observation.parameter_label == "mystery_thing"
     assert result.observation.canonical_value is None
     assert any(issue.code == QcFlagCode.UNKNOWN_PARAMETER.value for issue in result.issues)
-    assert result.observation.qc_status is QcStatus.WARNING
+    assert QcFlagCode.UNKNOWN_PARAMETER in result.observation.qc_flags
+    assert result.observation.qc_status is QcStatus.FAIL
 
 
 def test_canonicalize_skips_rows_without_a_timestamp() -> None:

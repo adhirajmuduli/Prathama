@@ -56,12 +56,14 @@ def _resource_file(name: str) -> Any:
 
 def read_resource_bytes(name: str) -> bytes:
     """Return the exact bytes of a resource, without any newline translation."""
-    return _resource_file(name).read_bytes()
+    data: bytes = _resource_file(name).read_bytes()
+    return data
 
 
 def read_resource_text(name: str) -> str:
     """Return the text of a resource document shipped in this package."""
-    return _resource_file(name).read_text(encoding="utf-8")
+    text: str = _resource_file(name).read_text(encoding="utf-8")
+    return text
 
 
 def load_yaml_resource(name: str) -> dict[str, Any]:

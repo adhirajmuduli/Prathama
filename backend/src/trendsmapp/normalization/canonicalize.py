@@ -17,9 +17,10 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from trendsmapp.constants import DEFAULT_ANALYSIS_CRS
-from trendsmapp.domain.enums import QcFlagCode, QcStatus
+from trendsmapp.domain.enums import QcFlagCode
 from trendsmapp.domain.identifiers import validate_identifier
 from trendsmapp.domain.models import Observation
+from trendsmapp.domain.policies import status_for_flags
 from trendsmapp.domain.units import UnitRegistry, get_unit_registry
 from trendsmapp.errors import ValidationError
 from trendsmapp.ingestion.chunking import TextBatch
@@ -316,6 +317,7 @@ def canonicalize_row(
 
     station_label = row.cell("station")
     station_key = derive_station_key(station_label)
+    qc_flags = _flags_from_issues(issues)
     observation = Observation(
         observation_id=observation_id_for(
             dataset_version_id=dataset_version_id,
@@ -351,8 +353,8 @@ def canonicalize_row(
         conversion_factor=conversion_factor,
         method_id=None,
         instrument_id=None,
-        qc_status=QcStatus.WARNING if issues else QcStatus.PASS,
-        qc_flags=(),
+        qc_status=status_for_flags(qc_flags),
+        qc_flags=qc_flags,
         is_excluded=False,
         exclusion_reason=None,
         provenance_ids=(),
@@ -403,6 +405,23 @@ def _resolve_coordinates(
     if station_coordinates:
         return station_coordinates.get(derive_station_key(station_label))
     return None
+
+
+def _flags_from_issues(issues: list[RowIssue]) -> tuple[QcFlagCode, ...]:
+    """Map canonicalization issues onto QC flags.
+
+    Codes that are already flag codes pass through. ``invalid_value`` becomes
+    ``INVALID_VALUE``. Codes with no flag equivalent (an invalid depth, a
+    missing source CRS) stay in the normalization report only.
+    """
+    flags: list[QcFlagCode] = []
+    for issue in issues:
+        try:
+            flags.append(QcFlagCode(issue.code))
+        except ValueError:
+            if issue.code == "invalid_value":
+                flags.append(QcFlagCode.INVALID_VALUE)
+    return tuple(dict.fromkeys(flags))
 
 
 def _skipped(row: NormalizedRow, reason: str, field: str, detail: str) -> CanonicalizationResult:

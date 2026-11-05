@@ -120,3 +120,32 @@ class DatasetRepository:
         """Return the next sequential version number for a dataset."""
         versions = await self.list_versions(dataset_id)
         return max((version.version_number for version in versions), default=0) + 1
+
+    async def update_version_stats(
+        self,
+        version_id: str,
+        *,
+        row_count: int,
+        parameter_count: int,
+        station_count: int,
+        first_sampled_at: datetime | None,
+        last_sampled_at: datetime | None,
+        normalized_artifact_id: str | None = None,
+        normalized_sha256: str | None = None,
+        boundary_id: str | None = None,
+    ) -> DatasetVersionRow:
+        """Fill in the measured statistics of a dataset version after ingestion."""
+        row = await self.require_version(version_id)
+        row.row_count = row_count
+        row.parameter_count = parameter_count
+        row.station_count = station_count
+        row.first_sampled_at = first_sampled_at
+        row.last_sampled_at = last_sampled_at
+        if normalized_artifact_id is not None:
+            row.normalized_artifact_id = normalized_artifact_id
+        if normalized_sha256 is not None:
+            row.normalized_sha256 = normalized_sha256
+        if boundary_id is not None:
+            row.boundary_id = boundary_id
+        await self._session.flush()
+        return row

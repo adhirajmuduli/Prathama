@@ -77,6 +77,11 @@ def normalized_extension(filename: str) -> str:
     if not isinstance(filename, str) or not filename.strip():
         raise ValidationError("A filename is required to determine the file format.")
     trimmed = filename.strip()
+    if "/" in trimmed or "\\" in trimmed or ".." in trimmed:
+        raise ValidationError(
+            "The filename must be a plain name, not a path.",
+            details={"filename": trimmed[:128]},
+        )
     position = trimmed.rfind(".")
     if position <= 0 or position == len(trimmed) - 1:
         raise ValidationError(

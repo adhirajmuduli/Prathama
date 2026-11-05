@@ -22,7 +22,7 @@ from trendsmapp.api.middleware import (
     RequestContextMiddleware,
     SecurityHeadersMiddleware,
 )
-from trendsmapp.api.routers import capabilities, health
+from trendsmapp.api.routers import capabilities, datasets, health, jobs, uploads
 from trendsmapp.logging_config import configure_logging, get_logger
 from trendsmapp.persistence.database import (
     create_engine_for_settings,
@@ -104,4 +104,7 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
     install_exception_handlers(application)
     application.include_router(health.router)
     application.include_router(capabilities.router)
+    application.include_router(uploads.router)
+    application.include_router(jobs.router)
+    application.include_router(datasets.router)
     return application

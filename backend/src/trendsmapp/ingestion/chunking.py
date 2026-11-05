@@ -38,7 +38,7 @@ __all__ = [
 ]
 
 _CONTENT_RANGE_PATTERN: Final[re.Pattern[str]] = re.compile(
-    r"^bytes\s*=\s*(?P<start>\d+)\s*-\s*(?P<end>\d+)$"
+    r"^bytes\s*=?\s*(?P<start>\d+)\s*-\s*(?P<end>\d+)(?:[/\s]\s*(?:\d+|\*))?$"
 )
 
 #: The largest number of parts a single upload session may declare.
@@ -177,13 +177,17 @@ def expected_part_size(*, total_bytes: int, chunk_size: int, part_number: int) -
 
 
 def parse_content_range(value: str) -> tuple[int, int]:
-    """Parse a ``bytes=start-end`` content range into an inclusive range."""
+    """Parse a ``Content-Range`` value into an inclusive byte range.
+
+    Both the HTTP header form ``bytes 0-1023/2048`` (with an optional total) and
+    the ``bytes=0-1023`` form are accepted; anything else is rejected.
+    """
     if not isinstance(value, str):
         raise ValidationError("A content range is required for a part upload.")
     match = _CONTENT_RANGE_PATTERN.fullmatch(value.strip())
     if match is None:
         raise ValidationError(
-            "The content range must have the form 'bytes=start-end'.",
+            "The content range must have the form 'bytes start-end' (or 'bytes=start-end').",
             details={"content_range": value.strip()[:64]},
         )
     start = int(match.group("start"))

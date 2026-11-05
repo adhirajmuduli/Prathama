@@ -76,8 +76,15 @@ async def prepared_database(engine: AsyncEngine) -> AsyncEngine:
 
 
 @pytest_asyncio.fixture
-async def client(settings: Settings) -> AsyncIterator[httpx.AsyncClient]:
-    """Return an HTTP client bound to the application with its lifespan running."""
+async def client(
+    settings: Settings, prepared_database: AsyncEngine
+) -> AsyncIterator[httpx.AsyncClient]:
+    """Return an HTTP client bound to the application with its lifespan running.
+
+    The schema is created from the ORM metadata first (``prepared_database``);
+    in production the separate ``migrate`` service applies the Alembic
+    migrations before the API starts.
+    """
     application = create_app(settings=settings)
     async with application.router.lifespan_context(application):
         transport = httpx.ASGITransport(app=application)

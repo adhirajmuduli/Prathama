@@ -35,15 +35,9 @@ __all__ = [
 BOUNDARY_GEOJSON: Final[str] = "default_boundary.geojson"
 BOUNDARY_PROVENANCE: Final[str] = "default_boundary.provenance.v1.yaml"
 
-#: Coordinates closer than this many metres are the same location.
-_DUPLICATE_LOCATION_METRES: Final[float] = 50.0
-
 #: A station whose coordinates move more than this many metres between visits
 #: has drifted.
 _STATION_DRIFT_METRES: Final[float] = 500.0
-
-#: Coordinates are compared at this rounding to find duplicate locations.
-_COORDINATE_PRECISION: Final[int] = 5
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,15 +117,15 @@ def check_coordinates(
     observations: Sequence[Observation],
     boundary: Boundary | None = None,
     *,
-    duplicate_location_metres: float = _DUPLICATE_LOCATION_METRES,
     station_drift_metres: float = _STATION_DRIFT_METRES,
 ) -> list[tuple[int, QcFlagCode, str]]:
-    """Flag boundary, duplicate-location, and station-drift problems.
+    """Flag boundary and station-drift problems.
 
     Returns ``(observation_index, flag, detail)`` triples. The boundary check
-    is skipped when no boundary is supplied. Duplicate locations are found by
-    rounding coordinates; station drift is found by comparing the projected
-    coordinates of one station label across its visits.
+    is skipped when no boundary is supplied. Station drift is found by
+    comparing the projected coordinates of one station label across its
+    visits. Duplicate locations between different stations are a separate rule
+    (:mod:`trendsmapp.qc.duplicates`), because they need the station labels.
     """
     findings: list[tuple[int, QcFlagCode, str]] = []
 
@@ -139,19 +133,6 @@ def check_coordinates(
         for index, observation in enumerate(observations):
             if not boundary.contains(observation.longitude_wgs84, observation.latitude_wgs84):
                 findings.append((index, QcFlagCode.OUTSIDE_BOUNDARY, boundary.boundary_id))
-
-    locations: dict[tuple[float, float], int] = {}
-    for index, observation in enumerate(observations):
-        key = (
-            round(observation.longitude_wgs84, _COORDINATE_PRECISION),
-            round(observation.latitude_wgs84, _COORDINATE_PRECISION),
-        )
-        if key in locations and locations[key] != index:
-            findings.append(
-                (index, QcFlagCode.DUPLICATE_STATION, f"same location as row {locations[key]}")
-            )
-        else:
-            locations.setdefault(key, index)
 
     by_station: dict[str, list[tuple[int, float, float]]] = {}
     for index, observation in enumerate(observations):

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from trendsmapp.clock import utc_now
@@ -127,6 +127,16 @@ class UploadRepository:
         await self._session.flush()
         return row
 
+    async def record_result(
+        self, *, upload_id: str, raw_artifact_id: str, ingest_job_id: str
+    ) -> UploadRow:
+        """Record the raw artifact and ingest job of a completed upload."""
+        row = await self.require(upload_id)
+        row.raw_artifact_id = raw_artifact_id
+        row.ingest_job_id = ingest_job_id
+        await self._session.flush()
+        return row
+
     async def cancel(self, upload_id: str) -> UploadRow:
         """Cancel an open upload session and remove its part records."""
         row = await self.require(upload_id)
@@ -152,3 +162,14 @@ class UploadRepository:
             )
         )
         return list(result.scalars())
+
+    async def count_open(self, *, now: datetime | None = None) -> int:
+        """Return the number of open, unexpired sessions."""
+        reference = now or utc_now()
+        result = await self._session.execute(
+            select(func.count()).where(
+                UploadRow.status == OPEN_STATUS,
+                UploadRow.expires_at >= reference,
+            )
+        )
+        return int(result.scalar_one())

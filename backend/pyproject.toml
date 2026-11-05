@@ -109,6 +109,7 @@ plugins = ["pydantic.mypy"]
 # boundary and validated by our own code.
 module = [
     "shap.*",
+    "shapely.*",
     "pykrige.*",
     "xgboost.*",
     "rasterio.*",

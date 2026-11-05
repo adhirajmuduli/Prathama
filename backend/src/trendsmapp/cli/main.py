@@ -78,10 +78,11 @@ def worker(
     """Run the worker process until it is stopped."""
     import asyncio
 
+    from trendsmapp.services.ingestion import build_default_registry
     from trendsmapp.worker.main import run_worker
 
     settings = get_settings()
     if poll_interval is not None:
         settings = settings.model_copy(update={"worker_poll_interval_seconds": poll_interval})
     configure_logging(level=settings.log_level, json_output=settings.log_json)
-    asyncio.run(run_worker(settings=settings))
+    asyncio.run(run_worker(settings=settings, registry=build_default_registry()))

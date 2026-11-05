@@ -106,11 +106,16 @@ class UploadRow(Base):
     expected_sha256: Mapped[str | None] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="open")
     dataset_id: Mapped[str | None] = mapped_column(String(64))
+    raw_artifact_id: Mapped[str | None] = mapped_column(String(64))
+    ingest_job_id: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    __table_args__ = (Index("ix_uploads_status", "status"),)
+    __table_args__ = (
+        Index("ix_uploads_status", "status"),
+        Index("ix_uploads_raw_artifact_id", "raw_artifact_id"),
+    )
 
 
 class UploadPartRow(Base):
