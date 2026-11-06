@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -128,6 +129,55 @@ class AnalysisService:
         return CreateAnalysisResponse(
             run_id=run_id, job_id=job.id, recipe_hash=digest, status=run.status
         )
+
+    async def create_animation(
+        self,
+        run_id: str,
+        request: Any,
+        idempotency_key: str | None = None,
+    ) -> dict[str, str]:
+        """Enqueue an animation job over the stored rasters of a run."""
+        run = await self._runs.require(run_id)
+        if run.status != "succeeded":
+            raise ConflictError(
+                "Only a succeeded run can be animated.",
+                details={"run_id": run_id, "status": run.status},
+            )
+        rasters = [
+            row
+            for row in await self._artifacts.list_for_run(run_id)
+            if row.kind == "raster"
+            and (row.details or {}).get("kind") == "geotiff"
+            and (
+                request.parameter_id is None
+                or (row.details or {}).get("parameter_id") == request.parameter_id
+            )
+            and (request.method is None or (row.details or {}).get("method") == request.method)
+        ]
+        if not rasters:
+            raise NotFoundError(
+                "The run has no stored rasters for the requested parameter and method.",
+                details={"run_id": run_id},
+            )
+        payload = {
+            "run_id": run_id,
+            "parameter_id": request.parameter_id,
+            "method": request.method,
+            "palette": request.palette,
+            "fps": request.fps,
+        }
+        key = f"animate:{run_id}:" + sha256_bytes(
+            json.dumps(payload, sort_keys=True).encode("utf-8")
+        )
+        job, _created = await self._jobs.create(
+            job_type=JobType.ANIMATE,
+            job_id=new_job_id(),
+            payload=payload,
+            idempotency_key=key if idempotency_key is None else f"{key}:{idempotency_key}",
+            request_hash=sha256_bytes(json.dumps(payload, sort_keys=True).encode("utf-8")),
+            run_id=run_id,
+        )
+        return {"job_id": job.id, "run_id": run_id, "status": "accepted"}
 
     async def get_run(self, run_id: str) -> Any:
         """Return one run row."""

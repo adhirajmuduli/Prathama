@@ -22,6 +22,41 @@ export interface ApiOperation {
 
 export const API_OPERATIONS: readonly ApiOperation[] = [
   {
+    method: "post",
+    path: "/api/v1/analyses",
+    operationId: "create_analysis_api_v1_analyses_post",
+    summary: "Create Analysis",
+    description: "Validate a recipe and enqueue the analysis job.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/analyses/{run_id}",
+    operationId: "get_analysis_api_v1_analyses__run_id__get",
+    summary: "Get Analysis",
+    description: "Return one analysis run.",
+  },
+  {
+    method: "post",
+    path: "/api/v1/analyses/{run_id}/animations",
+    operationId: "create_animation_api_v1_analyses__run_id__animations_post",
+    summary: "Create Animation",
+    description: "Enqueue an animation job over the stored rasters of a run.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/analyses/{run_id}/artifacts",
+    operationId: "list_analysis_artifacts_api_v1_analyses__run_id__artifacts_get",
+    summary: "List Analysis Artifacts",
+    description: "Return every artifact a run produced.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/analyses/{run_id}/results",
+    operationId: "get_analysis_results_api_v1_analyses__run_id__results_get",
+    summary: "Get Analysis Results",
+    description: "Return the stored analysis-results document of a run.",
+  },
+  {
     method: "get",
     path: "/api/v1/artifacts/{artifact_id}",
     operationId: "get_artifact_api_v1_artifacts__artifact_id__get",
@@ -180,6 +215,13 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
 export type AbortUploadResponse = {
   "status"?: string;
   "upload_id": string;
+};
+
+export type AnimationRequest = {
+  "fps"?: number;
+  "method"?: string | unknown;
+  "palette"?: string;
+  "parameter_id"?: string | unknown;
 };
 
 export type ArtifactRef = {
@@ -383,6 +425,34 @@ export type ProvenanceRef = {
   "parent_artifact_ids"?: readonly string[];
   "provenance_id": string;
   "transformations"?: readonly string[];
+};
+
+export type Recipe = {
+  "dataset_version_id": string;
+  "schema_version"?: string;
+  "seed"?: number;
+  "spatial": unknown;
+  "temporal"?: unknown | unknown;
+};
+
+export type SpatialSection = {
+  "analysis_crs"?: string;
+  "grid_resolution_m": number;
+  "max_grid_cells": number;
+  "methods": readonly Record<string, unknown>[];
+  "permitted_qc_statuses"?: readonly string[];
+  "selection_rule"?: string;
+  "validation"?: string;
+};
+
+export type TemporalSection = {
+  "allow_extrapolation"?: boolean;
+  "compute_change_points"?: boolean;
+  "compute_trends"?: boolean;
+  "frame_count"?: number;
+  "interpolation"?: string;
+  "max_gap_days"?: number;
+  "resolution"?: string;
 };
 
 export type TimezonePolicy = "assume_utc" | "require_offset" | "named";

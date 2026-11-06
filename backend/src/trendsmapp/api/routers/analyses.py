@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from trendsmapp.api.dependencies import (
@@ -35,6 +36,29 @@ def _service(
 
 
 AnalysisServiceDependency = Annotated[AnalysisService, Depends(_service)]
+
+
+@router.post("/{run_id}/animations", status_code=status.HTTP_202_ACCEPTED)
+async def create_animation(
+    run_id: str,
+    request: AnimationRequest,
+    service: AnalysisServiceDependency,
+    idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+) -> dict[str, str]:
+    """Enqueue an animation job over the stored rasters of a run."""
+    job = await service.create_animation(run_id, request, idempotency_key)
+    return job
+
+
+class AnimationRequest(BaseModel):
+    """The body of ``POST /api/v1/analyses/{run_id}/animations``."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    parameter_id: str | None = None
+    method: str | None = None
+    palette: str = "viridis"
+    fps: int = Field(default=2, ge=1, le=30)
 
 
 def _run_response(row: RunRow) -> dict[str, Any]:

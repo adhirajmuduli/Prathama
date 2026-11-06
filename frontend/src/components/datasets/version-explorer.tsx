@@ -7,6 +7,7 @@
 
 import { useMemo, useState } from "react";
 
+import { AnalysisPanel } from "./analysis-panel";
 import { createApiClient } from "../../lib/api/client";
 import { publicApiBaseUrl } from "../../lib/env/client";
 import {
@@ -16,10 +17,11 @@ import {
 } from "../../lib/contracts/ingest";
 import { formatBytes, formatTimestamp } from "../../lib/format";
 
-type Tab = "preview" | "parse" | "normalization" | "qc" | "provenance" | "artifacts";
+type Tab = "preview" | "parse" | "normalization" | "qc" | "provenance" | "artifacts" | "analyze";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "preview", label: "Preview" },
+  { id: "analyze", label: "Analyze" },
   { id: "parse", label: "Parse report" },
   { id: "normalization", label: "Normalization" },
   { id: "qc", label: "Quality control" },
@@ -155,7 +157,10 @@ export function VersionExplorer({ versions }: VersionExplorerProps) {
       ) : null}
 
       {tab === "preview" && preview !== null ? <PreviewTable data={preview} /> : null}
-      {tab !== "preview" && tab !== "provenance" && tab !== "artifacts" && report !== null ? (
+      {tab === "analyze" && selected !== null ? (
+        <AnalysisPanel datasetVersionId={selected.version_id} />
+      ) : null}
+      {tab !== "preview" && tab !== "analyze" && tab !== "provenance" && tab !== "artifacts" && report !== null ? (
         <ReportView data={report} />
       ) : null}
       {tab === "provenance" && provenance !== null ? <ProvenanceView data={provenance} /> : null}

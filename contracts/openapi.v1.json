@@ -23,6 +23,48 @@
         "title": "AbortUploadResponse",
         "type": "object"
       },
+      "AnimationRequest": {
+        "additionalProperties": false,
+        "description": "The body of ``POST /api/v1/analyses/{run_id}/animations``.",
+        "properties": {
+          "fps": {
+            "default": 2,
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Fps",
+            "type": "integer"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "palette": {
+            "default": "viridis",
+            "title": "Palette",
+            "type": "string"
+          },
+          "parameter_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameter Id"
+          }
+        },
+        "title": "AnimationRequest",
+        "type": "object"
+      },
       "ArtifactRef": {
         "additionalProperties": false,
         "description": "A reference to one immutable stored artifact.",
@@ -1781,6 +1823,79 @@
           }
         },
         "summary": "Get Analysis",
+        "tags": [
+          "analyses"
+        ]
+      }
+    },
+    "/api/v1/analyses/{run_id}/animations": {
+      "post": {
+        "description": "Enqueue an animation job over the stored rasters of a run.",
+        "operationId": "create_animation_api_v1_analyses__run_id__animations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnimationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Create Animation Api V1 Analyses  Run Id  Animations Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Animation",
         "tags": [
           "analyses"
         ]

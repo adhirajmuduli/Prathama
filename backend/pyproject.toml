@@ -86,7 +86,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["E501", "N802", "N803", "N806"]
+"tests/*" = ["E501", "N802", "N803", "N806", "ASYNC230", "ASYNC240"]
 "scripts/*" = ["T201"]
 # The test-data generator embeds CSV fixture literals whose lines are longer
 # than the code limit; the content is data, not prose.

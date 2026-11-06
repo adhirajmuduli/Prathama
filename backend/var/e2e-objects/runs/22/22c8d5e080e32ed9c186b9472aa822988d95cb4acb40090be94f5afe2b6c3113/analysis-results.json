@@ -1,0 +1,142 @@
+{
+  "boundary_sha256": "6a18811f70f56e4f4b3455b6e376470da447483821faeaef93147fc0100b9775",
+  "frames": [
+    {
+      "decisions": [
+        {
+          "evidence": {
+            "idw": 0.5302753445812086
+          },
+          "rule": "best_rmse",
+          "selected": "idw"
+        }
+      ],
+      "methods": [
+        {
+          "bias": -0.06255426925851526,
+          "folds": 4,
+          "geotiff_key": "runs/11/11b7b78439af2f109465bc438c6dd172dbc02ffdeb206e05077dd0d24bbffca6/idw.tif",
+          "mae": 0.5255932935457837,
+          "method": "idw",
+          "png_key": "runs/aa/aabcbc9e118421e3de68f61746d418759cbf0e412153d81082805be8b120253f/idw.png",
+          "rmse": 0.5302753445812086,
+          "uncertainty_kind": "support_only"
+        }
+      ],
+      "parameter_id": "dissolved_oxygen",
+      "point_count": 4,
+      "sampled_at": "2024-01-15T09:30:00+00:00",
+      "skipped_reason": null
+    },
+    {
+      "decisions": [
+        {
+          "evidence": {
+            "idw": 0.4684724820565422
+          },
+          "rule": "best_rmse",
+          "selected": "idw"
+        }
+      ],
+      "methods": [
+        {
+          "bias": -0.055750461261598216,
+          "folds": 4,
+          "geotiff_key": "runs/b9/b925c63f9e74e989d505b8bb73d57b9535a7921021c1d55cfbeefb14cea244f0/idw.tif",
+          "mae": 0.4649277727089405,
+          "method": "idw",
+          "png_key": "runs/0b/0bc5ec9b7a4b4b1fff2d3a6891475d8201517fc2974ca00b66d9a5cdfcbbbd90/idw.png",
+          "rmse": 0.4684724820565422,
+          "uncertainty_kind": "support_only"
+        }
+      ],
+      "parameter_id": "dissolved_oxygen",
+      "point_count": 4,
+      "sampled_at": "2024-02-12T09:15:00+00:00",
+      "skipped_reason": null
+    },
+    {
+      "decisions": [
+        {
+          "evidence": {
+            "idw": 0.3795897269773504
+          },
+          "rule": "best_rmse",
+          "selected": "idw"
+        }
+      ],
+      "methods": [
+        {
+          "bias": -0.06167014120842573,
+          "folds": 4,
+          "geotiff_key": "runs/40/407376ab45d93842c136ad4c121423cca4b02cec4fea886b851fa73839bda910/idw.tif",
+          "mae": 0.3688993239838867,
+          "method": "idw",
+          "png_key": "runs/f1/f169279f6d0777dd5e476db199fa874d670772e40102ae24cda937ecbfe62c90/idw.png",
+          "rmse": 0.3795897269773504,
+          "uncertainty_kind": "support_only"
+        }
+      ],
+      "parameter_id": "dissolved_oxygen",
+      "point_count": 4,
+      "sampled_at": "2024-03-10T09:00:00+00:00",
+      "skipped_reason": null
+    }
+  ],
+  "grid_cells": 120,
+  "masked_cells": 31,
+  "recipe_hash": "0e9276ebec77786ae0fc6aa2be9a5cb461268260dbd325fce1c00c79a41355c0",
+  "run_id": "run_2e75db9fe7b341fc93295126d9d2acb9",
+  "temporal": {
+    "series": [
+      {
+        "frames": 56,
+        "missing": 53,
+        "observed": 3,
+        "parameter_id": "dissolved_oxygen",
+        "seasonal_counts": {
+          "pre_monsoon": 1,
+          "winter": 2
+        },
+        "station_id": "stn_0fdc11186e3cf471bcee0f3c",
+        "trend_slope_per_day": 0.005456612353164074
+      },
+      {
+        "frames": 56,
+        "missing": 53,
+        "observed": 3,
+        "parameter_id": "dissolved_oxygen",
+        "seasonal_counts": {
+          "pre_monsoon": 1,
+          "winter": 2
+        },
+        "station_id": "stn_2adc690bbdc9a10d8c9bd5a5",
+        "trend_slope_per_day": 0.0018188707843880194
+      },
+      {
+        "frames": 56,
+        "missing": 53,
+        "observed": 3,
+        "parameter_id": "dissolved_oxygen",
+        "seasonal_counts": {
+          "pre_monsoon": 1,
+          "winter": 2
+        },
+        "station_id": "stn_34fb43de7a06820ba8124bd8",
+        "trend_slope_per_day": 0.00727548313755211
+      },
+      {
+        "frames": 56,
+        "missing": 53,
+        "observed": 3,
+        "parameter_id": "dissolved_oxygen",
+        "seasonal_counts": {
+          "pre_monsoon": 1,
+          "winter": 2
+        },
+        "station_id": "stn_8641ee80ef0686f4557b12b6",
+        "trend_slope_per_day": 0.0018188707843880356
+      }
+    ]
+  }
+}

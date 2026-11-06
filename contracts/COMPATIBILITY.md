@@ -7,7 +7,7 @@ whether the change is compatible.
 The digest below pins the snapshot that this note describes. CI fails when the
 snapshot changes without an updated note.
 
-OpenAPI snapshot SHA-256: `2d269b8ea0fa0311446ef308549d8ff4d5f30db941268825c536aa25f3045846`
+OpenAPI snapshot SHA-256: `bfad1d48cef44d6bf4907ec0ba310cad65b66aecc30650f40ab42af882cc8ed3`
 
 ## API major version 1
 
@@ -43,6 +43,7 @@ The first published contract of the rebuilt API.
 | GET | `/api/v1/analyses/{run_id}` | One analysis run with its recipe and hashes. |
 | GET | `/api/v1/analyses/{run_id}/artifacts` | Every artifact a run produced. |
 | GET | `/api/v1/analyses/{run_id}/results` | The stored results document of a run. |
+| POST | `/api/v1/analyses/{run_id}/animations` | Enqueue an animation job over the run's stored rasters. |
 
 ### Conventions
 

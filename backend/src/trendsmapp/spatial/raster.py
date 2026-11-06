@@ -36,6 +36,43 @@ class RasterWriteResult:
     size_bytes: int
 
 
+def grid_from_geotiff(payload: bytes) -> tuple[Grid, np.ndarray]:
+    """Reconstruct the grid and values from a written GeoTIFF payload.
+
+    The grid is rebuilt from the extent tags written at creation; the mask is
+    recovered from the nodata cells, so a stored raster is fully
+    self-describing.
+    """
+    import io
+
+    import rasterio
+
+    with rasterio.open(io.BytesIO(payload)) as dataset:
+        data = dataset.read(1)
+        tags = dict(dataset.tags().items())
+        transform = dataset.transform
+        crs = dataset.crs.to_string()
+    n_rows, n_cols = data.shape
+    resolution = float(transform.a)
+    x_min = float(transform.c)
+    y_max = float(transform.f)
+    y_min = y_max - n_rows * resolution
+    nodata = float(tags.get("nodata", str(NODATA)))
+    values = np.asarray(data, dtype=float)
+    values[data == nodata] = np.nan  # nodata cells are excluded from scales and statistics
+    mask = data != nodata
+    grid = Grid(
+        crs=crs,
+        x_min=x_min,
+        y_min=y_min,
+        resolution_m=resolution,
+        n_cols=n_cols,
+        n_rows=n_rows,
+        mask=mask,
+    )
+    return grid, values
+
+
 def _extent_metadata(grid: Grid) -> dict[str, object]:
     """Return the exact extent metadata of a grid."""
     x_min, y_min, x_max, y_max = grid.extent()

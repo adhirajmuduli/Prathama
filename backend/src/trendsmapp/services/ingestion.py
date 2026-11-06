@@ -433,8 +433,10 @@ class IngestWorkflow:
 def build_default_registry() -> JobHandlerRegistry:
     """Build the workflow registry with every handler this build implements."""
     from trendsmapp.services.analysis import register_analysis_handlers
+    from trendsmapp.services.animation import register_animate_handler
 
     registry = JobHandlerRegistry()
     registry.register(JobType.INGEST, IngestWorkflow())
     register_analysis_handlers(registry)
+    register_animate_handler(registry)
     return registry
