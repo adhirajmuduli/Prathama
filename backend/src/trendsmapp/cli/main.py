@@ -86,3 +86,53 @@ def worker(
         settings = settings.model_copy(update={"worker_poll_interval_seconds": poll_interval})
     configure_logging(level=settings.log_level, json_output=settings.log_json)
     asyncio.run(run_worker(settings=settings, registry=build_default_registry()))
+
+
+@app.command()
+def dev(
+    host: Annotated[str, typer.Option("--host", help="The host to bind.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", help="The port to bind.")] = 8000,
+) -> None:
+    """Run the API and the worker in one process, for local development and E2E.
+
+    The worker runs in a daemon thread with its own event loop; the API serves
+    in the main thread. Production deployments run them as separate processes.
+    """
+    import asyncio
+    import threading
+
+    import uvicorn
+
+    from trendsmapp.services.ingestion import build_default_registry
+    from trendsmapp.worker.main import run_worker
+
+    settings = get_settings()
+    configure_logging(level=settings.log_level, json_output=settings.log_json)
+
+    # Local development applies the migrations itself; production runs the
+    # separate migrate service before the API and worker start. The resolved
+    # URL is exported so the Alembic environment migrates the same database
+    # the application will use (os.getenv does not read .env files).
+    import os
+
+    os.environ["TRENDSMAPP_DATABASE_URL"] = settings.database_url
+    from alembic.config import main as alembic_main
+
+    typer.echo("Applying database migrations")
+    alembic_main(argv=["-c", "alembic.ini", "upgrade", "head"])
+
+    def _run_worker() -> None:
+        asyncio.run(
+            run_worker(settings=settings, registry=build_default_registry(), signal_handlers=False)
+        )
+
+    thread = threading.Thread(target=_run_worker, name="trendsmapp-worker", daemon=True)
+    thread.start()
+    typer.echo(f"Serving the API on http://{host}:{port} with the worker in-process")
+    uvicorn.run(
+        "trendsmapp.api.app:create_app",
+        factory=True,
+        host=host,
+        port=port,
+        log_level=settings.log_level.lower(),
+    )

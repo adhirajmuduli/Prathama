@@ -121,12 +121,18 @@ make logs    # docker compose logs --tail=100 -f
 make down    # docker compose down
 ```
 
-For a fast loop without containers, run the API and the worker directly from
-the backend environment:
+For a fast loop without containers, run the API and the worker in one process
+(the command applies the database migrations first, then serves and polls):
 
 ```bash
 cd backend
 uv sync --frozen --all-groups
+uv run trendsmapp dev --port 8000
+```
+
+Or run them separately, as production does:
+
+```bash
 uv run uvicorn trendsmapp.api.app:create_app --factory --port 8000
 uv run trendsmapp worker
 ```

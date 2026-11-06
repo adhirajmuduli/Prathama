@@ -2,6 +2,8 @@ import Link from "next/link";
 
 const NAVIGATION = [
   { href: "/", label: "Overview" },
+  { href: "/upload", label: "Upload" },
+  { href: "/datasets", label: "Datasets" },
   { href: "/methods", label: "Methods" },
   { href: "/privacy", label: "Privacy" },
 ] as const;

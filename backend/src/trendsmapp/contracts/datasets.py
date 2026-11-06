@@ -12,6 +12,7 @@ from trendsmapp.contracts.common import (
     DatasetId,
     DatasetVersionId,
     JobId,
+    PageMeta,
     ProvenanceRef,
     Sha256Hex,
     UploadId,
@@ -21,6 +22,7 @@ from trendsmapp.ingestion.column_mapping import ColumnMapping
 __all__ = [
     "CreateDatasetRequest",
     "CreateDatasetResponse",
+    "DatasetListResponse",
     "DatasetResponse",
     "DatasetVersionListResponse",
     "DatasetVersionResponse",
@@ -97,6 +99,15 @@ class DatasetVersionListResponse(BaseModel):
 
     dataset_id: DatasetId
     items: tuple[DatasetVersionResponse, ...]
+
+
+class DatasetListResponse(BaseModel):
+    """A page of datasets."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    items: tuple[DatasetResponse, ...]
+    page: PageMeta
 
 
 class ProbeResponse(BaseModel):

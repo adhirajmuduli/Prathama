@@ -121,6 +121,23 @@ class DatasetRepository:
         versions = await self.list_versions(dataset_id)
         return max((version.version_number for version in versions), default=0) + 1
 
+    async def list_datasets(self, *, limit: int = 100, offset: int = 0) -> list[DatasetRow]:
+        """Return datasets, most recently updated first, with a bound."""
+        result = await self._session.execute(
+            select(DatasetRow)
+            .order_by(DatasetRow.updated_at.desc(), DatasetRow.id)
+            .limit(min(max(limit, 1), 1000))
+            .offset(max(offset, 0))
+        )
+        return list(result.scalars())
+
+    async def count_datasets(self) -> int:
+        """Return the total number of datasets."""
+        from sqlalchemy import func
+
+        result = await self._session.execute(select(func.count()).select_from(DatasetRow))
+        return int(result.scalar_one())
+
     async def update_version_stats(
         self,
         version_id: str,

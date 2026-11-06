@@ -13,11 +13,14 @@ import trendsmapp.resources as resources_module
 from trendsmapp.domain.enums import QcFlagCode, QcStatus, ValueQualifier
 from trendsmapp.domain.models import Observation
 from trendsmapp.errors import ValidationError
+from trendsmapp.geospatial.boundary import (
+    BOUNDARY_GEOJSON,
+    load_default_boundary,
+)
 from trendsmapp.ingestion import ColumnMapping, ParseSession, probe_parse
 from trendsmapp.ingestion.sniffing import DecimalStyle
 from trendsmapp.normalization import NormalizationPipeline
-from trendsmapp.qc import QcPipeline, QcReport, load_boundary
-from trendsmapp.qc.coordinates import BOUNDARY_GEOJSON
+from trendsmapp.qc import QcPipeline, QcReport
 
 T0 = datetime(2024, 1, 15, 9, 30, tzinfo=UTC)
 
@@ -77,28 +80,28 @@ def _obs(
 
 
 def test_boundary_loads_with_verified_provenance() -> None:
-    boundary = load_boundary()
+    boundary = load_default_boundary()
     assert boundary.boundary_id == "relation/1917079"
     assert boundary.license == "ODbL 1.0"
     assert "openstreetmap.org" in boundary.attribution
     assert boundary.sha256 == "6a18811f70f56e4f4b3455b6e376470da447483821faeaef93147fc0100b9775"
-    assert boundary.contains(85.47, 19.73) is True
-    assert boundary.contains(80.0, 10.0) is False
+    assert boundary.contains_lonlat(85.47, 19.73) is True
+    assert boundary.contains_lonlat(80.0, 10.0) is False
 
 
 def test_boundary_loader_rejects_a_tampered_geojson(monkeypatch: pytest.MonkeyPatch) -> None:
-    import trendsmapp.qc.coordinates as coordinates_module
+    import trendsmapp.geospatial.boundary as coordinates_module
 
     real_bytes = resources_module.read_resource_bytes(BOUNDARY_GEOJSON)
     tampered = real_bytes.replace(b"Chilika", b"Tampered")
     monkeypatch.setattr(resources_module, "read_resource_bytes", lambda name: tampered)
     monkeypatch.setattr(coordinates_module, "read_resource_bytes", lambda name: tampered)
-    coordinates_module.load_boundary.cache_clear()
+    coordinates_module.load_default_boundary.cache_clear()
     with pytest.raises(ValidationError) as error:
-        load_boundary()
+        load_default_boundary()
     assert "does not match the provenance digest" in str(error.value)
     assert error.value.details["expected"] != error.value.details["actual"]
-    coordinates_module.load_boundary.cache_clear()
+    coordinates_module.load_default_boundary.cache_clear()
 
 
 def test_boundary_loader_rejects_a_missing_sidecar_digest(
@@ -109,16 +112,16 @@ def test_boundary_loader_rejects_a_missing_sidecar_digest(
         "load_yaml_resource",
         lambda name: {"schema_version": "1.0.0", "resource": BOUNDARY_GEOJSON},
     )
-    import trendsmapp.qc.coordinates as coordinates_module
+    import trendsmapp.geospatial.boundary as coordinates_module
 
     monkeypatch.setattr(
         coordinates_module, "load_yaml_resource", resources_module.load_yaml_resource
     )
-    coordinates_module.load_boundary.cache_clear()
+    coordinates_module.load_default_boundary.cache_clear()
     with pytest.raises(ValidationError) as error:
-        load_boundary()
+        load_default_boundary()
     assert "sha256" in str(error.value)
-    coordinates_module.load_boundary.cache_clear()
+    coordinates_module.load_default_boundary.cache_clear()
 
 
 def test_boundary_loader_rejects_a_sidecar_for_another_resource(
@@ -133,16 +136,16 @@ def test_boundary_loader_rejects_a_sidecar_for_another_resource(
             "sha256": "0" * 64,
         },
     )
-    import trendsmapp.qc.coordinates as coordinates_module
+    import trendsmapp.geospatial.boundary as coordinates_module
 
     monkeypatch.setattr(
         coordinates_module, "load_yaml_resource", resources_module.load_yaml_resource
     )
-    coordinates_module.load_boundary.cache_clear()
+    coordinates_module.load_default_boundary.cache_clear()
     with pytest.raises(ValidationError) as error:
-        load_boundary()
+        load_default_boundary()
     assert "points at" in str(error.value)
-    coordinates_module.load_boundary.cache_clear()
+    coordinates_module.load_default_boundary.cache_clear()
 
 
 def test_boundary_loader_rejects_a_multi_feature_geojson(
@@ -176,17 +179,17 @@ def test_boundary_loader_rejects_a_multi_feature_geojson(
             "source": "x",
         },
     )
-    import trendsmapp.qc.coordinates as coordinates_module
+    import trendsmapp.geospatial.boundary as coordinates_module
 
     monkeypatch.setattr(
         coordinates_module, "load_yaml_resource", resources_module.load_yaml_resource
     )
     monkeypatch.setattr(coordinates_module, "read_resource_bytes", lambda name: payload)
-    coordinates_module.load_boundary.cache_clear()
+    coordinates_module.load_default_boundary.cache_clear()
     with pytest.raises(ValidationError) as error:
-        load_boundary()
+        load_default_boundary()
     assert "exactly one feature" in str(error.value)
-    coordinates_module.load_boundary.cache_clear()
+    coordinates_module.load_default_boundary.cache_clear()
 
 
 # --- QC pipeline ----------------------------------------------------------------

@@ -13,6 +13,23 @@ API major version.
 
 ### Added
 
+- Chunked upload API and service: session creation with a validated part plan,
+  per-part range, size, and digest verification, content-addressed assembly of
+  the immutable raw artifact, idempotent completion that enqueues the ingest
+  job, and abort with part cleanup.
+- Dataset API: probe of a stored upload, dataset and version creation from a
+  confirmed column mapping, version listing and detail with artifacts, preview,
+  stored parse/normalization/QC reports, provenance, and artifact download.
+- Worker ingest workflow: probe-only jobs at upload completion and full
+  parse → normalize → QC → artifact → seal jobs at dataset creation, with
+  progress stages, cancellation probes, station/parameter registration, and
+  provenance events. The CLI gains a `dev` command that migrates, serves, and
+  polls in one process.
+- Frontend ingest UI: chunked uploader with retry and progress, probe view,
+  mapping editor, dataset list and version explorer with preview, reports,
+  provenance, and artifact downloads; typed client extended with POST/PUT and
+  ingest contract schemas; generated contract types refreshed from the new
+  OpenAPI snapshot.
 - Contract artifacts under `contracts/`: the generated OpenAPI snapshot, the
   generated schema-version document, the committed payload examples, and a
   compatibility note that pins the digest of the snapshot it describes.

@@ -121,6 +121,8 @@ module = [
     "pandas.*",
     "openpyxl.*",
     "yaml.*",
+    "scipy.*",
+    "sklearn.*",
 ]
 ignore_missing_imports = true
 

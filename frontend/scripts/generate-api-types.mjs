@@ -114,8 +114,14 @@ function toTypeScript(schema) {
   if (Array.isArray(schema.enum) && schema.enum.length > 0) {
     return schema.enum.map((value) => JSON.stringify(value)).join(" | ");
   }
-  if (Array.isArray(schema.anyOf)) {
-    return schema.anyOf.map(toTypeScript).join(" | ");
+  if (Array.isArray(schema.anyOf) || Array.isArray(schema.oneOf)) {
+    const members = schema.anyOf ?? schema.oneOf;
+    return members
+      .map((entry) => {
+        const mapped = toTypeScript(entry);
+        return mapped.startsWith("readonly ") ? `(${mapped})` : mapped;
+      })
+      .join(" | ");
   }
   if (schema.type === "string") {
     return "string";
@@ -127,7 +133,10 @@ function toTypeScript(schema) {
     return "boolean";
   }
   if (schema.type === "array") {
-    return `readonly ${toTypeScript(schema.items)}[]`;
+    const inner = toTypeScript(schema.items);
+    const unwrapped = inner.startsWith("readonly ") ? inner.slice("readonly ".length) : inner;
+    const elementType = unwrapped.includes(" | ") ? `(${unwrapped})` : unwrapped;
+    return `readonly ${elementType}[]`;
   }
   if (schema.type === "object" || schema.properties !== undefined) {
     const properties = Object.entries(schema.properties ?? {});

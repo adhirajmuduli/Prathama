@@ -309,6 +309,9 @@ class UploadService:
                 "mime_warnings": list(verdict.warnings),
             },
         )
+        # Registration is idempotent by digest: when the bytes were already
+        # stored, the existing row wins and its id is the one to reference.
+        artifact_id = artifact_row.id
         await self._uploads.complete(upload_id)
 
         key = f"{_INGEST_KEY_PREFIX}:{upload_id}" + (

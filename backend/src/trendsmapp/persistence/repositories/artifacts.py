@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from trendsmapp.clock import utc_now
@@ -36,11 +37,17 @@ class ArtifactRepository:
         metadata: dict[str, Any] | None = None,
         created_at: datetime | None = None,
     ) -> ArtifactRow:
-        """Register an artifact reference.
+        """Register an artifact reference, idempotently.
 
         The same bytes may be registered under several kinds, but the same
         kind and hash pair is unique, which keeps artifact indexes stable.
+        Re-registering the same digest and kind returns the row that is
+        already stored instead of failing the unique constraint, so uploading
+        the same file twice is a no-op, not an error.
         """
+        existing = await self.get_by_digest(kind=kind, sha256=sha256)
+        if existing is not None:
+            return existing
         row = ArtifactRow(
             id=artifact_id,
             kind=kind,
@@ -55,8 +62,24 @@ class ArtifactRepository:
             created_at=created_at or utc_now(),
         )
         self._session.add(row)
-        await self._session.flush()
+        try:
+            await self._session.flush()
+        except IntegrityError:
+            # Another writer registered the same digest concurrently; the
+            # existing row wins and is returned.
+            await self._session.rollback()
+            existing = await self.get_by_digest(kind=kind, sha256=sha256)
+            if existing is None:
+                raise
+            return existing
         return row
+
+    async def get_by_digest(self, *, kind: str, sha256: str) -> ArtifactRow | None:
+        """Return the artifact registered for a digest and kind, when any."""
+        result = await self._session.execute(
+            select(ArtifactRow).where(ArtifactRow.kind == kind, ArtifactRow.sha256 == sha256)
+        )
+        return result.scalar_one_or_none()
 
     async def get(self, artifact_id: str) -> ArtifactRow | None:
         """Return an artifact reference by identifier."""

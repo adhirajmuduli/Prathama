@@ -37,6 +37,7 @@ def settings(tmp_path: Path) -> Settings:
         database_url=TEST_DATABASE_URL_TEMPLATE.format(path=(tmp_path / "test.db").as_posix()),
         object_store_backend="local",
         local_storage_root=tmp_path / "objects",
+        cors_allow_origins=["http://localhost:3000"],
         log_level="warning",
         log_json=False,
         worker_poll_interval_seconds=0.01,

@@ -66,13 +66,30 @@ class RunRepository:
         return row
 
     async def list_for_version(self, dataset_version_id: str) -> list[RunRow]:
-        """Return every run executed against a dataset version."""
+        """Return every run of a dataset version, oldest first."""
         result = await self._session.execute(
             select(RunRow)
             .where(RunRow.dataset_version_id == dataset_version_id)
-            .order_by(RunRow.created_at)
+            .order_by(RunRow.created_at, RunRow.id)
         )
         return list(result.scalars())
+
+    async def find_by_recipe(self, dataset_version_id: str, recipe_hash: str) -> RunRow | None:
+        """Return the run of a dataset version for a recipe hash, when any.
+
+        The recipe hash is the idempotency key of an analysis: the same recipe
+        on the same dataset version is never run twice.
+        """
+        result = await self._session.execute(
+            select(RunRow)
+            .where(
+                RunRow.dataset_version_id == dataset_version_id,
+                RunRow.recipe_hash == recipe_hash,
+            )
+            .order_by(RunRow.created_at, RunRow.id)
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
 
     async def finish(self, run_id: str, *, status: str) -> RunRow:
         """Mark a run as finished with a terminal status."""

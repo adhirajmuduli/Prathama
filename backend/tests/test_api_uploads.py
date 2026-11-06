@@ -335,3 +335,19 @@ async def test_path_traversal_in_the_filename_is_rejected(client: httpx.AsyncCli
         json={"filename": "../evil.csv", "size_bytes": 10},
     )
     assert response.status_code == 422
+
+
+async def test_cors_preflight_allows_the_uploader_headers(client: httpx.AsyncClient) -> None:
+    """The browser uploader sends Content-Range and Idempotency-Key; both must preflight."""
+    response = await client.options(
+        "/api/v1/uploads",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type,content-range,x-request-id,idempotency-key",
+        },
+    )
+    assert response.status_code == 200
+    allowed = response.headers.get("access-control-allow-headers", "")
+    for header in ("content-type", "content-range", "x-request-id", "idempotency-key"):
+        assert header in allowed.lower()

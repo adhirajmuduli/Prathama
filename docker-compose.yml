@@ -64,6 +64,9 @@ services:
       TRENDSMAPP_S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-trendsmapp-secret}
       TRENDSMAPP_LOG_LEVEL: ${TRENDSMAPP_LOG_LEVEL:-info}
       TRENDSMAPP_LOG_JSON: "true"
+      # List-valued variables are JSON in the environment.
+      TRENDSMAPP_CORS_ALLOW_ORIGINS: ${TRENDSMAPP_CORS_ALLOW_ORIGINS:-["http://localhost:3000"]}
+      TRENDSMAPP_TRUSTED_HOSTS: ${TRENDSMAPP_TRUSTED_HOSTS:-["localhost","127.0.0.1","api","testserver"]}
 
   api:
     build:

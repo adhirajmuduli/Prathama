@@ -143,6 +143,60 @@ CANONICAL_PARQUET_SCHEMA: Final[pa.Schema] = pa.schema(
 )
 
 
+def observations_from_parquet(buffer: BinaryIO) -> list[Observation]:
+    """Rebuild canonical observations from a written canonical Parquet artifact.
+
+    The Parquet schema is fixed, so the round trip is exact: timestamps become
+    aware datetimes, enums become their members, and nulls become None. This is
+    what the analysis worker uses to read a sealed dataset version.
+    """
+    import pyarrow.parquet as pq
+
+    from trendsmapp.domain.enums import QcFlagCode, QcStatus, ValueQualifier
+
+    table = pq.read_table(buffer)
+    rows = table.to_pylist()
+    observations: list[Observation] = []
+    for record in rows:
+        observations.append(
+            Observation(
+                observation_id=record["observation_id"],
+                dataset_id=record["dataset_id"],
+                dataset_version_id=record["dataset_version_id"],
+                source_row=record["source_row"],
+                source_sheet=record["source_sheet"],
+                station_id=record["station_id"],
+                station_label=record["station_label"],
+                latitude_wgs84=record["latitude_wgs84"],
+                longitude_wgs84=record["longitude_wgs84"],
+                x_projected_m=record["x_projected_m"],
+                y_projected_m=record["y_projected_m"],
+                source_crs=record["source_crs"],
+                analysis_crs=record["analysis_crs"],
+                sector=record["sector"],
+                sampled_at=record["sampled_at"],
+                sampling_depth_m=record["sampling_depth_m"],
+                parameter_id=record["parameter_id"],
+                parameter_label=record["parameter_label"],
+                raw_value=record["raw_value"],
+                raw_unit=record["raw_unit"],
+                value_qualifier=ValueQualifier(record["value_qualifier"]),
+                canonical_value=record["canonical_value"],
+                canonical_unit=record["canonical_unit"],
+                detection_limit=record["detection_limit"],
+                conversion_factor=record["conversion_factor"],
+                method_id=None,
+                instrument_id=None,
+                qc_status=QcStatus(record["qc_status"]),
+                qc_flags=tuple(QcFlagCode(flag) for flag in record["qc_flags"]),
+                is_excluded=record["is_excluded"],
+                exclusion_reason=record["exclusion_reason"],
+                provenance_ids=tuple(record["provenance_ids"]),
+            )
+        )
+    return observations
+
+
 def _observation_to_record(observation: Observation) -> dict[str, Any]:
     """Return the Parquet record of one canonical observation."""
     return {

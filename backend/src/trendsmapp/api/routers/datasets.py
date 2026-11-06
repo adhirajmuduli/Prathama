@@ -19,6 +19,7 @@ from trendsmapp.contracts.common import ArtifactRef
 from trendsmapp.contracts.datasets import (
     CreateDatasetRequest,
     CreateDatasetResponse,
+    DatasetListResponse,
     DatasetResponse,
     DatasetVersionListResponse,
     DatasetVersionResponse,
@@ -46,6 +47,16 @@ def _service(
 
 
 DatasetServiceDependency = Annotated[DatasetService, Depends(_service)]
+
+
+@router.get("/datasets", response_model=DatasetListResponse)
+async def list_datasets(
+    service: DatasetServiceDependency,
+    limit: Annotated[int, Query(ge=1, le=1000)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> DatasetListResponse:
+    """Return a page of datasets, most recently updated first."""
+    return await service.list_datasets(limit=limit, offset=offset)
 
 
 @router.post("/uploads/{upload_id}/probe", response_model=ProbeResponse)

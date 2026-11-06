@@ -42,7 +42,16 @@ class RegistryRepository:
         first_sampled_at: datetime | None = None,
         last_sampled_at: datetime | None = None,
     ) -> StationRow:
-        """Register a station for a dataset version."""
+        """Register a station for a dataset version, idempotently.
+
+        A station id is the identity of the station, so registering the same
+        id again — for example when the same source is ingested into a new
+        dataset version — returns the row that is already stored instead of
+        failing the primary key.
+        """
+        existing = await self._session.get(StationRow, station_id)
+        if existing is not None:
+            return existing
         row = StationRow(
             id=station_id,
             dataset_version_id=dataset_version_id,
@@ -81,7 +90,14 @@ class RegistryRepository:
         physical_range_min: float | None = None,
         physical_range_max: float | None = None,
     ) -> ParameterRow:
-        """Register a parameter for a dataset version."""
+        """Register a parameter for a dataset version, idempotently.
+
+        A parameter id is the identity of the parameter, so registering the
+        same id again returns the row that is already stored.
+        """
+        existing = await self._session.get(ParameterRow, parameter_id)
+        if existing is not None:
+            return existing
         row = ParameterRow(
             id=parameter_id,
             dataset_version_id=dataset_version_id,

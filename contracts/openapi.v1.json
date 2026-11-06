@@ -427,6 +427,28 @@
         "title": "CreateUploadRequest",
         "type": "object"
       },
+      "DatasetListResponse": {
+        "additionalProperties": false,
+        "description": "A page of datasets.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageMeta"
+          }
+        },
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "DatasetListResponse",
+        "type": "object"
+      },
       "DatasetResponse": {
         "additionalProperties": false,
         "description": "One dataset with its current version.",
@@ -894,6 +916,33 @@
         "title": "MappedColumn",
         "type": "object"
       },
+      "PageMeta": {
+        "additionalProperties": false,
+        "description": "Pagination metadata for a table response.",
+        "properties": {
+          "limit": {
+            "default": 100,
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "title": "PageMeta",
+        "type": "object"
+      },
       "PartPlanResponse": {
         "additionalProperties": false,
         "description": "One planned part of an upload.",
@@ -1239,6 +1288,152 @@
         "title": "ProvenanceRef",
         "type": "object"
       },
+      "Recipe": {
+        "additionalProperties": false,
+        "description": "One analysis recipe.",
+        "properties": {
+          "dataset_version_id": {
+            "minLength": 1,
+            "title": "Dataset Version Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "seed": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "spatial": {
+            "$ref": "#/components/schemas/SpatialSection"
+          },
+          "temporal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TemporalSection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dataset_version_id",
+          "spatial"
+        ],
+        "title": "Recipe",
+        "type": "object"
+      },
+      "SpatialSection": {
+        "additionalProperties": false,
+        "description": "The spatial configuration of a recipe.",
+        "properties": {
+          "analysis_crs": {
+            "default": "EPSG:32644",
+            "title": "Analysis Crs",
+            "type": "string"
+          },
+          "grid_resolution_m": {
+            "exclusiveMinimum": 0.0,
+            "title": "Grid Resolution M",
+            "type": "number"
+          },
+          "max_grid_cells": {
+            "maximum": 250000.0,
+            "minimum": 1000.0,
+            "title": "Max Grid Cells",
+            "type": "integer"
+          },
+          "methods": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "minItems": 1,
+            "title": "Methods",
+            "type": "array"
+          },
+          "permitted_qc_statuses": {
+            "default": [
+              "pass",
+              "warning"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Permitted Qc Statuses",
+            "type": "array"
+          },
+          "selection_rule": {
+            "default": "none",
+            "title": "Selection Rule",
+            "type": "string"
+          },
+          "validation": {
+            "default": "leave_one_station_out",
+            "title": "Validation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "methods",
+          "grid_resolution_m",
+          "max_grid_cells"
+        ],
+        "title": "SpatialSection",
+        "type": "object"
+      },
+      "TemporalSection": {
+        "additionalProperties": false,
+        "description": "The temporal configuration of a recipe.",
+        "properties": {
+          "allow_extrapolation": {
+            "default": false,
+            "title": "Allow Extrapolation",
+            "type": "boolean"
+          },
+          "compute_change_points": {
+            "default": false,
+            "title": "Compute Change Points",
+            "type": "boolean"
+          },
+          "compute_trends": {
+            "default": true,
+            "title": "Compute Trends",
+            "type": "boolean"
+          },
+          "frame_count": {
+            "default": 0,
+            "maximum": 900.0,
+            "minimum": 0.0,
+            "title": "Frame Count",
+            "type": "integer"
+          },
+          "interpolation": {
+            "default": "linear",
+            "title": "Interpolation",
+            "type": "string"
+          },
+          "max_gap_days": {
+            "default": 60.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Max Gap Days",
+            "type": "number"
+          },
+          "resolution": {
+            "default": "day",
+            "title": "Resolution",
+            "type": "string"
+          }
+        },
+        "title": "TemporalSection",
+        "type": "object"
+      },
       "TimezonePolicy": {
         "description": "How a timestamp without an explicit offset is interpreted.",
         "enum": [
@@ -1482,6 +1677,205 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/analyses": {
+      "post": {
+        "description": "Validate a recipe and enqueue the analysis job.",
+        "operationId": "create_analysis_api_v1_analyses_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Recipe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Create Analysis Api V1 Analyses Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Analysis",
+        "tags": [
+          "analyses"
+        ]
+      }
+    },
+    "/api/v1/analyses/{run_id}": {
+      "get": {
+        "description": "Return one analysis run.",
+        "operationId": "get_analysis_api_v1_analyses__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Analysis Api V1 Analyses  Run Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Analysis",
+        "tags": [
+          "analyses"
+        ]
+      }
+    },
+    "/api/v1/analyses/{run_id}/artifacts": {
+      "get": {
+        "description": "Return every artifact a run produced.",
+        "operationId": "list_analysis_artifacts_api_v1_analyses__run_id__artifacts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Analysis Artifacts Api V1 Analyses  Run Id  Artifacts Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Analysis Artifacts",
+        "tags": [
+          "analyses"
+        ]
+      }
+    },
+    "/api/v1/analyses/{run_id}/results": {
+      "get": {
+        "description": "Return the stored analysis-results document of a run.",
+        "operationId": "get_analysis_results_api_v1_analyses__run_id__results_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Analysis Results Api V1 Analyses  Run Id  Results Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Analysis Results",
+        "tags": [
+          "analyses"
+        ]
+      }
+    },
     "/api/v1/artifacts/{artifact_id}": {
       "get": {
         "description": "Return one artifact reference.",
@@ -1815,6 +2209,61 @@
       }
     },
     "/api/v1/datasets": {
+      "get": {
+        "description": "Return a page of datasets, most recently updated first.",
+        "operationId": "list_datasets_api_v1_datasets_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Datasets",
+        "tags": [
+          "datasets"
+        ]
+      },
       "post": {
         "description": "Create a dataset version from an upload and a confirmed mapping.",
         "operationId": "create_dataset_api_v1_datasets_post",

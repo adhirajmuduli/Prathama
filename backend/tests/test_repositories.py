@@ -266,6 +266,36 @@ async def test_artifact_repository_indexes_artifacts_by_run_and_version(
         await session.commit()
 
 
+async def test_artifact_registration_is_idempotent_by_digest(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Re-registering the same (kind, digest) returns the stored row, not an error."""
+    async with session_factory() as session:
+        repository = ArtifactRepository(session)
+        first = await repository.register(
+            artifact_id=new_artifact_id(),
+            kind="datasets",
+            sha256="9" * 64,
+            size_bytes=10,
+            content_type="text/csv",
+            storage_key=f"datasets/99/{'9' * 64}/a.csv",
+            schema_version="1.0.0",
+        )
+        again = await repository.register(
+            artifact_id=new_artifact_id(),
+            kind="datasets",
+            sha256="9" * 64,
+            size_bytes=10,
+            content_type="text/csv",
+            storage_key=f"datasets/99/{'9' * 64}/b.csv",
+            schema_version="1.0.0",
+        )
+        assert again.id == first.id
+        assert await repository.get_by_digest(kind="datasets", sha256="9" * 64) is not None
+        assert await repository.get_by_digest(kind="datasets", sha256="8" * 64) is None
+        await session.commit()
+
+
 async def test_registry_repository_stores_stations_parameters_and_rules(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:

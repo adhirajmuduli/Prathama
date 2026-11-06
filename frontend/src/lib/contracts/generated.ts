@@ -23,6 +23,20 @@ export interface ApiOperation {
 export const API_OPERATIONS: readonly ApiOperation[] = [
   {
     method: "get",
+    path: "/api/v1/artifacts/{artifact_id}",
+    operationId: "get_artifact_api_v1_artifacts__artifact_id__get",
+    summary: "Get Artifact",
+    description: "Return one artifact reference.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/artifacts/{artifact_id}/content",
+    operationId: "download_artifact_api_v1_artifacts__artifact_id__content_get",
+    summary: "Download Artifact",
+    description: "Stream the bytes of one stored artifact.",
+  },
+  {
+    method: "get",
     path: "/api/v1/capabilities",
     operationId: "capabilities_api_v1_capabilities_get",
     summary: "Capabilities",
@@ -34,6 +48,62 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     operationId: "contract_versions_api_v1_contracts_versions_get",
     summary: "Contract Versions",
     description: "Return the contract versions this deployment speaks.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/dataset-versions/{version_id}",
+    operationId: "get_version_api_v1_dataset_versions__version_id__get",
+    summary: "Get Version",
+    description: "Return one dataset version with its artifacts.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/dataset-versions/{version_id}/preview",
+    operationId: "preview_version_api_v1_dataset_versions__version_id__preview_get",
+    summary: "Preview Version",
+    description: "Return the first rows of a normalized dataset version.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/dataset-versions/{version_id}/provenance",
+    operationId: "get_provenance_api_v1_dataset_versions__version_id__provenance_get",
+    summary: "Get Provenance",
+    description: "Return the provenance events of a dataset version.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/dataset-versions/{version_id}/reports/{kind}",
+    operationId: "get_report_api_v1_dataset_versions__version_id__reports__kind__get",
+    summary: "Get Report",
+    description: "Return one stored JSON report of a dataset version.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/datasets",
+    operationId: "list_datasets_api_v1_datasets_get",
+    summary: "List Datasets",
+    description: "Return a page of datasets, most recently updated first.",
+  },
+  {
+    method: "post",
+    path: "/api/v1/datasets",
+    operationId: "create_dataset_api_v1_datasets_post",
+    summary: "Create Dataset",
+    description: "Create a dataset version from an upload and a confirmed mapping.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/datasets/{dataset_id}",
+    operationId: "get_dataset_api_v1_datasets__dataset_id__get",
+    summary: "Get Dataset",
+    description: "Return one dataset.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/datasets/{dataset_id}/versions",
+    operationId: "list_versions_api_v1_datasets__dataset_id__versions_get",
+    summary: "List Versions",
+    description: "Return every version of a dataset, oldest first.",
   },
   {
     method: "get",
@@ -49,4 +119,307 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     summary: "Readiness",
     description: "Return the readiness state of the process and its dependencies.",
   },
+  {
+    method: "get",
+    path: "/api/v1/jobs/{job_id}",
+    operationId: "get_job_api_v1_jobs__job_id__get",
+    summary: "Get Job",
+    description: "Return one job by identifier.",
+  },
+  {
+    method: "post",
+    path: "/api/v1/jobs/{job_id}/cancel",
+    operationId: "cancel_job_api_v1_jobs__job_id__cancel_post",
+    summary: "Cancel Job",
+    description: "Request cancellation of a queued or running job.",
+  },
+  {
+    method: "post",
+    path: "/api/v1/uploads",
+    operationId: "create_upload_api_v1_uploads_post",
+    summary: "Create Upload",
+    description: "Create an upload session and return its part plan.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/uploads/{upload_id}",
+    operationId: "get_upload_api_v1_uploads__upload_id__get",
+    summary: "Get Upload",
+    description: "Return the current state of an upload session.",
+  },
+  {
+    method: "post",
+    path: "/api/v1/uploads/{upload_id}/abort",
+    operationId: "abort_upload_api_v1_uploads__upload_id__abort_post",
+    summary: "Abort Upload",
+    description: "Cancel an open upload session and delete its stored parts.",
+  },
+  {
+    method: "post",
+    path: "/api/v1/uploads/{upload_id}/complete",
+    operationId: "complete_upload_api_v1_uploads__upload_id__complete_post",
+    summary: "Complete Upload",
+    description: "Assemble, verify, and store the upload, then enqueue the ingest job.",
+  },
+  {
+    method: "put",
+    path: "/api/v1/uploads/{upload_id}/parts/{part_number}",
+    operationId: "put_part_api_v1_uploads__upload_id__parts__part_number__put",
+    summary: "Put Part",
+    description: "Store one part of an upload after range and size validation.",
+  },
+  {
+    method: "post",
+    path: "/api/v1/uploads/{upload_id}/probe",
+    operationId: "probe_upload_api_v1_uploads__upload_id__probe_post",
+    summary: "Probe Upload",
+    description: "Describe the first rows of a completed upload and propose a mapping.",
+  },
 ];
+
+export type AbortUploadResponse = {
+  "status"?: string;
+  "upload_id": string;
+};
+
+export type ArtifactRef = {
+  "artifact_id": string;
+  "content_type": string;
+  "created_at": string;
+  "kind": "raw_upload" | "normalized_dataset" | "qc_report" | "parse_report" | "normalization_report" | "provenance" | "raster" | "figure" | "video" | "model" | "metrics" | "predictions" | "explanations" | "export_bundle" | "boundary" | "other";
+  "media_type_detail"?: Record<string, unknown>;
+  "schema_version"?: string;
+  "sha256": string;
+  "size_bytes": number;
+};
+
+export type CancelJobResponse = {
+  "cancel_requested": boolean;
+  "job_id": string;
+  "status": "queued" | "running" | "succeeded" | "failed" | "cancelled";
+};
+
+export type ColumnMapping = {
+  "columns": readonly unknown[];
+  "date_order"?: unknown;
+  "default_parameter"?: string | unknown;
+  "default_unit"?: string | unknown;
+  "duplicate_policy"?: unknown;
+  "layout": unknown;
+  "schema_version"?: string;
+  "source_crs"?: string | unknown;
+  "timezone_name"?: string | unknown;
+  "timezone_policy"?: unknown;
+  "wide_axis"?: "stations" | "parameters" | unknown;
+};
+
+export type ColumnRole = "station" | "latitude" | "longitude" | "easting" | "northing" | "timestamp" | "parameter" | "value" | "unit" | "qualifier" | "depth" | "sector" | "ignored";
+
+export type CompleteUploadResponse = {
+  "artifact": unknown;
+  "job_id": string;
+  "status"?: string;
+  "upload_id": string;
+};
+
+export type CreateDatasetRequest = {
+  "description"?: string | unknown;
+  "mapping": unknown;
+  "name": string;
+  "upload_id": string;
+};
+
+export type CreateDatasetResponse = {
+  "dataset_id": string;
+  "job_id": string;
+  "status"?: string;
+  "version_id": string;
+};
+
+export type CreateUploadRequest = {
+  "chunk_size_bytes"?: number | unknown;
+  "content_type"?: string | unknown;
+  "dataset_id"?: string | unknown;
+  "filename": string;
+  "sha256"?: string | unknown;
+  "size_bytes": number;
+};
+
+export type DatasetListResponse = {
+  "items": readonly unknown[];
+  "page": unknown;
+};
+
+export type DatasetResponse = {
+  "created_at": string;
+  "current_version_id": string | unknown;
+  "dataset_id": string;
+  "description": string | unknown;
+  "name": string;
+  "updated_at": string;
+};
+
+export type DatasetVersionListResponse = {
+  "dataset_id": string;
+  "items": readonly unknown[];
+};
+
+export type DatasetVersionResponse = {
+  "artifacts": readonly unknown[];
+  "boundary_id": string | unknown;
+  "created_at": string;
+  "dataset_id": string;
+  "first_sampled_at": string | unknown;
+  "last_sampled_at": string | unknown;
+  "normalized_artifact": unknown | unknown;
+  "parameter_count": number;
+  "row_count": number;
+  "schema_version": string;
+  "sealed": boolean;
+  "sealed_at": string | unknown;
+  "station_count": number;
+  "version_id": string;
+  "version_number": number;
+};
+
+export type DateOrder = "day_first" | "month_first" | "year_first";
+
+export type DuplicatePolicy = "flag_all" | "keep_first" | "keep_last" | "keep_most_complete" | "error";
+
+export type HTTPValidationError = {
+  "detail"?: readonly unknown[];
+};
+
+export type JobResponse = {
+  "attempts": number;
+  "cancel_requested"?: boolean;
+  "created_at": string;
+  "error"?: Record<string, unknown> | unknown;
+  "finished_at"?: string | unknown;
+  "heartbeat_at"?: string | unknown;
+  "job_id": string;
+  "job_type": string;
+  "payload"?: Record<string, unknown>;
+  "progress": number;
+  "result"?: Record<string, unknown> | unknown;
+  "run_id"?: string | unknown;
+  "stage"?: string | unknown;
+  "started_at"?: string | unknown;
+  "status": "queued" | "running" | "succeeded" | "failed" | "cancelled";
+  "worker_id"?: string | unknown;
+};
+
+export type LayoutKind = "long" | "wide" | "unknown";
+
+export type MappedColumn = {
+  "column": string;
+  "parameter_label"?: string | unknown;
+  "role": unknown;
+  "station_label"?: string | unknown;
+  "unit"?: string | unknown;
+};
+
+export type PageMeta = {
+  "limit"?: number;
+  "offset"?: number;
+  "total"?: number;
+};
+
+export type PartPlanResponse = {
+  "end_byte": number;
+  "part_number": number;
+  "size_bytes": number;
+  "start_byte": number;
+};
+
+export type PartUploadResponse = {
+  "part_number": number;
+  "received"?: boolean;
+  "sha256": string;
+  "size_bytes": number;
+  "upload_id": string;
+};
+
+export type PreviewResponse = {
+  "artifact_sha256": string;
+  "columns": readonly string[];
+  "limit": number;
+  "row_count": number;
+  "rows": readonly unknown[][];
+  "version_id": string;
+};
+
+export type ProbeResponse = {
+  "content_type": string | unknown;
+  "date_fields": readonly string[];
+  "decimal_style": string;
+  "delimiter": string | unknown;
+  "encoding": string | unknown;
+  "extension": string;
+  "fields": readonly string[];
+  "file_format": string;
+  "filename": string;
+  "has_header": boolean;
+  "layout": string;
+  "layout_confidence": number;
+  "layout_evidence": readonly string[];
+  "layout_warnings": readonly string[];
+  "numeric_fields": readonly string[];
+  "proposal_warnings": readonly string[];
+  "proposed_mapping": unknown;
+  "sheet_names": readonly string[];
+  "sniff_warnings": readonly string[];
+  "upload_id": string;
+};
+
+export type ProvenanceListResponse = {
+  "items": readonly unknown[];
+  "version_id": string;
+};
+
+export type ProvenanceRef = {
+  "event_type": string;
+  "occurred_at": string;
+  "parent_artifact_ids"?: readonly string[];
+  "provenance_id": string;
+  "transformations"?: readonly string[];
+};
+
+export type TimezonePolicy = "assume_utc" | "require_offset" | "named";
+
+export type UploadSessionResponse = {
+  "chunk_size_bytes": number;
+  "created_at": string;
+  "expires_at": string;
+  "extension": string;
+  "filename": string;
+  "part_count": number;
+  "parts": readonly unknown[];
+  "size_bytes": number;
+  "status"?: string;
+  "upload_id": string;
+};
+
+export type UploadStatusResponse = {
+  "artifact"?: unknown | unknown;
+  "completed_at"?: string | unknown;
+  "created_at": string;
+  "expires_at": string;
+  "extension": string;
+  "filename": string;
+  "job_id"?: string | unknown;
+  "missing_parts": readonly number[];
+  "parts_received": readonly number[];
+  "sha256": string | unknown;
+  "size_bytes": number;
+  "status": "open" | "completed" | "cancelled";
+  "upload_id": string;
+};
+
+export type ValidationError = {
+  "ctx"?: Record<string, unknown>;
+  "input"?: unknown;
+  "loc": readonly (string | number)[];
+  "msg": string;
+  "type": string;
+};

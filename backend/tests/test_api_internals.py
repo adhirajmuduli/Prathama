@@ -71,7 +71,7 @@ async def test_lifespan_publishes_the_runtime_state(settings: Settings) -> None:
 async def test_cors_middleware_is_installed_only_when_origins_are_configured(
     settings: Settings,
 ) -> None:
-    without_cors = _application(settings)
+    without_cors = _application(settings.model_copy(update={"cors_allow_origins": []}))
     assert not any(
         middleware.cls.__name__ == "CORSMiddleware" for middleware in without_cors.user_middleware
     )

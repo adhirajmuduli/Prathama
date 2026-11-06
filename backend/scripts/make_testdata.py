@@ -90,6 +90,21 @@ _NO_HEADER_CSV = """St. A,19.7350,85.4700,2024-01-15T09:30:00Z,dissolved_oxygen,
 St. B,19.8100,85.5200,2024-01-15T10:05:00Z,salinity,12.4,psu
 """
 
+_LONG_MULTI_STATION_CSV = """station,latitude,longitude,sampled_at,parameter,value,unit,qualifier,depth_m,notes
+St. A,19.7350,85.4700,2024-01-15T09:30:00Z,dissolved_oxygen,6.8,mg/L,,0.5,
+St. B,19.8100,85.5200,2024-01-15T09:30:00Z,dissolved_oxygen,5.9,mg/L,,1.0,
+St. C,19.7500,85.4900,2024-01-15T09:30:00Z,dissolved_oxygen,6.1,mg/L,,0.5,
+St. D,19.7000,85.4500,2024-01-15T09:30:00Z,dissolved_oxygen,7.0,mg/L,,1.0,
+St. A,19.7350,85.4700,2024-02-12T09:15:00Z,dissolved_oxygen,7.2,mg/L,,0.5,
+St. B,19.8100,85.5200,2024-02-12T09:15:00Z,dissolved_oxygen,6.4,mg/L,,1.0,
+St. C,19.7500,85.4900,2024-02-12T09:15:00Z,dissolved_oxygen,6.6,mg/L,,0.5,
+St. D,19.7000,85.4500,2024-02-12T09:15:00Z,dissolved_oxygen,7.4,mg/L,,1.0,
+St. A,19.7350,85.4700,2024-03-10T09:00:00Z,dissolved_oxygen,6.9,mg/L,,0.5,
+St. B,19.8100,85.5200,2024-03-10T09:00:00Z,dissolved_oxygen,6.2,mg/L,,1.0,
+St. C,19.7500,85.4900,2024-03-10T09:00:00Z,dissolved_oxygen,6.5,mg/L,,0.5,
+St. D,19.7000,85.4500,2024-03-10T09:00:00Z,dissolved_oxygen,7.1,mg/L,,1.0,
+"""
+
 _NOT_A_WORKBOOK = b"station,value\n1,2\n"
 
 
@@ -257,6 +272,7 @@ def build_fixtures() -> dict[str, bytes]:
         "cp1252_non_utf8.csv": _CP1252_CSV.encode("cp1252"),
         "binary_disguised.csv": _BINARY_CSV,
         "no_header_table.csv": _NO_HEADER_CSV.encode("utf-8"),
+        "long_multi_station.csv": _LONG_MULTI_STATION_CSV.encode("utf-8"),
         "empty.csv": b"",
         "observations.xlsx": workbook,
         "formulas_cached.xlsx": cached_workbook,

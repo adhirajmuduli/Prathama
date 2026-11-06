@@ -18,6 +18,7 @@ from trendsmapp.contracts.common import ArtifactRef
 from trendsmapp.contracts.datasets import (
     CreateDatasetRequest,
     CreateDatasetResponse,
+    DatasetListResponse,
     DatasetResponse,
     DatasetVersionListResponse,
     DatasetVersionResponse,
@@ -206,6 +207,29 @@ class DatasetService:
             current_version_id=row.current_version_id,
             created_at=row.created_at,
             updated_at=row.updated_at,
+        )
+
+    async def list_datasets(self, *, limit: int = 100, offset: int = 0) -> DatasetListResponse:
+        """Return a page of datasets, most recently updated first."""
+        from trendsmapp.contracts.common import PageMeta
+
+        rows = await self._datasets.list_datasets(limit=limit, offset=offset)
+        total = await self._datasets.count_datasets()
+        items = []
+        for row in rows:
+            items.append(
+                DatasetResponse(
+                    dataset_id=row.id,
+                    name=row.name,
+                    description=row.description,
+                    current_version_id=row.current_version_id,
+                    created_at=row.created_at,
+                    updated_at=row.updated_at,
+                )
+            )
+        return DatasetListResponse(
+            items=tuple(items),
+            page=PageMeta(offset=offset, limit=limit, total=total),
         )
 
     async def list_versions(self, dataset_id: str) -> DatasetVersionListResponse:

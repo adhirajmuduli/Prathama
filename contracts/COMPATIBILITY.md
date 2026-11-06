@@ -7,7 +7,7 @@ whether the change is compatible.
 The digest below pins the snapshot that this note describes. CI fails when the
 snapshot changes without an updated note.
 
-OpenAPI snapshot SHA-256: `4b03843cc9944ef1b7ac15389964ceb98adfaf232545a27f5cae378d56774211`
+OpenAPI snapshot SHA-256: `2d269b8ea0fa0311446ef308549d8ff4d5f30db941268825c536aa25f3045846`
 
 ## API major version 1
 
@@ -30,6 +30,7 @@ The first published contract of the rebuilt API.
 | POST | `/api/v1/jobs/{job_id}/cancel` | Request cancellation of a queued or running job. |
 | POST | `/api/v1/uploads/{upload_id}/probe` | Describe the first rows of a completed upload and propose a mapping. |
 | POST | `/api/v1/datasets` | Create a dataset version from an upload and a confirmed mapping, and enqueue the ingest job. |
+| GET | `/api/v1/datasets` | A page of datasets, most recently updated first. |
 | GET | `/api/v1/datasets/{dataset_id}` | One dataset with its current version. |
 | GET | `/api/v1/datasets/{dataset_id}/versions` | Every version of a dataset, oldest first. |
 | GET | `/api/v1/dataset-versions/{version_id}` | One dataset version with its artifacts. |
@@ -38,6 +39,10 @@ The first published contract of the rebuilt API.
 | GET | `/api/v1/dataset-versions/{version_id}/provenance` | The provenance events of a dataset version. |
 | GET | `/api/v1/artifacts/{artifact_id}` | One artifact reference. |
 | GET | `/api/v1/artifacts/{artifact_id}/content` | Stream the bytes of one stored artifact. |
+| POST | `/api/v1/analyses` | Validate a recipe against a sealed dataset version and enqueue the analysis job. |
+| GET | `/api/v1/analyses/{run_id}` | One analysis run with its recipe and hashes. |
+| GET | `/api/v1/analyses/{run_id}/artifacts` | Every artifact a run produced. |
+| GET | `/api/v1/analyses/{run_id}/results` | The stored results document of a run. |
 
 ### Conventions
 

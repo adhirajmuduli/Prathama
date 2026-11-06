@@ -2,8 +2,9 @@
   "binary_disguised.csv": "71bf5c6472ee7790b762fd6a18d28059189f9a9dd08a62554711c7089213523c",
   "cp1252_non_utf8.csv": "16c8a66d365faef61e9a247b297ecbe8757364310ce6c15dc7ead77c75769b65",
   "empty.csv": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "error_cells.xlsx": "3d57019fff65c91cd39ae8dc8fe752a0e0d31808ab19ac719a75fdd036106712",
-  "formulas_cached.xlsx": "3e670d1525c0fc764af6ab107ba3c11f16ec29519dd1437187371068328cb044",
+  "error_cells.xlsx": "9700b9883f75b3b2a39b44533bfe7b7c6700f5d8ee8ccdbe6a134a9d8163a5a6",
+  "formulas_cached.xlsx": "1667f2dca3c036a6ca45ea1fc6b795226b263bc9a7d2778f0d1cc31c9370c5d3",
+  "long_multi_station.csv": "8bc342e87a99c75c04735ee7de1bf8c8277af0002c782fb02f947420e1a0a4bd",
   "long_observations.csv": "893559e1c343fea1435780aaca5795d69d28027df5b0476429918ba84eb709bd",
   "malformed_ragged.csv": "072328b1af2859f124a9ed868ea96e1cf17148b7606a937d6fe0a1eebf3614b6",
   "malformed_unclosed_quote.csv": "281215e53a1d2c26f8189b4be5fc08a889245e1305408205c153a03a7c3264fd",
@@ -12,7 +13,7 @@
   "not_a_workbook.xlsx": "7c289271008a59383b96726c2fe59397afb9c3d21abb9db5ccc94c79e32f5c52",
   "observations.parquet": "f10746e22f63ea2c54e4531f37b748bfed79a610ed2aabd5125bae9b76b7d1a7",
   "observations.tsv": "3bb832fd828c9b2ed3a45e2db61afab10b88df0962bb4390a0d4def330cbf610",
-  "observations.xlsx": "3a02ce1fdb841c9309aa5e5552d82e03e115c4d7f4f89f7c2e2ee89689607c40",
+  "observations.xlsx": "38c6ce3bdfb02c6b49000e4139e7ff93a0e4470fae59dbad6b2d587b5e27e695",
   "truncated.parquet": "f0339cd30f7936b90f101f8284ba36e23b8c638bc294d20adcb935867696b079",
   "wide_station_matrix.csv": "9b4ce7e3436da7de3918044b2baca3c2e9de7ea941fd0bc3580b4c18e4dc7be0"
 }

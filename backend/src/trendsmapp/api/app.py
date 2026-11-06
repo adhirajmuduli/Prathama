@@ -22,7 +22,14 @@ from trendsmapp.api.middleware import (
     RequestContextMiddleware,
     SecurityHeadersMiddleware,
 )
-from trendsmapp.api.routers import capabilities, datasets, health, jobs, uploads
+from trendsmapp.api.routers import (
+    analyses,
+    capabilities,
+    datasets,
+    health,
+    jobs,
+    uploads,
+)
 from trendsmapp.logging_config import configure_logging, get_logger
 from trendsmapp.persistence.database import (
     create_engine_for_settings,
@@ -91,10 +98,12 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
             allow_headers=[
                 "Authorization",
                 "Content-Type",
+                "Content-Range",
                 "X-Request-ID",
                 "X-Trendsmapp-Api-Version",
                 "X-Trendsmapp-Recipe-Schema-Version",
                 "X-Trendsmapp-Idempotency-Key",
+                "Idempotency-Key",
             ],
             expose_headers=["X-Request-ID"],
         )
@@ -107,4 +116,5 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
     application.include_router(uploads.router)
     application.include_router(jobs.router)
     application.include_router(datasets.router)
+    application.include_router(analyses.router)
     return application
