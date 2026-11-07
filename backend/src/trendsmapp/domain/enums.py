@@ -10,22 +10,28 @@ from __future__ import annotations
 from enum import StrEnum
 
 __all__ = [
+    "SETTING_SPLIT_FAMILIES",
     "CensoringPolicy",
     "ColumnRole",
     "DateOrder",
     "DuplicatePolicy",
     "ExclusionPolicy",
+    "ExplanationMethod",
     "ExtrapolationPolicy",
     "FileFormat",
     "FrameStatus",
     "JobStatus",
     "JobType",
     "LayoutKind",
+    "ModelFamily",
+    "PredictionSetting",
     "QcFlagCode",
     "QcStatus",
     "SpatialMethod",
+    "SplitStrategy",
     "TemporalInterpolation",
     "TimezonePolicy",
+    "UncertaintyMethod",
     "ValueQualifier",
 ]
 
@@ -222,3 +228,97 @@ class JobStatus(StrEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     CANCELLED = "cancelled"
+
+
+class ModelFamily(StrEnum):
+    """The approved model families, each backed by a registry adapter.
+
+    The baselines are implemented in :mod:`trendsmapp.ml.baselines`; the rest are
+    adapters over documented estimators from scikit-learn or XGBoost.
+    """
+
+    MEAN_BASELINE = "mean_baseline"
+    STATION_CLIMATOLOGY = "station_climatology"
+    SEASONAL_CLIMATOLOGY = "seasonal_climatology"
+    ELASTIC_NET = "elastic_net"
+    RANDOM_FOREST = "random_forest"
+    EXTRA_TREES = "extra_trees"
+    HIST_GRADIENT_BOOSTING = "hist_gradient_boosting"
+    XGBOOST = "xgboost"
+
+
+class PredictionSetting(StrEnum):
+    """What the model is asked to predict; each has an allowed split family."""
+
+    KNOWN_STATION_TEMPORAL = "known_station_temporal"
+    UNSEEN_STATION_SPATIAL = "unseen_station_spatial"
+    FUTURE_PERIOD = "future_period"
+    MISSING_RECONSTRUCTION = "missing_reconstruction"
+
+
+class SplitStrategy(StrEnum):
+    """How outer evaluation folds are generated."""
+
+    STATION_GROUP = "station_group"
+    SPATIAL_BLOCK = "spatial_block"
+    LEAVE_YEAR_OUT = "leave_year_out"
+    ROLLING_ORIGIN = "rolling_origin"
+    SECTOR = "sector"
+    COMBINED = "combined"
+    RANDOM_ROW = "random_row"
+
+
+#: Split families allowed per prediction setting. Random row splitting is never
+#: allowed for claims that need held-out stations or future periods.
+SETTING_SPLIT_FAMILIES: dict[PredictionSetting, frozenset[SplitStrategy]] = {
+    PredictionSetting.KNOWN_STATION_TEMPORAL: frozenset(
+        {
+            SplitStrategy.STATION_GROUP,
+            SplitStrategy.LEAVE_YEAR_OUT,
+            SplitStrategy.ROLLING_ORIGIN,
+            SplitStrategy.SECTOR,
+            SplitStrategy.COMBINED,
+        }
+    ),
+    PredictionSetting.UNSEEN_STATION_SPATIAL: frozenset(
+        {
+            SplitStrategy.STATION_GROUP,
+            SplitStrategy.SPATIAL_BLOCK,
+            SplitStrategy.SECTOR,
+            SplitStrategy.COMBINED,
+        }
+    ),
+    PredictionSetting.FUTURE_PERIOD: frozenset(
+        {
+            SplitStrategy.LEAVE_YEAR_OUT,
+            SplitStrategy.ROLLING_ORIGIN,
+            SplitStrategy.COMBINED,
+        }
+    ),
+    PredictionSetting.MISSING_RECONSTRUCTION: frozenset(
+        {
+            SplitStrategy.STATION_GROUP,
+            SplitStrategy.SPATIAL_BLOCK,
+            SplitStrategy.LEAVE_YEAR_OUT,
+            SplitStrategy.ROLLING_ORIGIN,
+            SplitStrategy.SECTOR,
+            SplitStrategy.COMBINED,
+            SplitStrategy.RANDOM_ROW,
+        }
+    ),
+}
+
+
+class UncertaintyMethod(StrEnum):
+    """How prediction intervals are produced."""
+
+    BOOTSTRAP_ENSEMBLE = "bootstrap_ensemble"
+    QUANTILE = "quantile"
+
+
+class ExplanationMethod(StrEnum):
+    """The explanation methods a task may request."""
+
+    PERMUTATION = "permutation"
+    SHAP_TREE = "shap_tree"
+    PARTIAL_DEPENDENCE = "partial_dependence"
