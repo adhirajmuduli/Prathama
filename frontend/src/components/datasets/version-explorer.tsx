@@ -8,6 +8,7 @@
 import { useMemo, useState } from "react";
 
 import { AnalysisPanel } from "./analysis-panel";
+import { ModelPanel } from "./model-panel";
 import { createApiClient } from "../../lib/api/client";
 import { publicApiBaseUrl } from "../../lib/env/client";
 import {
@@ -17,11 +18,20 @@ import {
 } from "../../lib/contracts/ingest";
 import { formatBytes, formatTimestamp } from "../../lib/format";
 
-type Tab = "preview" | "parse" | "normalization" | "qc" | "provenance" | "artifacts" | "analyze";
+type Tab =
+  | "preview"
+  | "parse"
+  | "normalization"
+  | "qc"
+  | "provenance"
+  | "artifacts"
+  | "analyze"
+  | "model";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "preview", label: "Preview" },
   { id: "analyze", label: "Analyze" },
+  { id: "model", label: "Model" },
   { id: "parse", label: "Parse report" },
   { id: "normalization", label: "Normalization" },
   { id: "qc", label: "Quality control" },
@@ -35,11 +45,16 @@ export interface VersionExplorerProps {
 
 export function VersionExplorer({ versions }: VersionExplorerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(
-    versions.length > 0 ? (versions[versions.length - 1]?.version_id ?? null) : null,
+    versions.length > 0
+      ? (versions[versions.length - 1]?.version_id ?? null)
+      : null,
   );
   const [tab, setTab] = useState<Tab>("preview");
   const client = useMemo(
-    () => (publicApiBaseUrl === null ? null : createApiClient({ baseUrl: publicApiBaseUrl })),
+    () =>
+      publicApiBaseUrl === null
+        ? null
+        : createApiClient({ baseUrl: publicApiBaseUrl }),
     [],
   );
   const [preview, setPreview] = useState<unknown>(null);
@@ -47,7 +62,8 @@ export function VersionExplorer({ versions }: VersionExplorerProps) {
   const [provenance, setProvenance] = useState<unknown>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const selected = versions.find((version) => version.version_id === selectedId) ?? null;
+  const selected =
+    versions.find((version) => version.version_id === selectedId) ?? null;
 
   const loadTab = async (nextTab: Tab, versionId: string) => {
     setTab(nextTab);
@@ -84,7 +100,9 @@ export function VersionExplorer({ versions }: VersionExplorerProps) {
         );
       }
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : "The tab could not be loaded.");
+      setLoadError(
+        error instanceof Error ? error.message : "The tab could not be loaded.",
+      );
     }
   };
 
@@ -111,7 +129,8 @@ export function VersionExplorer({ versions }: VersionExplorerProps) {
           >
             {versions.map((version) => (
               <option key={version.version_id} value={version.version_id}>
-                v{version.version_number} {version.sealed ? "(sealed)" : "(unsealed)"} —{" "}
+                v{version.version_number}{" "}
+                {version.sealed ? "(sealed)" : "(unsealed)"} —{" "}
                 {version.row_count} rows
               </option>
             ))}
@@ -119,9 +138,10 @@ export function VersionExplorer({ versions }: VersionExplorerProps) {
         </label>
         {selected !== null ? (
           <p className="text-xs text-slate-500">
-            {selected.station_count} stations · {selected.parameter_count} parameters ·{" "}
-            {selected.boundary_id ?? "no boundary"}
-            {selected.first_sampled_at !== null && selected.first_sampled_at !== undefined
+            {selected.station_count} stations · {selected.parameter_count}{" "}
+            parameters · {selected.boundary_id ?? "no boundary"}
+            {selected.first_sampled_at !== null &&
+            selected.first_sampled_at !== undefined
               ? ` · ${formatTimestamp(selected.first_sampled_at)} → ${formatTimestamp(selected.last_sampled_at ?? selected.first_sampled_at)}`
               : ""}
           </p>
@@ -151,20 +171,37 @@ export function VersionExplorer({ versions }: VersionExplorerProps) {
       </div>
 
       {loadError !== null ? (
-        <p role="alert" className="rounded border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+        <p
+          role="alert"
+          className="rounded border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-900"
+        >
           {loadError}
         </p>
       ) : null}
 
-      {tab === "preview" && preview !== null ? <PreviewTable data={preview} /> : null}
+      {tab === "preview" && preview !== null ? (
+        <PreviewTable data={preview} />
+      ) : null}
       {tab === "analyze" && selected !== null ? (
         <AnalysisPanel datasetVersionId={selected.version_id} />
       ) : null}
-      {tab !== "preview" && tab !== "analyze" && tab !== "provenance" && tab !== "artifacts" && report !== null ? (
+      {tab === "model" && selected !== null ? (
+        <ModelPanel datasetVersionId={selected.version_id} />
+      ) : null}
+      {tab !== "preview" &&
+      tab !== "analyze" &&
+      tab !== "model" &&
+      tab !== "provenance" &&
+      tab !== "artifacts" &&
+      report !== null ? (
         <ReportView data={report} />
       ) : null}
-      {tab === "provenance" && provenance !== null ? <ProvenanceView data={provenance} /> : null}
-      {tab === "artifacts" && selected !== null ? <ArtifactList version={selected} /> : null}
+      {tab === "provenance" && provenance !== null ? (
+        <ProvenanceView data={provenance} />
+      ) : null}
+      {tab === "artifacts" && selected !== null ? (
+        <ArtifactList version={selected} />
+      ) : null}
     </div>
   );
 }
@@ -195,7 +232,10 @@ function PreviewTable({ data }: { readonly data: unknown }) {
           {parsed.rows.map((row, rowIndex) => (
             <tr key={rowIndex} className="border-t border-slate-100">
               {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className="whitespace-nowrap px-3 py-1 font-mono text-slate-700">
+                <td
+                  key={cellIndex}
+                  className="whitespace-nowrap px-3 py-1 font-mono text-slate-700"
+                >
                   {cell === null ? "∅" : String(cell)}
                 </td>
               ))}
@@ -218,16 +258,26 @@ function ReportView({ data }: { readonly data: unknown }) {
 function ProvenanceView({ data }: { readonly data: unknown }) {
   const parsed = provenanceListSchema.parse(data);
   if (parsed.items.length === 0) {
-    return <p className="text-sm text-slate-600">No provenance events recorded for this version.</p>;
+    return (
+      <p className="text-sm text-slate-600">
+        No provenance events recorded for this version.
+      </p>
+    );
   }
   return (
     <ul className="space-y-2">
       {parsed.items.map((item) => (
-        <li key={item.provenance_id} className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
+        <li
+          key={item.provenance_id}
+          className="rounded-lg border border-slate-200 bg-white p-3 text-sm"
+        >
           <p className="font-semibold">{item.event_type}</p>
-          <p className="text-xs text-slate-500">{formatTimestamp(item.occurred_at)}</p>
+          <p className="text-xs text-slate-500">
+            {formatTimestamp(item.occurred_at)}
+          </p>
           <p className="mt-1 font-mono text-xs text-slate-600">
-            inputs: {item.parent_artifact_ids.length} · steps: {item.transformations.join(" → ")}
+            inputs: {item.parent_artifact_ids.length} · steps:{" "}
+            {item.transformations.join(" → ")}
           </p>
         </li>
       ))}
@@ -246,7 +296,8 @@ function ArtifactList({ version }: { readonly version: DatasetVersion }) {
           <div>
             <p className="font-semibold text-slate-900">{artifact.kind}</p>
             <p className="font-mono text-xs text-slate-500">
-              {artifact.sha256.slice(0, 16)}… · {formatBytes(artifact.size_bytes)} ·{" "}
+              {artifact.sha256.slice(0, 16)}… ·{" "}
+              {formatBytes(artifact.size_bytes)} ·{" "}
               {formatTimestamp(artifact.created_at)}
             </p>
           </div>

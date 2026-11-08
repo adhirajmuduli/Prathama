@@ -4,13 +4,7 @@
 export const API_TITLE = "Trendsmapp API";
 export const API_VERSION = "0.1.0";
 
-export type ApiHttpMethod =
-  | "get"
-  | "post"
-  | "put"
-  | "patch"
-  | "delete"
-;
+export type ApiHttpMethod = "get" | "post" | "put" | "patch" | "delete";
 
 export interface ApiOperation {
   readonly method: ApiHttpMethod;
@@ -45,7 +39,8 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
   {
     method: "get",
     path: "/api/v1/analyses/{run_id}/artifacts",
-    operationId: "list_analysis_artifacts_api_v1_analyses__run_id__artifacts_get",
+    operationId:
+      "list_analysis_artifacts_api_v1_analyses__run_id__artifacts_get",
     summary: "List Analysis Artifacts",
     description: "Return every artifact a run produced.",
   },
@@ -75,7 +70,8 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     path: "/api/v1/capabilities",
     operationId: "capabilities_api_v1_capabilities_get",
     summary: "Capabilities",
-    description: "Return the formats, methods, versions, and limits of this deployment.",
+    description:
+      "Return the formats, methods, versions, and limits of this deployment.",
   },
   {
     method: "get",
@@ -94,21 +90,24 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
   {
     method: "get",
     path: "/api/v1/dataset-versions/{version_id}/preview",
-    operationId: "preview_version_api_v1_dataset_versions__version_id__preview_get",
+    operationId:
+      "preview_version_api_v1_dataset_versions__version_id__preview_get",
     summary: "Preview Version",
     description: "Return the first rows of a normalized dataset version.",
   },
   {
     method: "get",
     path: "/api/v1/dataset-versions/{version_id}/provenance",
-    operationId: "get_provenance_api_v1_dataset_versions__version_id__provenance_get",
+    operationId:
+      "get_provenance_api_v1_dataset_versions__version_id__provenance_get",
     summary: "Get Provenance",
     description: "Return the provenance events of a dataset version.",
   },
   {
     method: "get",
     path: "/api/v1/dataset-versions/{version_id}/reports/{kind}",
-    operationId: "get_report_api_v1_dataset_versions__version_id__reports__kind__get",
+    operationId:
+      "get_report_api_v1_dataset_versions__version_id__reports__kind__get",
     summary: "Get Report",
     description: "Return one stored JSON report of a dataset version.",
   },
@@ -124,7 +123,8 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     path: "/api/v1/datasets",
     operationId: "create_dataset_api_v1_datasets_post",
     summary: "Create Dataset",
-    description: "Create a dataset version from an upload and a confirmed mapping.",
+    description:
+      "Create a dataset version from an upload and a confirmed mapping.",
   },
   {
     method: "get",
@@ -141,6 +141,29 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     description: "Return every version of a dataset, oldest first.",
   },
   {
+    method: "post",
+    path: "/api/v1/exports",
+    operationId: "create_export_api_v1_exports_post",
+    summary: "Create Export",
+    description:
+      "Enqueue the export of one succeeded run as a verified bundle.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/exports/{export_id}",
+    operationId: "get_export_api_v1_exports__export_id__get",
+    summary: "Get Export",
+    description:
+      "Return one export with its bundle artifact and the manifest inside it.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/exports/{export_id}/download",
+    operationId: "download_export_api_v1_exports__export_id__download_get",
+    summary: "Download Export",
+    description: "Stream the verified ZIP bundle of one export.",
+  },
+  {
     method: "get",
     path: "/api/v1/health/live",
     operationId: "liveness_api_v1_health_live_get",
@@ -152,7 +175,8 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     path: "/api/v1/health/ready",
     operationId: "readiness_api_v1_health_ready_get",
     summary: "Readiness",
-    description: "Return the readiness state of the process and its dependencies.",
+    description:
+      "Return the readiness state of the process and its dependencies.",
   },
   {
     method: "get",
@@ -167,6 +191,62 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     operationId: "cancel_job_api_v1_jobs__job_id__cancel_post",
     summary: "Cancel Job",
     description: "Request cancellation of a queued or running job.",
+  },
+  {
+    method: "post",
+    path: "/api/v1/model-runs",
+    operationId: "create_model_run_api_v1_model_runs_post",
+    summary: "Create Model Run",
+    description:
+      "Validate a task against a sealed dataset version and enqueue the training job.\n\nThe task hash is the idempotency key of the run: reposting the same task on\nthe same dataset version returns the existing run instead of enqueueing a\nduplicate job.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/model-runs/{run_id}",
+    operationId: "get_model_run_api_v1_model_runs__run_id__get",
+    summary: "Get Model Run",
+    description:
+      "Return one model run with its task, results, explanations, and artifacts.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/model-runs/{run_id}/artifacts",
+    operationId:
+      "list_model_run_artifacts_api_v1_model_runs__run_id__artifacts_get",
+    summary: "List Model Run Artifacts",
+    description: "Return every artifact a model run produced.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/model-runs/{run_id}/explanations",
+    operationId:
+      "get_model_run_explanations_api_v1_model_runs__run_id__explanations_get",
+    summary: "Get Model Run Explanations",
+    description: "Return the stored explanations document of a model run.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/model-runs/{run_id}/folds",
+    operationId: "get_model_run_folds_api_v1_model_runs__run_id__folds_get",
+    summary: "Get Model Run Folds",
+    description:
+      "Return the per-fold metrics of every evaluated family of a model run.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/model-runs/{run_id}/metrics",
+    operationId: "get_model_run_metrics_api_v1_model_runs__run_id__metrics_get",
+    summary: "Get Model Run Metrics",
+    description: "Return the stored metrics document of a model run.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/model-runs/{run_id}/predictions",
+    operationId:
+      "get_model_run_predictions_api_v1_model_runs__run_id__predictions_get",
+    summary: "Get Model Run Predictions",
+    description:
+      "Return the held-out observed-versus-predicted table of a model run.",
   },
   {
     method: "post",
@@ -194,7 +274,8 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     path: "/api/v1/uploads/{upload_id}/complete",
     operationId: "complete_upload_api_v1_uploads__upload_id__complete_post",
     summary: "Complete Upload",
-    description: "Assemble, verify, and store the upload, then enqueue the ingest job.",
+    description:
+      "Assemble, verify, and store the upload, then enqueue the ingest job.",
   },
   {
     method: "put",
@@ -208,288 +289,414 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
     path: "/api/v1/uploads/{upload_id}/probe",
     operationId: "probe_upload_api_v1_uploads__upload_id__probe_post",
     summary: "Probe Upload",
-    description: "Describe the first rows of a completed upload and propose a mapping.",
+    description:
+      "Describe the first rows of a completed upload and propose a mapping.",
   },
 ];
 
 export type AbortUploadResponse = {
-  "status"?: string;
-  "upload_id": string;
+  status?: string;
+  upload_id: string;
 };
 
 export type AnimationRequest = {
-  "fps"?: number;
-  "method"?: string | unknown;
-  "palette"?: string;
-  "parameter_id"?: string | unknown;
+  fps?: number;
+  method?: string | unknown;
+  palette?: string;
+  parameter_id?: string | unknown;
 };
 
 export type ArtifactRef = {
-  "artifact_id": string;
-  "content_type": string;
-  "created_at": string;
-  "kind": "raw_upload" | "normalized_dataset" | "qc_report" | "parse_report" | "normalization_report" | "provenance" | "raster" | "figure" | "video" | "model" | "metrics" | "predictions" | "explanations" | "export_bundle" | "boundary" | "other";
-  "media_type_detail"?: Record<string, unknown>;
-  "schema_version"?: string;
-  "sha256": string;
-  "size_bytes": number;
+  artifact_id: string;
+  content_type: string;
+  created_at: string;
+  kind:
+    | "raw_upload"
+    | "normalized_dataset"
+    | "qc_report"
+    | "parse_report"
+    | "normalization_report"
+    | "provenance"
+    | "raster"
+    | "figure"
+    | "video"
+    | "model"
+    | "metrics"
+    | "predictions"
+    | "explanations"
+    | "export_bundle"
+    | "boundary"
+    | "other";
+  media_type_detail?: Record<string, unknown>;
+  schema_version?: string;
+  sha256: string;
+  size_bytes: number;
 };
 
 export type CancelJobResponse = {
-  "cancel_requested": boolean;
-  "job_id": string;
-  "status": "queued" | "running" | "succeeded" | "failed" | "cancelled";
+  cancel_requested: boolean;
+  job_id: string;
+  status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
 };
 
 export type ColumnMapping = {
-  "columns": readonly unknown[];
-  "date_order"?: unknown;
-  "default_parameter"?: string | unknown;
-  "default_unit"?: string | unknown;
-  "duplicate_policy"?: unknown;
-  "layout": unknown;
-  "schema_version"?: string;
-  "source_crs"?: string | unknown;
-  "timezone_name"?: string | unknown;
-  "timezone_policy"?: unknown;
-  "wide_axis"?: "stations" | "parameters" | unknown;
+  columns: readonly unknown[];
+  date_order?: unknown;
+  default_parameter?: string | unknown;
+  default_unit?: string | unknown;
+  duplicate_policy?: unknown;
+  layout: unknown;
+  schema_version?: string;
+  source_crs?: string | unknown;
+  timezone_name?: string | unknown;
+  timezone_policy?: unknown;
+  wide_axis?: "stations" | "parameters" | unknown;
 };
 
-export type ColumnRole = "station" | "latitude" | "longitude" | "easting" | "northing" | "timestamp" | "parameter" | "value" | "unit" | "qualifier" | "depth" | "sector" | "ignored";
+export type ColumnRole =
+  | "station"
+  | "latitude"
+  | "longitude"
+  | "easting"
+  | "northing"
+  | "timestamp"
+  | "parameter"
+  | "value"
+  | "unit"
+  | "qualifier"
+  | "depth"
+  | "sector"
+  | "ignored";
 
 export type CompleteUploadResponse = {
-  "artifact": unknown;
-  "job_id": string;
-  "status"?: string;
-  "upload_id": string;
+  artifact: unknown;
+  job_id: string;
+  status?: string;
+  upload_id: string;
 };
 
 export type CreateDatasetRequest = {
-  "description"?: string | unknown;
-  "mapping": unknown;
-  "name": string;
-  "upload_id": string;
+  description?: string | unknown;
+  mapping: unknown;
+  name: string;
+  upload_id: string;
 };
 
 export type CreateDatasetResponse = {
-  "dataset_id": string;
-  "job_id": string;
-  "status"?: string;
-  "version_id": string;
+  dataset_id: string;
+  job_id: string;
+  status?: string;
+  version_id: string;
+};
+
+export type CreateExportRequest = {
+  run_id: string;
+};
+
+export type CreateExportResponse = {
+  export_id: string;
+  job_id: string;
+  run_id: string;
+  status?: string;
+};
+
+export type CreateModelRunResponse = {
+  job_id: string;
+  run_id: string;
+  status?: string;
+  task_hash: string;
 };
 
 export type CreateUploadRequest = {
-  "chunk_size_bytes"?: number | unknown;
-  "content_type"?: string | unknown;
-  "dataset_id"?: string | unknown;
-  "filename": string;
-  "sha256"?: string | unknown;
-  "size_bytes": number;
+  chunk_size_bytes?: number | unknown;
+  content_type?: string | unknown;
+  dataset_id?: string | unknown;
+  filename: string;
+  sha256?: string | unknown;
+  size_bytes: number;
 };
 
 export type DatasetListResponse = {
-  "items": readonly unknown[];
-  "page": unknown;
+  items: readonly unknown[];
+  page: unknown;
 };
 
 export type DatasetResponse = {
-  "created_at": string;
-  "current_version_id": string | unknown;
-  "dataset_id": string;
-  "description": string | unknown;
-  "name": string;
-  "updated_at": string;
+  created_at: string;
+  current_version_id: string | unknown;
+  dataset_id: string;
+  description: string | unknown;
+  name: string;
+  updated_at: string;
 };
 
 export type DatasetVersionListResponse = {
-  "dataset_id": string;
-  "items": readonly unknown[];
+  dataset_id: string;
+  items: readonly unknown[];
 };
 
 export type DatasetVersionResponse = {
-  "artifacts": readonly unknown[];
-  "boundary_id": string | unknown;
-  "created_at": string;
-  "dataset_id": string;
-  "first_sampled_at": string | unknown;
-  "last_sampled_at": string | unknown;
-  "normalized_artifact": unknown | unknown;
-  "parameter_count": number;
-  "row_count": number;
-  "schema_version": string;
-  "sealed": boolean;
-  "sealed_at": string | unknown;
-  "station_count": number;
-  "version_id": string;
-  "version_number": number;
+  artifacts: readonly unknown[];
+  boundary_id: string | unknown;
+  created_at: string;
+  dataset_id: string;
+  first_sampled_at: string | unknown;
+  last_sampled_at: string | unknown;
+  normalized_artifact: unknown | unknown;
+  parameter_count: number;
+  row_count: number;
+  schema_version: string;
+  sealed: boolean;
+  sealed_at: string | unknown;
+  station_count: number;
+  version_id: string;
+  version_number: number;
 };
 
 export type DateOrder = "day_first" | "month_first" | "year_first";
 
-export type DuplicatePolicy = "flag_all" | "keep_first" | "keep_last" | "keep_most_complete" | "error";
+export type DuplicatePolicy =
+  "flag_all" | "keep_first" | "keep_last" | "keep_most_complete" | "error";
+
+export type ExplanationMethod =
+  "permutation" | "shap_tree" | "partial_dependence";
+
+export type ExportResponse = {
+  artifact: unknown;
+  export_id: string;
+  job_id?: string | unknown;
+  manifest?: Record<string, unknown>;
+  run_id: string;
+  status: string;
+};
 
 export type HTTPValidationError = {
-  "detail"?: readonly unknown[];
+  detail?: readonly unknown[];
 };
 
 export type JobResponse = {
-  "attempts": number;
-  "cancel_requested"?: boolean;
-  "created_at": string;
-  "error"?: Record<string, unknown> | unknown;
-  "finished_at"?: string | unknown;
-  "heartbeat_at"?: string | unknown;
-  "job_id": string;
-  "job_type": string;
-  "payload"?: Record<string, unknown>;
-  "progress": number;
-  "result"?: Record<string, unknown> | unknown;
-  "run_id"?: string | unknown;
-  "stage"?: string | unknown;
-  "started_at"?: string | unknown;
-  "status": "queued" | "running" | "succeeded" | "failed" | "cancelled";
-  "worker_id"?: string | unknown;
+  attempts: number;
+  cancel_requested?: boolean;
+  created_at: string;
+  error?: Record<string, unknown> | unknown;
+  finished_at?: string | unknown;
+  heartbeat_at?: string | unknown;
+  job_id: string;
+  job_type: string;
+  payload?: Record<string, unknown>;
+  progress: number;
+  result?: Record<string, unknown> | unknown;
+  run_id?: string | unknown;
+  stage?: string | unknown;
+  started_at?: string | unknown;
+  status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+  worker_id?: string | unknown;
 };
 
 export type LayoutKind = "long" | "wide" | "unknown";
 
+export type MLTask = {
+  candidate_models: readonly unknown[];
+  dataset_version_id: string;
+  eligible_end?: string | unknown;
+  eligible_start?: string | unknown;
+  eligible_station_ids?: readonly string[];
+  explanation_methods?: readonly unknown[];
+  feature_names?: readonly string[];
+  inner_split?: unknown;
+  lag_policy?: string;
+  missing_data_policy?: string;
+  outer_split?: unknown;
+  prediction_unit: string;
+  primary_metric?: string;
+  qc_policy?: string;
+  schema_version?: string;
+  search_budget?: number;
+  seed?: number;
+  setting: unknown;
+  target_parameter_id: string;
+  uncertainty_method?: unknown;
+};
+
 export type MappedColumn = {
-  "column": string;
-  "parameter_label"?: string | unknown;
-  "role": unknown;
-  "station_label"?: string | unknown;
-  "unit"?: string | unknown;
+  column: string;
+  parameter_label?: string | unknown;
+  role: unknown;
+  station_label?: string | unknown;
+  unit?: string | unknown;
+};
+
+export type ModelFamily =
+  | "mean_baseline"
+  | "station_climatology"
+  | "seasonal_climatology"
+  | "elastic_net"
+  | "random_forest"
+  | "extra_trees"
+  | "hist_gradient_boosting"
+  | "xgboost";
+
+export type ModelRunResponse = {
+  artifacts?: readonly unknown[];
+  created_at: string;
+  dataset_version_id: string;
+  explanations?: Record<string, unknown> | unknown;
+  finished_at?: string | unknown;
+  job_id?: string | unknown;
+  results?: Record<string, unknown> | unknown;
+  run_id: string;
+  status: string;
+  task: unknown;
+  task_hash: string;
+  warnings?: readonly string[];
 };
 
 export type PageMeta = {
-  "limit"?: number;
-  "offset"?: number;
-  "total"?: number;
+  limit?: number;
+  offset?: number;
+  total?: number;
 };
 
 export type PartPlanResponse = {
-  "end_byte": number;
-  "part_number": number;
-  "size_bytes": number;
-  "start_byte": number;
+  end_byte: number;
+  part_number: number;
+  size_bytes: number;
+  start_byte: number;
 };
 
 export type PartUploadResponse = {
-  "part_number": number;
-  "received"?: boolean;
-  "sha256": string;
-  "size_bytes": number;
-  "upload_id": string;
+  part_number: number;
+  received?: boolean;
+  sha256: string;
+  size_bytes: number;
+  upload_id: string;
 };
 
+export type PredictionSetting =
+  | "known_station_temporal"
+  | "unseen_station_spatial"
+  | "future_period"
+  | "missing_reconstruction";
+
 export type PreviewResponse = {
-  "artifact_sha256": string;
-  "columns": readonly string[];
-  "limit": number;
-  "row_count": number;
-  "rows": readonly unknown[][];
-  "version_id": string;
+  artifact_sha256: string;
+  columns: readonly string[];
+  limit: number;
+  row_count: number;
+  rows: readonly unknown[][];
+  version_id: string;
 };
 
 export type ProbeResponse = {
-  "content_type": string | unknown;
-  "date_fields": readonly string[];
-  "decimal_style": string;
-  "delimiter": string | unknown;
-  "encoding": string | unknown;
-  "extension": string;
-  "fields": readonly string[];
-  "file_format": string;
-  "filename": string;
-  "has_header": boolean;
-  "layout": string;
-  "layout_confidence": number;
-  "layout_evidence": readonly string[];
-  "layout_warnings": readonly string[];
-  "numeric_fields": readonly string[];
-  "proposal_warnings": readonly string[];
-  "proposed_mapping": unknown;
-  "sheet_names": readonly string[];
-  "sniff_warnings": readonly string[];
-  "upload_id": string;
+  content_type: string | unknown;
+  date_fields: readonly string[];
+  decimal_style: string;
+  delimiter: string | unknown;
+  encoding: string | unknown;
+  extension: string;
+  fields: readonly string[];
+  file_format: string;
+  filename: string;
+  has_header: boolean;
+  layout: string;
+  layout_confidence: number;
+  layout_evidence: readonly string[];
+  layout_warnings: readonly string[];
+  numeric_fields: readonly string[];
+  proposal_warnings: readonly string[];
+  proposed_mapping: unknown;
+  sheet_names: readonly string[];
+  sniff_warnings: readonly string[];
+  upload_id: string;
 };
 
 export type ProvenanceListResponse = {
-  "items": readonly unknown[];
-  "version_id": string;
+  items: readonly unknown[];
+  version_id: string;
 };
 
 export type ProvenanceRef = {
-  "event_type": string;
-  "occurred_at": string;
-  "parent_artifact_ids"?: readonly string[];
-  "provenance_id": string;
-  "transformations"?: readonly string[];
+  event_type: string;
+  occurred_at: string;
+  parent_artifact_ids?: readonly string[];
+  provenance_id: string;
+  transformations?: readonly string[];
 };
 
 export type Recipe = {
-  "dataset_version_id": string;
-  "schema_version"?: string;
-  "seed"?: number;
-  "spatial": unknown;
-  "temporal"?: unknown | unknown;
+  dataset_version_id: string;
+  schema_version?: string;
+  seed?: number;
+  spatial: unknown;
+  temporal?: unknown | unknown;
 };
 
 export type SpatialSection = {
-  "analysis_crs"?: string;
-  "grid_resolution_m": number;
-  "max_grid_cells": number;
-  "methods": readonly Record<string, unknown>[];
-  "permitted_qc_statuses"?: readonly string[];
-  "selection_rule"?: string;
-  "validation"?: string;
+  analysis_crs?: string;
+  grid_resolution_m: number;
+  max_grid_cells: number;
+  methods: readonly Record<string, unknown>[];
+  permitted_qc_statuses?: readonly string[];
+  selection_rule?: string;
+  validation?: string;
 };
 
+export type SplitStrategy =
+  | "station_group"
+  | "spatial_block"
+  | "leave_year_out"
+  | "rolling_origin"
+  | "sector"
+  | "combined"
+  | "random_row";
+
 export type TemporalSection = {
-  "allow_extrapolation"?: boolean;
-  "compute_change_points"?: boolean;
-  "compute_trends"?: boolean;
-  "frame_count"?: number;
-  "interpolation"?: string;
-  "max_gap_days"?: number;
-  "resolution"?: string;
+  allow_extrapolation?: boolean;
+  compute_change_points?: boolean;
+  compute_trends?: boolean;
+  frame_count?: number;
+  interpolation?: string;
+  max_gap_days?: number;
+  resolution?: string;
 };
 
 export type TimezonePolicy = "assume_utc" | "require_offset" | "named";
 
+export type UncertaintyMethod = "bootstrap_ensemble" | "quantile";
+
 export type UploadSessionResponse = {
-  "chunk_size_bytes": number;
-  "created_at": string;
-  "expires_at": string;
-  "extension": string;
-  "filename": string;
-  "part_count": number;
-  "parts": readonly unknown[];
-  "size_bytes": number;
-  "status"?: string;
-  "upload_id": string;
+  chunk_size_bytes: number;
+  created_at: string;
+  expires_at: string;
+  extension: string;
+  filename: string;
+  part_count: number;
+  parts: readonly unknown[];
+  size_bytes: number;
+  status?: string;
+  upload_id: string;
 };
 
 export type UploadStatusResponse = {
-  "artifact"?: unknown | unknown;
-  "completed_at"?: string | unknown;
-  "created_at": string;
-  "expires_at": string;
-  "extension": string;
-  "filename": string;
-  "job_id"?: string | unknown;
-  "missing_parts": readonly number[];
-  "parts_received": readonly number[];
-  "sha256": string | unknown;
-  "size_bytes": number;
-  "status": "open" | "completed" | "cancelled";
-  "upload_id": string;
+  artifact?: unknown | unknown;
+  completed_at?: string | unknown;
+  created_at: string;
+  expires_at: string;
+  extension: string;
+  filename: string;
+  job_id?: string | unknown;
+  missing_parts: readonly number[];
+  parts_received: readonly number[];
+  sha256: string | unknown;
+  size_bytes: number;
+  status: "open" | "completed" | "cancelled";
+  upload_id: string;
 };
 
 export type ValidationError = {
-  "ctx"?: Record<string, unknown>;
-  "input"?: unknown;
-  "loc": readonly (string | number)[];
-  "msg": string;
-  "type": string;
+  ctx?: Record<string, unknown>;
+  input?: unknown;
+  loc: readonly (string | number)[];
+  msg: string;
+  type: string;
 };

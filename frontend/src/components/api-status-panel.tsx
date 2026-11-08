@@ -146,7 +146,13 @@ export function ApiStatusPanel({
   );
 }
 
-function Row({ label, value }: { readonly label: string; readonly value: string }) {
+function Row({
+  label,
+  value,
+}: {
+  readonly label: string;
+  readonly value: string;
+}) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
       <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">

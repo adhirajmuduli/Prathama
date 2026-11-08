@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type StatusBannerTone = "info" | "warning" | "danger";
+export type StatusBannerTone = "info" | "warning" | "danger" | "success";
 
 export interface StatusBannerProps {
   readonly tone: StatusBannerTone;
@@ -13,6 +13,7 @@ const TONE_CLASSES: Record<StatusBannerTone, string> = {
   info: "border-sky-300 bg-sky-50 text-sky-950",
   warning: "border-amber-300 bg-amber-50 text-amber-950",
   danger: "border-rose-300 bg-rose-50 text-rose-950",
+  success: "border-emerald-300 bg-emerald-50 text-emerald-950",
 };
 
 export function StatusBanner({
@@ -28,7 +29,9 @@ export function StatusBanner({
     >
       <p className="text-sm font-semibold">{title}</p>
       <p className="mt-1 text-sm">{description}</p>
-      {children === undefined ? null : <div className="mt-2 text-sm">{children}</div>}
+      {children === undefined ? null : (
+        <div className="mt-2 text-sm">{children}</div>
+      )}
     </section>
   );
 }

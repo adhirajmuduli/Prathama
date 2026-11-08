@@ -19,7 +19,9 @@ describe("ingest contract schemas", () => {
       size_bytes: 998,
       chunk_size_bytes: 5_242_880,
       part_count: 1,
-      parts: [{ part_number: 1, start_byte: 0, end_byte: 997, size_bytes: 998 }],
+      parts: [
+        { part_number: 1, start_byte: 0, end_byte: 997, size_bytes: 998 },
+      ],
       status: "open",
       expires_at: "2026-11-05T12:00:00Z",
       created_at: "2026-11-05T11:00:00Z",
@@ -74,7 +76,9 @@ describe("ingest contract schemas", () => {
     };
     const parsed = probeSchema.parse(probe);
     expect(parsed.proposed_mapping.date_order).toBe("day_first");
-    expect(columnMappingSchema.parse(parsed.proposed_mapping).columns).toHaveLength(1);
+    expect(
+      columnMappingSchema.parse(parsed.proposed_mapping).columns,
+    ).toHaveLength(1);
   });
 
   it("validates a completed upload and a terminal job", () => {

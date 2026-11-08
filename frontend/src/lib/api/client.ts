@@ -12,7 +12,11 @@ export interface ApiRequestOptions {
 
 export interface ApiClient {
   readonly baseUrl: string;
-  getJson<T>(path: string, schema: z.ZodType<T>, options?: ApiRequestOptions): Promise<T>;
+  getJson<T>(
+    path: string,
+    schema: z.ZodType<T>,
+    options?: ApiRequestOptions,
+  ): Promise<T>;
   postJson<T, B>(
     path: string,
     body: B,
@@ -68,7 +72,9 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     const controller = new AbortController();
     const timeoutMs = init.options.timeoutMs ?? defaultTimeoutMs;
     const timer = setTimeout(() => {
-      controller.abort(new DOMException("The request timed out.", "TimeoutError"));
+      controller.abort(
+        new DOMException("The request timed out.", "TimeoutError"),
+      );
     }, timeoutMs);
 
     const signals: AbortSignal[] = [controller.signal];
@@ -150,10 +156,19 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 
   return {
     baseUrl,
-    getJson<T>(path: string, schema: z.ZodType<T>, options: ApiRequestOptions = {}) {
+    getJson<T>(
+      path: string,
+      schema: z.ZodType<T>,
+      options: ApiRequestOptions = {},
+    ) {
       return request("GET", path, { schema, options });
     },
-    postJson<T, B>(path: string, body: B, schema: z.ZodType<T>, options: ApiRequestOptions = {}) {
+    postJson<T, B>(
+      path: string,
+      body: B,
+      schema: z.ZodType<T>,
+      options: ApiRequestOptions = {},
+    ) {
       return request("POST", path, {
         body: JSON.stringify(body),
         contentType: "application/json",
@@ -161,7 +176,11 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         options,
       });
     },
-    postEmpty<T>(path: string, schema: z.ZodType<T>, options: ApiRequestOptions = {}) {
+    postEmpty<T>(
+      path: string,
+      schema: z.ZodType<T>,
+      options: ApiRequestOptions = {},
+    ) {
       return request("POST", path, { schema, options });
     },
     putBytes<T>(
@@ -170,7 +189,8 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       schema: z.ZodType<T>,
       options: ApiRequestOptions = {},
     ) {
-      const body: BodyInit = payload instanceof Uint8Array ? new Blob([payload.slice()]) : payload;
+      const body: BodyInit =
+        payload instanceof Uint8Array ? new Blob([payload.slice()]) : payload;
       return request("PUT", path, {
         body,
         contentType: "application/octet-stream",
@@ -189,7 +209,11 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
-function toApiError(response: Response, payload: unknown, requestId: string): ApiError {
+function toApiError(
+  response: Response,
+  payload: unknown,
+  requestId: string,
+): ApiError {
   const envelope = errorEnvelopeSchema.safeParse(payload);
   if (envelope.success) {
     return new ApiError({
@@ -242,5 +266,7 @@ function createRequestId(): string {
   }
   const bytes = new Uint8Array(16);
   cryptoApi.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 }

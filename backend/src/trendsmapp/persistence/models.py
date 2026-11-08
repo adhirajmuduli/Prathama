@@ -27,6 +27,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 __all__ = [
+    "ArtifactLinkRow",
     "ArtifactRow",
     "Base",
     "CompatibilityRow",
@@ -218,6 +219,29 @@ class ArtifactRow(Base):
         UniqueConstraint("sha256", "kind", name="uix_artifact_sha256_kind"),
         Index("ix_artifacts_run_id", "run_id"),
     )
+
+
+class ArtifactLinkRow(Base):
+    """Ownership link between a content-addressed artifact and its owner.
+
+    Artifact rows are unique per (kind, sha256): identical bytes are stored
+    once. Ownership — which run or dataset version produced the bytes — is
+    many-to-many through this table, so a re-run that reproduces identical
+    bytes still lists its own artifacts.
+    """
+
+    __tablename__ = "artifact_links"
+
+    artifact_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("artifacts.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    #: ``"run"`` or ``"dataset_version"``.
+    owner_type: Mapped[str] = mapped_column(String(16), primary_key=True)
+
+    owner_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+
+    __table_args__ = (Index("ix_artifact_links_owner", "owner_type", "owner_id"),)
 
 
 class ProvenanceEventRow(Base):

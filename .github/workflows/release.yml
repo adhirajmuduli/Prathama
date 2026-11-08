@@ -1,0 +1,130 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UV_FROZEN: "true"
+  UV_VERSION: "0.13.5"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/backend
+
+jobs:
+  gates:
+    name: release gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: resolve the version
+        id: meta
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            version="${{ github.ref_name }}"
+          else
+            version="${{ inputs.tag }}"
+          fi
+          if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "tag must be semver like v0.1.0, got $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: changelog records the release
+        run: |
+          version="${{ steps.meta.outputs.version }}"
+          if ! grep -q "^## \[${version#v}\]" CHANGELOG.md; then
+            echo "CHANGELOG.md has no entry for ${version}" >&2
+            exit 1
+          fi
+      - name: contracts are current at the tag
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.13"
+      - name: install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen --all-groups
+      - name: contract checks
+        working-directory: backend
+        run: |
+          uv run python scripts/export_openapi.py --check ../contracts/openapi.v1.json
+          uv run python scripts/export_schema_versions.py --check ../contracts/schema-versions.json
+          uv run python ../scripts/verify_contract_examples.py
+          uv run --no-project python ../scripts/check_contract_compatibility.py
+
+  image:
+    name: build, scan, and publish the backend image
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: build and push with provenance
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.gates.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          provenance: true
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: scan the released image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.gates.outputs.version }}
+          format: sarif
+          output: trivy-release.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: upload the scan result
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-release.sarif
+          category: trivy-release
+      - name: generate and attach the SBOM
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.gates.outputs.version }}
+          format: cyclonedx
+          output: sbom.cdx.json
+      - name: attach the SBOM to the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.gates.outputs.version }}
+          files: sbom.cdx.json
+          generate_release_notes: true

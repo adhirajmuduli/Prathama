@@ -9,21 +9,21 @@ fold has been evaluated.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Final, Sequence
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from typing import Any, Final
 
 import numpy as np
 
 from trendsmapp.contracts.tasks import MLTask
 from trendsmapp.domain.enums import ModelFamily
-from trendsmapp.ml.baselines import MeanBaseline, StationClimatology
 from trendsmapp.ml.metrics import aggregate_fold_metrics, bootstrap_ci, regression_metrics
-from trendsmapp.ml.models import ModelSpec, capability_for, make_model
+from trendsmapp.ml.models import ModelSpec, make_model
 from trendsmapp.ml.preprocessing import build_preprocessor
 from trendsmapp.ml.search import bounded_search
-from trendsmapp.ml.splits import FrameTable, Fold, generate_splits
+from trendsmapp.ml.splits import Fold, FrameTable, generate_splits
 
-__all__ = ["FoldResult", "TrainingResult", "train_and_evaluate"]
+__all__ = ["FoldResult", "TrainingResult", "fit_fold_model", "train_and_evaluate"]
 
 #: Baselines every ML model is compared against.
 BASELINE_FAMILIES: Final[tuple[ModelFamily, ...]] = (
@@ -34,7 +34,13 @@ BASELINE_FAMILIES: Final[tuple[ModelFamily, ...]] = (
 
 @dataclass(frozen=True, slots=True)
 class FoldResult:
-    """One outer fold's outcome for one model."""
+    """One outer fold's outcome for one model.
+
+    ``preprocessor`` is kept so a reviewer can verify that imputation and
+    encoding were fitted on the fold's training rows only, and ``test_index``
+    points at the held-out rows so explanations can be computed on data the
+    model never saw.
+    """
 
     fold_index: int
     family: ModelFamily
@@ -44,6 +50,8 @@ class FoldResult:
     y_true: np.ndarray
     y_pred: np.ndarray
     warnings: tuple[str, ...]
+    preprocessor: Any = None
+    test_index: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +68,9 @@ class TrainingResult:
     selected_params: dict[str, Any]
     final_model_sha256: str
     warnings: tuple[str, ...]
+    #: The final refit model and its preprocessor, for explanations.
+    final_model: Any = None
+    final_preprocessor: Any = None
 
 
 def train_and_evaluate(
@@ -74,14 +85,18 @@ def train_and_evaluate(
     feature_names: Sequence[str],
     feature_table_sha256: str,
     task_hash: str,
-    save_model,
+    save_model: Callable[..., bytes],
 ) -> TrainingResult:
     """Run the full outer/inner evaluation for every candidate and baseline."""
     n = len(y)
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
     table = FrameTable(
-        station_ids=groups, years=years, sectors=sectors, coords_m=coords_m, timestamps=[None] * n  # type: ignore[list-item]
+        station_ids=groups,
+        years=years,
+        sectors=sectors,
+        coords_m=coords_m,
+        timestamps=[None] * n,
     )
     outer_folds: list[Fold] = generate_splits(task.outer_split, table, seed=task.seed)
 
@@ -113,7 +128,7 @@ def train_and_evaluate(
                 sectors=sectors_train,
                 coords_m=coords_train,
             )
-            fold = _fit_fold_model(
+            fold = fit_fold_model(
                 family,
                 best.best_params,
                 task.seed,
@@ -127,7 +142,20 @@ def train_and_evaluate(
                 fold_index,
                 warnings,
             )
-            fold_results[family].append(fold)
+            fold_results[family].append(
+                FoldResult(
+                    fold_index=fold_index,
+                    family=family,
+                    train_size=len(train_idx),
+                    test_size=len(test_idx),
+                    metrics=fold.metrics,
+                    y_true=fold.y_true,
+                    y_pred=fold.y_pred,
+                    warnings=fold.warnings,
+                    preprocessor=fold.preprocessor,
+                    test_index=tuple(int(index) for index in test_idx),
+                )
+            )
 
         for family in BASELINE_FAMILIES:
             model = make_model(ModelSpec(family=family, seed=task.seed))
@@ -208,21 +236,19 @@ def train_and_evaluate(
         task_hash=task_hash,
         feature_names=tuple(feature_names),
         feature_table_sha256=feature_table_sha256,
-        folds=tuple(
-            fold
-            for family in all_families
-            for fold in fold_results[family]
-        ),
+        folds=tuple(fold for family in all_families for fold in fold_results[family]),
         aggregated=aggregated,
         baseline_comparison={key: aggregated[key] for key in baseline_scores},
         selected_family=selected_family,
         selected_params=best.best_params,
         final_model_sha256=final_sha,
         warnings=tuple(warnings),
+        final_model=final_model,
+        final_preprocessor=preprocessor,
     )
 
 
-def _fit_fold_model(
+def fit_fold_model(
     family: ModelFamily,
     params: dict[str, Any],
     seed: int,
@@ -236,23 +262,22 @@ def _fit_fold_model(
     fold_index: int,
     warnings: list[str],
 ) -> FoldResult:
-    """Fit one fold's model with preprocessing fitted on the outer-train only."""
+    """Fit one fold's model with preprocessing fitted on the outer-train only.
+
+    The preprocessing pipeline is fitted on ``x_train`` and never sees
+    ``x_test``; the returned fold result carries it so the property can be
+    verified.
+    """
     preprocessor = build_preprocessor(feature_names)
     preprocessor.fit(x_train, y_train)
     x_train_t = preprocessor.transform(x_train)
     x_test_t = preprocessor.transform(x_test)
 
     model = make_model(ModelSpec(family=family, params=dict(params), seed=seed))
-    if capability_for(family).needs_groups:
-        model.fit(x_train_t, y_train, groups_train)
-        y_pred = np.asarray(model.predict(x_test_t, groups_test), dtype=float)
-    else:
-        model.fit(x_train_t, y_train, groups_train)
-        y_pred = np.asarray(model.predict(x_test_t, groups_test), dtype=float)
+    model.fit(x_train_t, y_train, groups_train)
+    y_pred = np.asarray(model.predict(x_test_t, groups_test), dtype=float)
     if family is ModelFamily.STATION_CLIMATOLOGY:
-        unseen = {
-            group for group in groups_test if group not in set(groups_train)
-        }
+        unseen = {group for group in groups_test if group not in set(groups_train)}
         if unseen:
             warnings.append(
                 f"fold {fold_index}: station climatology fell back to the global "
@@ -268,4 +293,5 @@ def _fit_fold_model(
         y_true=y_test,
         y_pred=y_pred,
         warnings=(),
+        preprocessor=preprocessor,
     )

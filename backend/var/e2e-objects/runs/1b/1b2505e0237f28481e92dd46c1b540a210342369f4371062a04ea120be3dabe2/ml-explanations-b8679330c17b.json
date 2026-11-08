@@ -1,0 +1,99 @@
+{
+  "application_version": "0.1.0",
+  "detail": {
+    "features": [
+      "day_of_year",
+      "month",
+      "season",
+      "x_m",
+      "y_m"
+    ],
+    "primary_metric": "rmse",
+    "rows": 72,
+    "seed": 7
+  },
+  "held_out_rows": 72,
+  "limitations": [],
+  "method": "permutation",
+  "model_family": "elastic_net",
+  "rows": [
+    {
+      "baseline": 4968.163244189909,
+      "detail": {
+        "max": 2.7299609887713814,
+        "min": 2.077978030479244,
+        "repeats": 10,
+        "std": 0.19740943784089826
+      },
+      "feature": "x_m",
+      "group": null,
+      "method": "permutation",
+      "rank": 1,
+      "unit": "rmse",
+      "value": 2.457211824320166
+    },
+    {
+      "baseline": 4968.163244189909,
+      "detail": {
+        "max": 2.6675313540454226,
+        "min": 1.7336092728446602,
+        "repeats": 10,
+        "std": 0.3292894420998895
+      },
+      "feature": "y_m",
+      "group": null,
+      "method": "permutation",
+      "rank": 2,
+      "unit": "rmse",
+      "value": 2.1513547254864536
+    },
+    {
+      "baseline": 4968.163244189909,
+      "detail": {
+        "max": 0.010603966016788036,
+        "min": -0.0037066003214931698,
+        "repeats": 10,
+        "std": 0.0038410104140587016
+      },
+      "feature": "day_of_year",
+      "group": null,
+      "method": "permutation",
+      "rank": 3,
+      "unit": "rmse",
+      "value": 0.001844911951047834
+    },
+    {
+      "baseline": 4968.163244189909,
+      "detail": {
+        "max": -5.0042312977893744e-05,
+        "min": -0.0003605258852985571,
+        "repeats": 10,
+        "std": 8.972846196889092e-05
+      },
+      "feature": "season",
+      "group": null,
+      "method": "permutation",
+      "rank": 4,
+      "unit": "rmse",
+      "value": -0.00019021926700588666
+    },
+    {
+      "baseline": 4968.163244189909,
+      "detail": {
+        "max": -0.00024348546412511496,
+        "min": -0.0006924728186277207,
+        "repeats": 10,
+        "std": 0.00014098050323266457
+      },
+      "feature": "month",
+      "group": null,
+      "method": "permutation",
+      "rank": 5,
+      "unit": "rmse",
+      "value": -0.00044101383127781446
+    }
+  ],
+  "run_id": "run_ddd4fa0af63e48ae8024472d03aba83a",
+  "schema_version": "1.0.0",
+  "task_hash": "b8679330c17b84c65de7cab2701146237755b06d8120a448b5a6fd1abeea33d9"
+}

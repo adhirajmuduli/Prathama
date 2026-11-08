@@ -33,8 +33,12 @@ describe("ApiStatusPanel", () => {
     expect(
       screen.getByRole("heading", { name: "Service status" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("The backend is not answering")).toBeInTheDocument();
-    expect(screen.getByText("The API could not be reached.")).toBeInTheDocument();
+    expect(
+      screen.getByText("The backend is not answering"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("The API could not be reached."),
+    ).toBeInTheDocument();
   });
 
   it("shows the live contract versions of a ready backend", () => {

@@ -98,3 +98,10 @@ class RunRepository:
         row.finished_at = utc_now()
         await self._session.flush()
         return row
+
+    async def attach_job(self, run_id: str, job_id: str) -> RunRow:
+        """Record which job executes this run."""
+        row = await self.require(run_id)
+        row.job_id = job_id
+        await self._session.flush()
+        return row

@@ -10,6 +10,7 @@ import { useMemo, useState } from "react";
 import type { z } from "zod";
 
 import { StatusBanner } from "../status-banner";
+import { ExportPanel } from "./export-panel";
 import {
   createAnalysis,
   createAnimation,
@@ -45,15 +46,21 @@ export interface AnalysisPanelProps {
 
 export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
   const client = useMemo(
-    () => (publicApiBaseUrl === null ? null : createApiClient({ baseUrl: publicApiBaseUrl })),
+    () =>
+      publicApiBaseUrl === null
+        ? null
+        : createApiClient({ baseUrl: publicApiBaseUrl }),
     [],
   );
   const [selectedMethods, setSelectedMethods] = useState<
     z.infer<typeof spatialMethodSchema>[]
   >(["idw"]);
   const [resolution, setResolution] = useState("5000");
-  const [validation, setValidation] = useState<Recipe["spatial"]["validation"]>("leave_one_station_out");
-  const [selectionRule, setSelectionRule] = useState<Recipe["spatial"]["selection_rule"]>("best_rmse");
+  const [validation, setValidation] = useState<Recipe["spatial"]["validation"]>(
+    "leave_one_station_out",
+  );
+  const [selectionRule, setSelectionRule] =
+    useState<Recipe["spatial"]["selection_rule"]>("best_rmse");
   const [computeTemporal, setComputeTemporal] = useState(true);
   const [fps, setFps] = useState(2);
   const [busy, setBusy] = useState<string | null>(null);
@@ -115,9 +122,14 @@ export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
           : null,
       } satisfies Recipe);
       const created = await createAnalysis(client, recipe);
-      const finishedJob = await pollJobUntilTerminal(client, created.job_id, setJob, {
-        timeoutMs: 10 * 60_000,
-      });
+      const finishedJob = await pollJobUntilTerminal(
+        client,
+        created.job_id,
+        setJob,
+        {
+          timeoutMs: 10 * 60_000,
+        },
+      );
       if (finishedJob.status !== "succeeded") {
         throw new Error(
           finishedJob.error !== null && finishedJob.error !== undefined
@@ -157,9 +169,14 @@ export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
         palette: "viridis",
         fps,
       });
-      const finishedJob = await pollJobUntilTerminal(client, created.job_id, setJob, {
-        timeoutMs: 10 * 60_000,
-      });
+      const finishedJob = await pollJobUntilTerminal(
+        client,
+        created.job_id,
+        setJob,
+        {
+          timeoutMs: 10 * 60_000,
+        },
+      );
       if (finishedJob.status !== "succeeded") {
         throw new Error("The animation job failed.");
       }
@@ -180,9 +197,14 @@ export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <fieldset>
-          <legend className="text-sm font-medium text-slate-700">Spatial methods</legend>
+          <legend className="text-sm font-medium text-slate-700">
+            Spatial methods
+          </legend>
           {METHODS.map((method) => (
-            <label key={method.value} className="mt-1 flex items-center gap-2 text-sm">
+            <label
+              key={method.value}
+              className="mt-1 flex items-center gap-2 text-sm"
+            >
               <input
                 type="checkbox"
                 checked={selectedMethods.includes(method.value)}
@@ -193,7 +215,9 @@ export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
           ))}
         </fieldset>
         <label className="block text-sm">
-          <span className="font-medium text-slate-700">Grid resolution (m per cell)</span>
+          <span className="font-medium text-slate-700">
+            Grid resolution (m per cell)
+          </span>
           <input
             className="mt-1 w-full rounded border border-slate-300 px-2 py-1"
             value={resolution}
@@ -207,7 +231,9 @@ export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
             className="mt-1 w-full rounded border border-slate-300 px-2 py-1"
             value={validation}
             onChange={(event) =>
-              setValidation(event.target.value as Recipe["spatial"]["validation"])
+              setValidation(
+                event.target.value as Recipe["spatial"]["validation"],
+              )
             }
           >
             <option value="leave_one_station_out">Leave one station out</option>
@@ -221,7 +247,9 @@ export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
             className="mt-1 w-full rounded border border-slate-300 px-2 py-1"
             value={selectionRule}
             onChange={(event) =>
-              setSelectionRule(event.target.value as Recipe["spatial"]["selection_rule"])
+              setSelectionRule(
+                event.target.value as Recipe["spatial"]["selection_rule"],
+              )
             }
           >
             <option value="best_rmse">Best RMSE (recorded)</option>
@@ -234,7 +262,9 @@ export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
             checked={computeTemporal}
             onChange={(event) => setComputeTemporal(event.target.checked)}
           />
-          <span className="font-medium text-slate-700">Also compute temporal series</span>
+          <span className="font-medium text-slate-700">
+            Also compute temporal series
+          </span>
         </label>
         <label className="block text-sm">
           <span className="font-medium text-slate-700">Animation fps</span>
@@ -269,26 +299,44 @@ export function AnalysisPanel({ datasetVersionId }: AnalysisPanelProps) {
       </div>
 
       {error !== null ? (
-        <StatusBanner tone="danger" title="The request failed" description={error} />
+        <StatusBanner
+          tone="danger"
+          title="The request failed"
+          description={error}
+        />
       ) : null}
 
       {job !== null ? (
         <p className="text-xs text-slate-500">
           Job {job.status}
-          {job.stage !== null && job.stage !== undefined ? ` — ${job.stage}` : ""} —{" "}
-          {(job.progress * 100).toFixed(0)}%
+          {job.stage !== null && job.stage !== undefined
+            ? ` — ${job.stage}`
+            : ""}{" "}
+          — {(job.progress * 100).toFixed(0)}%
         </p>
       ) : null}
 
       {run !== null ? (
         <p className="text-xs text-slate-500">
           Run {run.run_id.slice(0, 12)}… — {run.status} — recipe{" "}
-          {run.recipe_hash.slice(0, 12)}… — dataset {run.dataset_sha256.slice(0, 12)}… — boundary{" "}
-          {(run.boundary_sha256 ?? "").slice(0, 12)}… — created {formatTimestamp(run.created_at)}
+          {run.recipe_hash.slice(0, 12)}… — dataset{" "}
+          {run.dataset_sha256.slice(0, 12)}… — boundary{" "}
+          {(run.boundary_sha256 ?? "").slice(0, 12)}… — created{" "}
+          {formatTimestamp(run.created_at)}
         </p>
       ) : null}
 
-      {results !== null ? <ResultsView results={results} artifacts={artifacts} videoArtifactId={videoArtifactId} /> : null}
+      {results !== null ? (
+        <ResultsView
+          results={results}
+          artifacts={artifacts}
+          videoArtifactId={videoArtifactId}
+        />
+      ) : null}
+
+      {run !== null && run.status === "succeeded" ? (
+        <ExportPanel runId={run.run_id} />
+      ) : null}
     </div>
   );
 }
@@ -322,13 +370,17 @@ function ResultsView({
   const pngByKey = new Map(
     artifacts
       .filter((item) => item.content_type === "image/png")
-      .map((item) => [item.media_type_detail["png_key"] ?? item.sha256, item] as const),
+      .map(
+        (item) =>
+          [item.media_type_detail["png_key"] ?? item.sha256, item] as const,
+      ),
   );
   return (
     <div className="space-y-4">
       <p className="text-xs text-slate-500">
-        {results.frames.length} frames · grid {results.grid_cells} cells ({results.masked_cells}{" "}
-        inside the boundary) · boundary {results.boundary_sha256.slice(0, 12)}…
+        {results.frames.length} frames · grid {results.grid_cells} cells (
+        {results.masked_cells} inside the boundary) · boundary{" "}
+        {results.boundary_sha256.slice(0, 12)}…
       </p>
       <div className="overflow-x-auto rounded-lg border border-slate-200">
         <table className="w-full text-xs">
@@ -346,15 +398,30 @@ function ResultsView({
           <tbody>
             {results.frames.flatMap((frame) =>
               frame.methods.map((method) => (
-                <tr key={`${frame.sampled_at}-${method.method}`} className="border-t border-slate-100">
-                  <td className="px-3 py-1 font-mono">{frame.sampled_at.slice(0, 19)}</td>
+                <tr
+                  key={`${frame.sampled_at}-${method.method}`}
+                  className="border-t border-slate-100"
+                >
+                  <td className="px-3 py-1 font-mono">
+                    {frame.sampled_at.slice(0, 19)}
+                  </td>
                   <td className="px-3 py-1">{frame.point_count}</td>
                   <td className="px-3 py-1">{method.method}</td>
-                  <td className="px-3 py-1">{method.rmse === null || method.rmse === undefined ? "—" : method.rmse.toFixed(4)}</td>
-                  <td className="px-3 py-1">{method.mae === null || method.mae === undefined ? "—" : method.mae.toFixed(4)}</td>
+                  <td className="px-3 py-1">
+                    {method.rmse === null || method.rmse === undefined
+                      ? "—"
+                      : method.rmse.toFixed(4)}
+                  </td>
+                  <td className="px-3 py-1">
+                    {method.mae === null || method.mae === undefined
+                      ? "—"
+                      : method.mae.toFixed(4)}
+                  </td>
                   <td className="px-3 py-1">{method.folds}</td>
                   <td className="px-3 py-1">
-                    {frame.decisions.find((decision) => decision.selected === method.method) !== undefined
+                    {frame.decisions.find(
+                      (decision) => decision.selected === method.method,
+                    ) !== undefined
                       ? "yes"
                       : "—"}
                   </td>
@@ -368,12 +435,16 @@ function ResultsView({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {results.frames.slice(0, 6).map((frame) => {
           const method = frame.methods[0];
-          const png = method === undefined ? undefined : pngByKey.get(method.png_key);
+          const png =
+            method === undefined ? undefined : pngByKey.get(method.png_key);
           if (png === undefined || method === undefined) {
             return null;
           }
           return (
-            <figure key={frame.sampled_at} className="rounded-lg border border-slate-200 bg-white p-2">
+            <figure
+              key={frame.sampled_at}
+              className="rounded-lg border border-slate-200 bg-white p-2"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`${publicApiBaseUrl ?? ""}/api/v1/artifacts/${png.artifact_id}/content`}
@@ -381,8 +452,8 @@ function ResultsView({
                 className="w-full rounded"
               />
               <figcaption className="mt-1 text-xs text-slate-600">
-                {frame.parameter_id} · {frame.sampled_at.slice(0, 10)} · {method.method} ·{" "}
-                {formatBytes(png.size_bytes)}
+                {frame.parameter_id} · {frame.sampled_at.slice(0, 10)} ·{" "}
+                {method.method} · {formatBytes(png.size_bytes)}
               </figcaption>
             </figure>
           );
@@ -395,9 +466,11 @@ function ResultsView({
           <ul className="mt-1 space-y-1">
             {results.temporal.series.map((series) => (
               <li key={`${series.station_id}-${series.parameter_id}`}>
-                {series.station_id.slice(0, 10)}… / {series.parameter_id} — {series.observed} observed,{" "}
-                {series.missing} missing, {series.frames} frames
-                {series.trend_slope_per_day !== null && series.trend_slope_per_day !== undefined
+                {series.station_id.slice(0, 10)}… / {series.parameter_id} —{" "}
+                {series.observed} observed, {series.missing} missing,{" "}
+                {series.frames} frames
+                {series.trend_slope_per_day !== null &&
+                series.trend_slope_per_day !== undefined
                   ? ` — trend ${series.trend_slope_per_day.toFixed(4)}/day`
                   : ""}
               </li>
@@ -415,8 +488,9 @@ function ResultsView({
             src={`${publicApiBaseUrl ?? ""}/api/v1/artifacts/${videoArtifactId}/content`}
           />
           <p className="mt-1 text-xs text-slate-500">
-            Frames carry timestamp, parameter, unit, method, and frame-status captions; the MP4 was
-            verified for frame count, fps, duration, and digest by the worker.
+            Frames carry timestamp, parameter, unit, method, and frame-status
+            captions; the MP4 was verified for frame count, fps, duration, and
+            digest by the worker.
           </p>
         </div>
       ) : null}

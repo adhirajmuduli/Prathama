@@ -12,11 +12,18 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { format, resolveConfig } from "prettier";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(scriptDirectory, "..");
 const snapshotPath = resolve(projectRoot, "..", "contracts", "openapi.v1.json");
-const outputPath = resolve(projectRoot, "src", "lib", "contracts", "generated.ts");
+const outputPath = resolve(
+  projectRoot,
+  "src",
+  "lib",
+  "contracts",
+  "generated.ts",
+);
 
 const HTTP_METHODS = ["get", "post", "put", "patch", "delete"];
 
@@ -76,13 +83,17 @@ const lines = [
 ];
 
 for (const [name, schema] of Object.entries(schemas)) {
-  lines.push(
-    `export type ${toTypeName(name)} = ${toTypeScript(schema)};`,
-    "",
-  );
+  lines.push(`export type ${toTypeName(name)} = ${toTypeScript(schema)};`, "");
 }
 
-const generated = lines.join("\n");
+// Format with the project's own Prettier config so `pnpm run format:check`
+// and this script's `--check` agree on the exact bytes of the output.
+const prettierConfig = await resolveConfig(outputPath);
+const generated = await format(lines.join("\n"), {
+  ...prettierConfig,
+  parser: "typescript",
+  filepath: outputPath,
+});
 
 if (process.argv.includes("--check")) {
   const current = await readFile(outputPath, "utf8").catch(() => "");
@@ -134,8 +145,12 @@ function toTypeScript(schema) {
   }
   if (schema.type === "array") {
     const inner = toTypeScript(schema.items);
-    const unwrapped = inner.startsWith("readonly ") ? inner.slice("readonly ".length) : inner;
-    const elementType = unwrapped.includes(" | ") ? `(${unwrapped})` : unwrapped;
+    const unwrapped = inner.startsWith("readonly ")
+      ? inner.slice("readonly ".length)
+      : inner;
+    const elementType = unwrapped.includes(" | ")
+      ? `(${unwrapped})`
+      : unwrapped;
     return `readonly ${elementType}[]`;
   }
   if (schema.type === "object" || schema.properties !== undefined) {

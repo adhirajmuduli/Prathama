@@ -9,7 +9,9 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   workers: 1,
-  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : [["list"]],
+  reporter: process.env.CI
+    ? [["github"], ["html", { open: "never" }]]
+    : [["list"]],
   use: {
     baseURL,
     trace: "on-first-retry",
@@ -23,7 +25,8 @@ export default defineConfig({
   webServer: [
     {
       name: "backend",
-      command: "..\\backend\\.venv\\Scripts\\trendsmapp.exe dev --host 127.0.0.1 --port 8000",
+      command:
+        "..\\backend\\.venv\\Scripts\\trendsmapp.exe dev --host 127.0.0.1 --port 8000",
       cwd: "../backend",
       url: `${apiURL}/api/v1/health/live`,
       // Always start a fresh backend: a reused one may hold a stale database.
@@ -33,7 +36,8 @@ export default defineConfig({
         TRENDSMAPP_ENVIRONMENT: "development",
         TRENDSMAPP_DATABASE_URL: "sqlite+aiosqlite:///./e2e.db",
         TRENDSMAPP_LOCAL_STORAGE_ROOT: "./var/e2e-objects",
-        TRENDSMAPP_CORS_ALLOW_ORIGINS: '["http://127.0.0.1:3000","http://localhost:3000"]',
+        TRENDSMAPP_CORS_ALLOW_ORIGINS:
+          '["http://127.0.0.1:3000","http://localhost:3000"]',
         TRENDSMAPP_LOG_LEVEL: "warning",
       },
     },
@@ -47,6 +51,8 @@ export default defineConfig({
         NEXT_PUBLIC_API_BASE_URL: apiURL,
         NEXT_PUBLIC_SITE_URL: baseURL,
         BACKEND_API_ORIGIN: apiURL,
+        // Cloudflare's always-pass test site key for the E2E contact form.
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
       },
     },
   ],

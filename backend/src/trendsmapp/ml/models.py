@@ -8,8 +8,8 @@ which library produced the model.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Final, Protocol
+from dataclasses import dataclass, field
+from typing import Any, Final, Protocol, cast
 
 import numpy as np
 
@@ -38,7 +38,7 @@ class TrainableModel(Protocol):
 
     def fit(self, x: np.ndarray, y: np.ndarray, groups: list[str] | None = None) -> None: ...
 
-    def predict(self, x: np.ndarray) -> np.ndarray: ...
+    def predict(self, x: np.ndarray, groups: list[str] | None = None) -> np.ndarray: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,12 +46,8 @@ class ModelSpec:
     """One candidate model with its hyperparameters and seed."""
 
     family: ModelFamily
-    params: dict[str, Any] = None  # type: ignore[assignment]
+    params: dict[str, Any] = field(default_factory=dict)
     seed: int = 0
-
-    def __post_init__(self) -> None:
-        if self.params is None:
-            object.__setattr__(self, "params", {})
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +76,15 @@ class _SklearnAdapter:
 
     def __init__(self, estimator: Any) -> None:
         self._estimator = estimator
+
+    @property
+    def estimator(self) -> Any:
+        """Return the wrapped estimator.
+
+        Explainers such as SHAP need the fitted estimator itself, not the
+        adapter, so this accessor is part of the adapter's contract.
+        """
+        return self._estimator
 
     def fit(self, x: np.ndarray, y: np.ndarray, groups: list[str] | None = None) -> None:
         """Fit the estimator, ignoring groups."""
@@ -150,7 +155,11 @@ def _build_registry() -> dict[ModelFamily, ModelEntry]:
     )
     registry[ModelFamily.ELASTIC_NET] = _entry(
         ModelFamily.ELASTIC_NET,
-        lambda spec: _SklearnAdapter(_sklearn_factory(ElasticNet, spec.seed, spec.params)),
+        # Coordinate descent needs headroom to converge on standardized
+        # features; the default 1000 iterations warns on small folds.
+        lambda spec: _SklearnAdapter(
+            _sklearn_factory(ElasticNet, spec.seed, {"max_iter": 10_000, **spec.params})
+        ),
         supports_shap_tree=False,
         description="scikit-learn ElasticNet.",
     )
@@ -231,4 +240,4 @@ def make_model(spec: ModelSpec) -> TrainableModel:
             f"The model family '{spec.family.value}' is not implemented.",
             details={"implemented": sorted(f.value for f in MODEL_REGISTRY)},
         )
-    return entry.factory(spec)
+    return cast(TrainableModel, entry.factory(spec))

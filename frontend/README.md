@@ -25,12 +25,12 @@ pnpm run generate:api-types      # regenerate the contract types
 
 Copy `.env.example` to `.env.local` and adjust the values.
 
-| Variable | Scope | Purpose |
-| --- | --- | --- |
-| `BACKEND_API_ORIGIN` | server | Origin of the scientific API used for server-side rendering |
-| `NEXT_PUBLIC_API_BASE_URL` | browser | Origin of the public API used for browser refreshes; empty disables them |
-| `NEXT_PUBLIC_SITE_URL` | browser | Public origin of this site, used for the sitemap and the canonical URL |
-| `TRENDSMAPP_API_TIMEOUT_MS` | server | Timeout of a server-side API call |
+| Variable                    | Scope   | Purpose                                                                  |
+| --------------------------- | ------- | ------------------------------------------------------------------------ |
+| `BACKEND_API_ORIGIN`        | server  | Origin of the scientific API used for server-side rendering              |
+| `NEXT_PUBLIC_API_BASE_URL`  | browser | Origin of the public API used for browser refreshes; empty disables them |
+| `NEXT_PUBLIC_SITE_URL`      | browser | Public origin of this site, used for the sitemap and the canonical URL   |
+| `TRENDSMAPP_API_TIMEOUT_MS` | server  | Timeout of a server-side API call                                        |
 
 No secret is ever exposed to the browser. The server-only environment module is
 import-protected: the ESLint import boundary rejects any import of
@@ -38,17 +38,17 @@ import-protected: the ESLint import boundary rejects any import of
 
 ## Structure
 
-| Path | Responsibility |
-| --- | --- |
-| `src/app/` | Routes, layouts, error boundaries, robots, and sitemap |
-| `src/components/` | Presentational components and the live status panel |
-| `src/lib/api/` | Typed fetch client, typed errors, status reader |
-| `src/lib/contracts/` | Generated contract types and the hand-written runtime schemas |
-| `src/lib/env/` | Server-only and public environment validation |
-| `src/providers/` | React Query provider |
+| Path                             | Responsibility                                                  |
+| -------------------------------- | --------------------------------------------------------------- |
+| `src/app/`                       | Routes, layouts, error boundaries, robots, and sitemap          |
+| `src/components/`                | Presentational components and the live status panel             |
+| `src/lib/api/`                   | Typed fetch client, typed errors, status reader                 |
+| `src/lib/contracts/`             | Generated contract types and the hand-written runtime schemas   |
+| `src/lib/env/`                   | Server-only and public environment validation                   |
+| `src/providers/`                 | React Query provider                                            |
 | `scripts/generate-api-types.mjs` | Regenerates the contract types from `contracts/openapi.v1.json` |
-| `tests/` | Vitest unit and component tests |
-| `tests/e2e/` | Playwright end-to-end tests |
+| `tests/`                         | Vitest unit and component tests                                 |
+| `tests/e2e/`                     | Playwright end-to-end tests                                     |
 
 ## Contract types
 

@@ -9,7 +9,8 @@
 import { z } from "zod";
 
 const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
-const idSchema = (prefix: string) => z.string().regex(new RegExp(`^${prefix}_[0-9a-f]{32}$`));
+const idSchema = (prefix: string) =>
+  z.string().regex(new RegExp(`^${prefix}_[0-9a-f]{32}$`));
 
 export const uploadIdSchema = idSchema("upl");
 export const datasetIdSchema = idSchema("ds");
@@ -51,10 +52,22 @@ export const columnMappingSchema = z.object({
   default_parameter: z.string().min(1).nullish(),
   default_unit: z.string().min(1).nullish(),
   source_crs: z.string().min(1).nullish(),
-  date_order: z.enum(["day_first", "month_first", "year_first"]).default("day_first"),
-  timezone_policy: z.enum(["assume_utc", "require_offset", "named"]).default("assume_utc"),
+  date_order: z
+    .enum(["day_first", "month_first", "year_first"])
+    .default("day_first"),
+  timezone_policy: z
+    .enum(["assume_utc", "require_offset", "named"])
+    .default("assume_utc"),
   timezone_name: z.string().min(1).nullish(),
-  duplicate_policy: z.enum(["flag_all", "keep_first", "keep_last", "keep_most_complete", "error"]).default("flag_all"),
+  duplicate_policy: z
+    .enum([
+      "flag_all",
+      "keep_first",
+      "keep_last",
+      "keep_most_complete",
+      "error",
+    ])
+    .default("flag_all"),
 });
 
 export type ColumnMapping = z.infer<typeof columnMappingSchema>;
@@ -269,6 +282,6 @@ export const provenanceListSchema = z.object({
       occurred_at: z.string(),
       parent_artifact_ids: z.array(z.string()),
       transformations: z.array(z.string()),
-    })
+    }),
   ),
 });

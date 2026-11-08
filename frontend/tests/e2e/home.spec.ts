@@ -12,7 +12,9 @@ test("the overview renders the service status panel", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("the navigation reaches the methods and privacy pages", async ({ page }) => {
+test("the navigation reaches the methods and privacy pages", async ({
+  page,
+}) => {
   await page.goto("/");
 
   await page.getByRole("link", { name: "Methods" }).click();

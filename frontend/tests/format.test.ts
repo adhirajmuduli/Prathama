@@ -32,7 +32,9 @@ describe("formatTimestamp", () => {
   });
 
   it("renders a parsable timestamp", () => {
-    expect(formatTimestamp("2026-10-27T09:30:00Z")).toBe("2026-10-27 09:30:00 UTC");
+    expect(formatTimestamp("2026-10-27T09:30:00Z")).toBe(
+      "2026-10-27 09:30:00 UTC",
+    );
   });
 });
 

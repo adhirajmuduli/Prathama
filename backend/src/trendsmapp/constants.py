@@ -22,6 +22,7 @@ __all__ = [
     "MAX_ANIMATION_FRAMES",
     "MAX_CANDIDATE_MODELS",
     "MAX_DECOMPRESSION_RATIO",
+    "MAX_EXPORT_BUNDLE_BYTES",
     "MAX_FILE_SIZE_BYTES",
     "MAX_INGESTED_COLUMNS",
     "MAX_INGESTED_ROWS",
@@ -104,6 +105,10 @@ GRID_CELL_LIMITS: Final[tuple[int, int]] = (1_000, 250_000)
 MAX_CANDIDATE_MODELS: Final[int] = 8
 MAX_SEARCH_TRIALS_PER_MODEL: Final[int] = 40
 MAX_SHAP_ROWS: Final[int] = 2_000
+
+#: Hard ceiling for one export bundle. A run whose artifacts exceed this is
+#: rejected with a structured error, never silently truncated.
+MAX_EXPORT_BUNDLE_BYTES: Final[int] = 512 * 1024 * 1024
 
 #: Analysis CRS default: UTM 44N, which covers the Chilika Lagoon basin.
 DEFAULT_ANALYSIS_CRS: Final[str] = "EPSG:32644"

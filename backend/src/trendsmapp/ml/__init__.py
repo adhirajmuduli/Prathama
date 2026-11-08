@@ -19,13 +19,25 @@ from trendsmapp.ml.models import (
     make_model,
     validate_models,
 )
+from trendsmapp.ml.pipeline import (
+    LAG_POLICIES,
+    MIN_FRAME_ROWS,
+    FeatureFrame,
+    MLRunResult,
+    build_feature_frame,
+    run_ml_task,
+)
 from trendsmapp.ml.preprocessing import build_preprocessor
 from trendsmapp.ml.splits import Fold, FrameTable, generate_splits
 
 __all__ = [
+    "LAG_POLICIES",
+    "MIN_FRAME_ROWS",
     "MODEL_REGISTRY",
+    "FeatureFrame",
     "Fold",
     "FrameTable",
+    "MLRunResult",
     "MeanBaseline",
     "MedianBaseline",
     "ModelCapability",
@@ -35,9 +47,11 @@ __all__ = [
     "SeasonalClimatology",
     "StationClimatology",
     "TrainableModel",
+    "build_feature_frame",
     "build_preprocessor",
     "capability_for",
     "generate_splits",
     "make_model",
+    "run_ml_task",
     "validate_models",
 ]

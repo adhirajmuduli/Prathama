@@ -13,7 +13,11 @@ import Link from "next/link";
 import { MappingForm } from "../../components/upload/mapping-form";
 import { StatusBanner } from "../../components/status-banner";
 import { createApiClient } from "../../lib/api/client";
-import { uploadFile, type UploadProgress, type UploadResult } from "../../lib/api/uploader";
+import {
+  uploadFile,
+  type UploadProgress,
+  type UploadResult,
+} from "../../lib/api/uploader";
 import { publicApiBaseUrl } from "../../lib/env/client";
 import {
   createDatasetResponseSchema,
@@ -26,13 +30,24 @@ import {
 } from "../../lib/contracts/ingest";
 import { formatBytes } from "../../lib/format";
 
-type Step = "idle" | "uploading" | "probing" | "mapping" | "creating" | "running" | "done" | "failed";
+type Step =
+  | "idle"
+  | "uploading"
+  | "probing"
+  | "mapping"
+  | "creating"
+  | "running"
+  | "done"
+  | "failed";
 
 const TERMINAL_JOB_STATES = new Set(["succeeded", "failed", "cancelled"]);
 
 export default function UploadPage() {
   const client = useMemo(
-    () => (publicApiBaseUrl === null ? null : createApiClient({ baseUrl: publicApiBaseUrl })),
+    () =>
+      publicApiBaseUrl === null
+        ? null
+        : createApiClient({ baseUrl: publicApiBaseUrl }),
     [],
   );
   const [step, setStep] = useState<Step>("idle");
@@ -49,7 +64,9 @@ export default function UploadPage() {
   const startUpload = useCallback(
     async (file: File) => {
       if (client === null) {
-        setError("The public API origin is not configured, so uploads are disabled.");
+        setError(
+          "The public API origin is not configured, so uploads are disabled.",
+        );
         return;
       }
       setStep("uploading");
@@ -70,7 +87,9 @@ export default function UploadPage() {
         setProbe(probeResponse);
         setStep("mapping");
       } catch (caught) {
-        setError(caught instanceof Error ? caught.message : "The upload failed.");
+        setError(
+          caught instanceof Error ? caught.message : "The upload failed.",
+        );
         setStep("failed");
       }
     },
@@ -100,7 +119,11 @@ export default function UploadPage() {
         await pollJob(client, created.job_id, setJob);
         setStep("done");
       } catch (caught) {
-        setError(caught instanceof Error ? caught.message : "Creating the dataset failed.");
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Creating the dataset failed.",
+        );
         setStep("failed");
       }
     },
@@ -117,7 +140,9 @@ export default function UploadPage() {
   if (client === null) {
     return (
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Upload a dataset</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          Upload a dataset
+        </h1>
         <StatusBanner
           tone="warning"
           title="Uploads are not available"
@@ -130,11 +155,13 @@ export default function UploadPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Upload a dataset</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          Upload a dataset
+        </h1>
         <p className="max-w-3xl text-sm leading-6 text-slate-700">
-          Choose a CSV, TSV, XLSX, or Parquet file. It is uploaded in verified chunks, probed,
-          and then you confirm the column mapping before the dataset version is created and
-          sealed by the worker.
+          Choose a CSV, TSV, XLSX, or Parquet file. It is uploaded in verified
+          chunks, probed, and then you confirm the column mapping before the
+          dataset version is created and sealed by the worker.
         </p>
       </header>
 
@@ -148,7 +175,11 @@ export default function UploadPage() {
             className="block w-full max-w-xl text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-800"
           />
           {step === "failed" && error !== null ? (
-            <StatusBanner tone="danger" title="The upload failed" description={error} />
+            <StatusBanner
+              tone="danger"
+              title="The upload failed"
+              description={error}
+            />
           ) : null}
         </section>
       ) : null}
@@ -185,8 +216,11 @@ export default function UploadPage() {
             tone="info"
             title={`Detected ${probe.file_format} layout '${probe.layout}' with ${probe.fields.length} columns`}
             description={
-              probe.layout_warnings.length > 0 || probe.proposal_warnings.length > 0
-                ? [...probe.layout_warnings, ...probe.proposal_warnings].join(" ")
+              probe.layout_warnings.length > 0 ||
+              probe.proposal_warnings.length > 0
+                ? [...probe.layout_warnings, ...probe.proposal_warnings].join(
+                    " ",
+                  )
                 : "The proposed mapping follows the detected header names; confirm or correct every role."
             }
           />
@@ -201,7 +235,11 @@ export default function UploadPage() {
       ) : null}
 
       {step === "creating" ? (
-        <StatusBanner tone="info" title="Creating the dataset" description="Validating the mapping and enqueueing the ingest job." />
+        <StatusBanner
+          tone="info"
+          title="Creating the dataset"
+          description="Validating the mapping and enqueueing the ingest job."
+        />
       ) : null}
 
       {step === "running" && job !== null ? (
@@ -216,7 +254,11 @@ export default function UploadPage() {
         <section className="space-y-3">
           <StatusBanner
             tone={job?.status === "succeeded" ? "info" : "warning"}
-            title={job?.status === "succeeded" ? "Dataset version sealed" : `Job ended as ${job?.status ?? "unknown"}`}
+            title={
+              job?.status === "succeeded"
+                ? "Dataset version sealed"
+                : `Job ended as ${job?.status ?? "unknown"}`
+            }
             description={
               job?.status === "succeeded"
                 ? "The ingest job succeeded and the version is sealed and immutable."
@@ -236,8 +278,9 @@ export default function UploadPage() {
 
       {completion !== null && step !== "idle" ? (
         <p className="text-xs text-slate-500">
-          Raw artifact {completion.artifact.sha256.slice(0, 16)}… ({formatBytes(completion.artifact.size_bytes)}),
-          immutable and content-addressed.
+          Raw artifact {completion.artifact.sha256.slice(0, 16)}… (
+          {formatBytes(completion.artifact.size_bytes)}), immutable and
+          content-addressed.
         </p>
       ) : null}
     </div>

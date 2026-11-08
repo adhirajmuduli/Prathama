@@ -25,11 +25,24 @@ from trendsmapp.contracts.compatibility import (
     negotiate_api_major,
     negotiate_recipe_schema_version,
 )
+from trendsmapp.contracts.exports import (
+    CreateExportRequest,
+    CreateExportResponse,
+    ExportId,
+    ExportResponse,
+)
 from trendsmapp.contracts.migrations import (
     ARTIFACT_SCHEMA_MIGRATIONS,
     Migration,
     MigrationRegistry,
     migrate_artifact_document,
+)
+from trendsmapp.contracts.models import CreateModelRunResponse, ModelRunResponse
+from trendsmapp.contracts.tasks import (
+    TASK_SCHEMA_VERSION,
+    MLTask,
+    task_hash,
+    validate_task_splits,
 )
 from trendsmapp.contracts.versions import (
     API_MAJOR_VERSION,
@@ -50,17 +63,25 @@ __all__ = [
     "SUPPORTED_API_MAJOR_VERSIONS",
     "SUPPORTED_ARTIFACT_SCHEMA_VERSIONS",
     "SUPPORTED_RECIPE_SCHEMA_VERSIONS",
+    "TASK_SCHEMA_VERSION",
     "ApiError",
     "ArtifactRef",
     "ArtifactRefKind",
     "ArtifactSchemaMigrations",
+    "CreateExportRequest",
+    "CreateExportResponse",
+    "CreateModelRunResponse",
     "DatasetId",
     "DatasetVersionId",
     "ErrorCode",
     "ErrorEnvelope",
+    "ExportId",
+    "ExportResponse",
     "JobId",
+    "MLTask",
     "Migration",
     "MigrationRegistry",
+    "ModelRunResponse",
     "ObservationId",
     "PageMeta",
     "ParameterId",
@@ -77,4 +98,6 @@ __all__ = [
     "migrate_artifact_document",
     "negotiate_api_major",
     "negotiate_recipe_schema_version",
+    "task_hash",
+    "validate_task_splits",
 ]

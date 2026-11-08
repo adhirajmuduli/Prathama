@@ -1,0 +1,46 @@
+name: reproducibility
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: "17 5 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reproducibility-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "true"
+  UV_VERSION: "0.13.5"
+
+jobs:
+  deterministic-outputs:
+    name: bundles and manifests are byte-deterministic
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: install dependencies
+        run: uv sync --frozen --all-groups
+      - name: reporting and bundle determinism tests
+        run: uv run pytest -q --no-header -p no:cacheprovider tests/test_reporting.py
+      - name: export bundles verify and reproduce
+        run: >
+          uv run pytest -q --no-header -p no:cacheprovider
+          tests/test_api_exports.py tests/test_reproduce_run.py

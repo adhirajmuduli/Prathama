@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Final, Sequence
+from collections.abc import Sequence
+from typing import Any, Final
 
 import numpy as np
 
@@ -26,7 +27,13 @@ def regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, floa
     if len(y_true) != len(y_pred):
         raise ValueError("y_true and y_pred must align.")
     if len(y_true) == 0:
-        return {"mae": float("nan"), "rmse": float("nan"), "bias": float("nan"), "r2": float("nan"), "n": 0.0}
+        return {
+            "mae": float("nan"),
+            "rmse": float("nan"),
+            "bias": float("nan"),
+            "r2": float("nan"),
+            "n": 0.0,
+        }
     errors = y_pred - y_true
     mae = float(np.mean(np.abs(errors)))
     rmse = float(np.sqrt(np.mean(errors**2)))

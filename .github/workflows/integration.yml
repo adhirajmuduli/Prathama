@@ -1,0 +1,106 @@
+name: integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "true"
+  UV_VERSION: "0.13.5"
+
+jobs:
+  postgres:
+    name: backend against PostgreSQL and S3-compatible storage
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: trendsmapp
+          POSTGRES_PASSWORD: trendsmapp
+          POSTGRES_DB: trendsmapp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U trendsmapp -d trendsmapp"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: trendsmapp
+          MINIO_ROOT_PASSWORD: trendsmapp-secret
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "mc ready local"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      TRENDSMAPP_ENVIRONMENT: development
+      TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://trendsmapp:trendsmapp@localhost:5432/trendsmapp
+      TRENDSMAPP_OBJECT_STORE_BACKEND: s3
+      TRENDSMAPP_S3_BUCKET: trendsmapp
+      TRENDSMAPP_S3_ENDPOINT_URL: http://localhost:9000
+      TRENDSMAPP_S3_REGION: us-east-1
+      TRENDSMAPP_S3_ACCESS_KEY_ID: trendsmapp
+      TRENDSMAPP_S3_SECRET_ACCESS_KEY: trendsmapp-secret
+      TRENDSMAPP_S3_FORCE_PATH_STYLE: "true"
+      TRENDSMAPP_CORS_ALLOW_ORIGINS: '["http://localhost:3000"]'
+      TRENDSMAPP_TRUSTED_HOSTS: '["localhost","127.0.0.1","testserver"]'
+      TRENDSMAPP_LOG_LEVEL: warning
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: install dependencies
+        run: uv sync --frozen --all-groups
+      - name: create the object-store bucket
+        run: |
+          docker run --network host minio/mc:latest \
+            sh -c "mc alias set local http://localhost:9000 trendsmapp trendsmapp-secret && mc mb --ignore-existing local/trendsmapp"
+      - name: apply migrations
+        run: uv run alembic upgrade head
+      - name: migration rolls back one revision and reapplies
+        run: |
+          uv run alembic downgrade -1
+          uv run alembic upgrade head
+      - name: run the full backend suite against PostgreSQL and S3
+        run: uv run pytest -q --no-header -p no:cacheprovider
+      - name: API and worker start against the services
+        run: |
+          uv run python -c "
+          import asyncio
+          from trendsmapp.settings import get_settings
+          from trendsmapp.persistence.database import create_engine_for_settings
+          from trendsmapp.storage.factory import create_object_store
+          async def check():
+              settings = get_settings()
+              engine = create_engine_for_settings(settings)
+              store = create_object_store(settings)
+              store.put_bytes('uploads/smoke/probe.bin', b'ok', content_type='application/octet-stream')
+              assert store.get_bytes('uploads/smoke/probe.bin') == b'ok'
+              await engine.dispose()
+          asyncio.run(check())
+          print('storage round-trip against S3-compatible store: ok')
+          "

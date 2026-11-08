@@ -2,9 +2,10 @@ import type { MetadataRoute } from "next";
 
 import { clientEnvironment } from "../lib/env/client";
 
-const siteUrl = clientEnvironment.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl =
+  clientEnvironment.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-const PUBLIC_ROUTES = ["/", "/methods", "/privacy"] as const;
+const PUBLIC_ROUTES = ["/", "/methods", "/contact", "/privacy"] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();

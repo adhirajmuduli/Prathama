@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Final, Sequence
+from typing import Any, Final
 
 import numpy as np
 
@@ -21,7 +21,11 @@ DEFAULT_SEARCH_GRIDS: Final[dict[ModelFamily, dict[str, list[Any]]]] = {
     ModelFamily.RANDOM_FOREST: {"n_estimators": [100, 300], "max_depth": [None, 8, 16]},
     ModelFamily.EXTRA_TREES: {"n_estimators": [100, 300], "max_depth": [None, 8, 16]},
     ModelFamily.HIST_GRADIENT_BOOSTING: {"max_iter": [100, 300], "learning_rate": [0.05, 0.1]},
-    ModelFamily.XGBOOST: {"n_estimators": [100, 300], "max_depth": [4, 6], "learning_rate": [0.05, 0.1]},
+    ModelFamily.XGBOOST: {
+        "n_estimators": [100, 300],
+        "max_depth": [4, 6],
+        "learning_rate": [0.05, 0.1],
+    },
 }
 
 
@@ -60,13 +64,20 @@ def bounded_search(
         return SearchResult(family=family, best_params={}, best_score=float("nan"), evaluations=0)
 
     keys = sorted(grid)
-    combos: list[dict[str, Any]] = [dict()]
+    combos: list[dict[str, Any]] = [{}]
     for key in keys:
         combos = [dict(combo, **{key: value}) for combo in combos for value in grid[key]]
     if len(combos) > budget:
         combos = combos[:budget]
 
-    if inner_strategy in {SplitStrategy.STATION_GROUP, SplitStrategy.LEAVE_YEAR_OUT, SplitStrategy.SECTOR, SplitStrategy.COMBINED, SplitStrategy.SPATIAL_BLOCK, SplitStrategy.ROLLING_ORIGIN}:
+    if inner_strategy in {
+        SplitStrategy.STATION_GROUP,
+        SplitStrategy.LEAVE_YEAR_OUT,
+        SplitStrategy.SECTOR,
+        SplitStrategy.COMBINED,
+        SplitStrategy.SPATIAL_BLOCK,
+        SplitStrategy.ROLLING_ORIGIN,
+    }:
         if years is None or sectors is None or coords_m is None:
             raise ValidationError("Inner split needs years, sectors, and coords.")
         table = FrameTable(
@@ -74,7 +85,7 @@ def bounded_search(
             years=years,
             sectors=sectors,
             coords_m=coords_m,
-            timestamps=[None] * len(groups),  # type: ignore[list-item]
+            timestamps=[None] * len(groups),
         )
         folds = generate_splits(inner_strategy, table, seed=seed)
     else:
@@ -82,7 +93,7 @@ def bounded_search(
 
     best: SearchResult | None = None
     evaluations = 0
-    for combo in combos:
+    for combo_index, combo in enumerate(combos):
         scores: list[float] = []
         for train_idx, test_idx in folds:
             model = make_model(ModelSpec(family=family, params=dict(combo), seed=seed))
@@ -90,9 +101,11 @@ def bounded_search(
             predictions = model.predict(x[test_idx], [groups[i] for i in test_idx])
             scores.append(regression_metrics(y[test_idx], predictions)[primary_metric])
         score = float(np.mean(scores)) if scores else float("nan")
-        evaluations += 1
+        evaluations = combo_index + 1
         if best is None or score < best.best_score:
-            best = SearchResult(family=family, best_params=dict(combo), best_score=score, evaluations=evaluations)
+            best = SearchResult(
+                family=family, best_params=dict(combo), best_score=score, evaluations=evaluations
+            )
     if best is None:
         raise ValidationError("The search budget produced no candidates.")
     return best
@@ -106,5 +119,5 @@ def _minimal_table(groups: list[str]) -> FrameTable:
         years=[2024] * n,
         sectors=["s"] * n,
         coords_m=np.zeros((n, 2)),
-        timestamps=[None] * n,  # type: ignore[list-item]
+        timestamps=[None] * n,
     )

@@ -49,10 +49,23 @@ preview context:
 | `BACKEND_API_ORIGIN` | Origin of the API used for server-side rendering |
 | `NEXT_PUBLIC_API_BASE_URL` | Origin of the API used by browser refreshes; empty disables them |
 | `NEXT_PUBLIC_SITE_URL` | Public origin of the site, used for the sitemap and the canonical URL |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public Cloudflare Turnstile site key for the contact form |
 
 No secret belongs in the frontend. The server-only environment module is
 protected by an ESLint import boundary, so a secret cannot be read by browser
 code by accident.
+
+#### Contact form (server-side only; all optional — the route answers 503 when absent)
+
+| Variable | Purpose |
+| --- | --- |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret for the mandatory server-side siteverify |
+| `UPSTASH_REST_URL`, `UPSTASH_REST_TOKEN` | Upstash Redis REST credentials for rate limiting and idempotency |
+| `RESEND_API_KEY` | Resend API key for transactional delivery |
+| `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL` | Sender and recipient of contact messages |
+| `CONTACT_HASH_SECRET` | HMAC secret for hashing IP/email; defaults to the Turnstile secret |
+| `CONTACT_RATE_LIMIT_WINDOW_MS`, `CONTACT_RATE_LIMIT_IP_PER_WINDOW`, `CONTACT_RATE_LIMIT_EMAIL_PER_WINDOW` | Sliding-window limits (defaults 1 h, 5 per IP, 3 per email) |
+| `CONTACT_IDEMPOTENCY_TTL_SECONDS` | Duplicate-suppression TTL (default 24 h) |
 
 ### Headers and redirects
 

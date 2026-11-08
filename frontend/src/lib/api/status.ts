@@ -53,7 +53,9 @@ export async function readApiStatus(
   const capabilities = readResult<Capabilities>(results[3]);
 
   const problems = results
-    .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+    .filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    )
     .map((result) => describeError(result.reason));
 
   return {
@@ -66,7 +68,9 @@ export async function readApiStatus(
   };
 }
 
-function readResult<T>(result: PromiseSettledResult<unknown> | undefined): T | null {
+function readResult<T>(
+  result: PromiseSettledResult<unknown> | undefined,
+): T | null {
   if (result === undefined || result.status !== "fulfilled") {
     return null;
   }

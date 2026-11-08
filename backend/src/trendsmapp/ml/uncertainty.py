@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Final, Sequence
+from typing import Final
 
 import numpy as np
 
 from trendsmapp.domain.enums import UncertaintyMethod
 from trendsmapp.errors import ValidationError
-from trendsmapp.ml.metrics import regression_metrics
 
-__all__ = ["BOOTSTRAP_REPLICATES", "QUANTILES", "UncertaintyResult", "compute_uncertainty"]
+__all__ = [
+    "BOOTSTRAP_REPLICATES",
+    "QUANTILES",
+    "FitPredict",
+    "UncertaintyResult",
+    "compute_uncertainty",
+]
+
+#: ``fit_predict(x_train, y_train, seed)`` fits on a bootstrap subset and returns
+#: a function mapping feature rows to predictions.
+FitPredict = Callable[[np.ndarray, np.ndarray, int], Callable[[np.ndarray], np.ndarray]]
 
 #: Bootstrap replicates for the ensemble interval.
 BOOTSTRAP_REPLICATES: Final[int] = 20
@@ -34,7 +44,7 @@ class UncertaintyResult:
 def compute_uncertainty(
     method: UncertaintyMethod,
     *,
-    fit_predict,
+    fit_predict: FitPredict,
     x_train: np.ndarray,
     y_train: np.ndarray,
     x_test: np.ndarray,
@@ -54,7 +64,14 @@ def compute_uncertainty(
     raise ValidationError(f"Unknown uncertainty method '{getattr(method, 'value', method)}'.")
 
 
-def _bootstrap_ensemble(fit_predict, x_train, y_train, x_test, y_test, seed: int) -> UncertaintyResult:
+def _bootstrap_ensemble(
+    fit_predict: FitPredict,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    x_test: np.ndarray,
+    y_test: np.ndarray | None,
+    seed: int,
+) -> UncertaintyResult:
     """Percentile interval from a bootstrap ensemble."""
     rng = np.random.default_rng(seed)
     n = len(y_train)
@@ -76,7 +93,14 @@ def _bootstrap_ensemble(fit_predict, x_train, y_train, x_test, y_test, seed: int
     )
 
 
-def _quantile_interval(fit_predict, x_train, y_train, x_test, y_test, seed: int) -> UncertaintyResult:
+def _quantile_interval(
+    fit_predict: FitPredict,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    x_test: np.ndarray,
+    y_test: np.ndarray | None,
+    seed: int,
+) -> UncertaintyResult:
     """Interval from two quantile regressors."""
     from sklearn.ensemble import HistGradientBoostingRegressor
 
@@ -100,9 +124,7 @@ def _quantile_interval(fit_predict, x_train, y_train, x_test, y_test, seed: int)
     )
 
 
-def _coverage(
-    lower: np.ndarray, upper: np.ndarray, y_test: np.ndarray | None
-) -> float | None:
+def _coverage(lower: np.ndarray, upper: np.ndarray, y_test: np.ndarray | None) -> float | None:
     """Return the fraction of test values inside the interval, when known."""
     if y_test is None:
         return None

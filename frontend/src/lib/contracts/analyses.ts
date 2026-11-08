@@ -5,13 +5,19 @@
 import { z } from "zod";
 
 const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
-const idSchema = (prefix: string) => z.string().regex(new RegExp(`^${prefix}_[0-9a-f]{32}$`));
+const idSchema = (prefix: string) =>
+  z.string().regex(new RegExp(`^${prefix}_[0-9a-f]{32}$`));
 
 export const runIdSchema = idSchema("run");
 export const jobIdSchema = idSchema("job");
 export const artifactIdSchema = idSchema("art");
 
-export const spatialMethodSchema = z.enum(["idw", "rbf", "kriging", "gaussian_process"]);
+export const spatialMethodSchema = z.enum([
+  "idw",
+  "rbf",
+  "kriging",
+  "gaussian_process",
+]);
 
 export const recipeSchema = z.object({
   schema_version: z.string().default("1.0.0"),
@@ -19,12 +25,19 @@ export const recipeSchema = z.object({
   seed: z.number().int().min(0).default(0),
   spatial: z.object({
     methods: z
-      .array(z.object({ method: spatialMethodSchema, params: z.record(z.string(), z.unknown()).default({}) }))
+      .array(
+        z.object({
+          method: spatialMethodSchema,
+          params: z.record(z.string(), z.unknown()).default({}),
+        }),
+      )
       .min(1),
     grid_resolution_m: z.number().positive(),
     max_grid_cells: z.number().int().min(1000).max(250_000),
     analysis_crs: z.string().default("EPSG:32644"),
-    validation: z.enum(["leave_one_station_out", "spatial_block", "none"]).default("leave_one_station_out"),
+    validation: z
+      .enum(["leave_one_station_out", "spatial_block", "none"])
+      .default("leave_one_station_out"),
     selection_rule: z.enum(["none", "best_rmse"]).default("none"),
     permitted_qc_statuses: z.array(z.string()).default(["pass", "warning"]),
   }),

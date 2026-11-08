@@ -1,0 +1,29 @@
+# Review ownership for the Trendsmapp rebuild.
+# Every pull request needs review from the owners of the areas it touches.
+
+# Scientific core: spatial/temporal/ML method selection, validation, and QC.
+/backend/src/trendsmapp/spatial/ @scientific-core
+/backend/src/trendsmapp/temporal/ @scientific-core
+/backend/src/trendsmapp/ml/ @scientific-core
+/backend/src/trendsmapp/explainability/ @scientific-core
+/backend/src/trendsmapp/qc/ @scientific-core
+
+# Backend API, worker, persistence, and services.
+/backend/ @backend-team
+
+# Frontend application and features.
+/frontend/ @frontend-team
+
+# Versioned API contract: snapshot, examples, compatibility note, generated types.
+/contracts/ @backend-team @frontend-team
+/frontend/src/lib/contracts/ @backend-team @frontend-team
+
+# Deployment, CI, and release machinery.
+/.github/ @devops-team
+/docker-compose.yml @devops-team
+/backend/Dockerfile @devops-team
+/netlify.toml @devops-team
+/docs/deployment.md @devops-team
+
+# Documentation that states methods or claims.
+/docs/ @scientific-core @backend-team

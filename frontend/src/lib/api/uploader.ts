@@ -149,7 +149,8 @@ async function uploadPartWithRetry(
       return;
     } catch (error) {
       const retryable =
-        error instanceof ApiError && (error.status === 0 || error.status >= 500);
+        error instanceof ApiError &&
+        (error.status === 0 || error.status >= 500);
       if (!retryable || attempt > options.maxRetries) {
         throw error;
       }
@@ -160,9 +161,9 @@ async function uploadPartWithRetry(
 
 async function sha256Hex(buffer: ArrayBuffer): Promise<string> {
   const digest = await globalThis.crypto.subtle.digest("SHA-256", buffer);
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
-  );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 function delay(ms: number, signal?: AbortSignal): Promise<void> {
@@ -182,7 +183,9 @@ function requestOptions(parts: {
 }): ApiRequestOptions {
   return {
     ...(parts.signal !== undefined ? { signal: parts.signal } : {}),
-    ...(parts.idempotencyKey !== undefined ? { idempotencyKey: parts.idempotencyKey } : {}),
+    ...(parts.idempotencyKey !== undefined
+      ? { idempotencyKey: parts.idempotencyKey }
+      : {}),
   };
 }
 

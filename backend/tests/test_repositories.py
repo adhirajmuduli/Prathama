@@ -296,6 +296,42 @@ async def test_artifact_registration_is_idempotent_by_digest(
         await session.commit()
 
 
+async def test_artifact_ownership_links_survive_identical_bytes(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Two runs registering the same digest each list the artifact as their own."""
+    async with session_factory() as session:
+        repository = ArtifactRepository(session)
+        first_run = new_run_id()
+        second_run = new_run_id()
+        first = await repository.register(
+            artifact_id=new_artifact_id(),
+            kind="raster",
+            sha256="7" * 64,
+            size_bytes=10,
+            content_type="image/png",
+            storage_key=f"runs/77/{'7' * 64}/frame.png",
+            schema_version="1.0.0",
+            run_id=first_run,
+        )
+        again = await repository.register(
+            artifact_id=new_artifact_id(),
+            kind="raster",
+            sha256="7" * 64,
+            size_bytes=10,
+            content_type="image/png",
+            storage_key=f"runs/77/{'7' * 64}/frame.png",
+            schema_version="1.0.0",
+            run_id=second_run,
+        )
+        # The content-addressed row is shared…
+        assert again.id == first.id
+        # …but both runs own a link to it.
+        assert [row.id for row in await repository.list_for_run(first_run)] == [first.id]
+        assert [row.id for row in await repository.list_for_run(second_run)] == [first.id]
+        await session.commit()
+
+
 async def test_registry_repository_stores_stations_parameters_and_rules(
     session_factory: async_sessionmaker[AsyncSession],
 ) -> None:

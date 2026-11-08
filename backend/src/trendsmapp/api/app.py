@@ -26,8 +26,10 @@ from trendsmapp.api.routers import (
     analyses,
     capabilities,
     datasets,
+    exports,
     health,
     jobs,
+    models,
     uploads,
 )
 from trendsmapp.logging_config import configure_logging, get_logger
@@ -117,4 +119,6 @@ def create_app(*, settings: Settings | None = None) -> FastAPI:
     application.include_router(jobs.router)
     application.include_router(datasets.router)
     application.include_router(analyses.router)
+    application.include_router(models.router)
+    application.include_router(exports.router)
     return application

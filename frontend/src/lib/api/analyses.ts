@@ -23,7 +23,11 @@ export async function createAnalysis(
   client: ApiClient,
   recipe: Recipe,
 ): Promise<z.infer<typeof createAnalysisResponseSchema>> {
-  return client.postJson("/api/v1/analyses", recipe, createAnalysisResponseSchema);
+  return client.postJson(
+    "/api/v1/analyses",
+    recipe,
+    createAnalysisResponseSchema,
+  );
 }
 
 export async function getRun(client: ApiClient, runId: string): Promise<Run> {
@@ -34,7 +38,10 @@ export async function getAnalysisResults(
   client: ApiClient,
   runId: string,
 ): Promise<AnalysisResults> {
-  return client.getJson(`/api/v1/analyses/${runId}/results`, analysisResultsSchema);
+  return client.getJson(
+    `/api/v1/analyses/${runId}/results`,
+    analysisResultsSchema,
+  );
 }
 
 export async function listRunArtifacts(client: ApiClient, runId: string) {
@@ -73,7 +80,11 @@ export async function pollJobUntilTerminal(
   for (;;) {
     const job = await getJob(client, jobId);
     onUpdate(job);
-    if (job.status === "succeeded" || job.status === "failed" || job.status === "cancelled") {
+    if (
+      job.status === "succeeded" ||
+      job.status === "failed" ||
+      job.status === "cancelled"
+    ) {
       return job;
     }
     if (Date.now() > deadline) {

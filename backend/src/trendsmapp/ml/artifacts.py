@@ -7,7 +7,7 @@ import json
 import platform
 from typing import Any, Final
 
-import joblib
+import joblib  # type: ignore[import-untyped]
 import numpy as np
 
 from trendsmapp.contracts.versions import APPLICATION_VERSION, ARTIFACT_SCHEMA_VERSION
@@ -28,7 +28,7 @@ def model_environment() -> dict[str, str]:
         "python": platform.python_version(),
         "platform": platform.platform(),
         "scikit_learn": sklearn.__version__,
-    "xgboost": xgboost.__version__,
+        "xgboost": xgboost.__version__,
         "numpy": np.__version__,
         "application_version": APPLICATION_VERSION,
     }
@@ -67,7 +67,7 @@ def load_model(container: bytes) -> tuple[Any, Any, dict[str, Any]]:
 
     Returns ``(model, preprocessor, metadata)``. Raises when the schema version
     is unsupported or the payload digest does not match the metadata.
- """
+    """
     import hashlib
 
     newline = container.index(b"\n")

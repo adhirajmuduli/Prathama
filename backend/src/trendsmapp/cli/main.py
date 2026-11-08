@@ -89,6 +89,44 @@ def worker(
 
 
 @app.command()
+def reproduce(
+    bundle: Annotated[
+        Path,
+        typer.Argument(help="The export bundle ZIP to verify.", exists=True, dir_okay=False),
+    ],
+) -> None:
+    """Verify an export bundle's checksums and print its manifest.
+
+    Exits non-zero when any checksum, member, or manifest entry fails, so the
+    command is usable as a CI reproduction gate.
+    """
+    from trendsmapp.reporting.verify import verify_bundle
+
+    payload = bundle.read_bytes()
+    report = verify_bundle(payload)
+    typer.echo(
+        json.dumps(
+            {
+                "bundle": str(bundle),
+                "ok": report.ok,
+                "checked_files": report.checked_files,
+                "mismatches": list(report.mismatches),
+                "missing": list(report.missing),
+                "unexpected": list(report.unexpected),
+                "run_id": report.manifest.get("run_id"),
+                "recipe_hash": report.manifest.get("recipe_hash"),
+                "dataset_sha256": report.manifest.get("dataset_sha256"),
+                "application_version": report.manifest.get("application_version"),
+                "generated_at": report.manifest.get("generated_at"),
+            },
+            indent=2,
+        )
+    )
+    if not report.ok:
+        raise typer.Exit(code=1)
+
+
+@app.command()
 def dev(
     host: Annotated[str, typer.Option("--host", help="The host to bind.")] = "127.0.0.1",
     port: Annotated[int, typer.Option("--port", help="The port to bind.")] = 8000,

@@ -32,7 +32,10 @@ describe("createApiClient", () => {
     );
     const client = createApiClient({ baseUrl: API_ORIGIN });
 
-    const payload = await client.getJson("/api/v1/health/live", healthLiveSchema);
+    const payload = await client.getJson(
+      "/api/v1/health/live",
+      healthLiveSchema,
+    );
 
     expect(payload).toEqual({ status: "ok", service: "trendsmapp" });
   });

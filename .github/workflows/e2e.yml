@@ -1,0 +1,61 @@
+name: e2e
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "true"
+  UV_VERSION: "0.13.5"
+
+jobs:
+  playwright:
+    name: full-stack Playwright on Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen --all-groups
+      - name: install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      - name: install the Chromium browser
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps chromium
+      - name: run the E2E suite
+        working-directory: frontend
+        env:
+          # The provider-backed contact happy path stays skipped without
+          # Upstash/Resend test credentials; every other spec runs for real.
+          CI: "true"
+        run: pnpm exec playwright test --project=chromium
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-failure-artifacts
+          path: frontend/test-results
+          if-no-files-found: warn

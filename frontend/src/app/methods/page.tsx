@@ -37,7 +37,9 @@ export default function MethodsPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Methods</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          Methods
+        </h1>
         <p className="max-w-3xl text-base leading-7 text-slate-700">
           This page summarizes the methods the rebuilt backend applies. The
           normative description, including the parameters and the validation
@@ -51,8 +53,12 @@ export default function MethodsPage() {
 
       {SECTIONS.map((section) => (
         <section key={section.heading} className="space-y-2">
-          <h2 className="text-lg font-semibold text-slate-900">{section.heading}</h2>
-          <p className="max-w-3xl text-sm leading-6 text-slate-700">{section.body}</p>
+          <h2 className="text-lg font-semibold text-slate-900">
+            {section.heading}
+          </h2>
+          <p className="max-w-3xl text-sm leading-6 text-slate-700">
+            {section.body}
+          </p>
         </section>
       ))}
     </div>

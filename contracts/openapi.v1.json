@@ -398,6 +398,89 @@
         "title": "CreateDatasetResponse",
         "type": "object"
       },
+      "CreateExportRequest": {
+        "additionalProperties": false,
+        "description": "The body of ``POST /api/v1/exports``.",
+        "properties": {
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "CreateExportRequest",
+        "type": "object"
+      },
+      "CreateExportResponse": {
+        "additionalProperties": false,
+        "description": "The 202 response of creating an export.",
+        "properties": {
+          "export_id": {
+            "pattern": "^exp_[0-9a-f]{32}$",
+            "title": "Export Id",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^job_[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "default": "accepted",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "export_id",
+          "job_id",
+          "run_id"
+        ],
+        "title": "CreateExportResponse",
+        "type": "object"
+      },
+      "CreateModelRunResponse": {
+        "additionalProperties": false,
+        "description": "The 202 response of creating a model run.",
+        "properties": {
+          "job_id": {
+            "pattern": "^job_[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "default": "accepted",
+            "title": "Status",
+            "type": "string"
+          },
+          "task_hash": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Task Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "job_id",
+          "task_hash"
+        ],
+        "title": "CreateModelRunResponse",
+        "type": "object"
+      },
       "CreateUploadRequest": {
         "additionalProperties": false,
         "description": "The body of ``POST /api/v1/uploads``.",
@@ -723,6 +806,64 @@
         "title": "DuplicatePolicy",
         "type": "string"
       },
+      "ExplanationMethod": {
+        "description": "The explanation methods a task may request.",
+        "enum": [
+          "permutation",
+          "shap_tree",
+          "partial_dependence"
+        ],
+        "title": "ExplanationMethod",
+        "type": "string"
+      },
+      "ExportResponse": {
+        "additionalProperties": false,
+        "description": "One export with its bundle artifact and the manifest inside it.",
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ArtifactRef"
+          },
+          "export_id": {
+            "pattern": "^exp_[0-9a-f]{32}$",
+            "title": "Export Id",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^job_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "manifest": {
+            "additionalProperties": true,
+            "title": "Manifest",
+            "type": "object"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "export_id",
+          "run_id",
+          "status",
+          "artifact"
+        ],
+        "title": "ExportResponse",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -902,6 +1043,143 @@
         "title": "LayoutKind",
         "type": "string"
       },
+      "MLTask": {
+        "additionalProperties": false,
+        "description": "One machine-learning task.\n\nEvery field the plan requires a run to declare is here: target, unit,\nprediction setting, eligible data, features, policies, evaluation, models,\nsearch budget, metric, seed, uncertainty, and explanations.",
+        "properties": {
+          "candidate_models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelFamily"
+            },
+            "minItems": 1,
+            "title": "Candidate Models",
+            "type": "array"
+          },
+          "dataset_version_id": {
+            "minLength": 1,
+            "title": "Dataset Version Id",
+            "type": "string"
+          },
+          "eligible_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eligible End"
+          },
+          "eligible_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eligible Start"
+          },
+          "eligible_station_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Eligible Station Ids",
+            "type": "array"
+          },
+          "explanation_methods": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ExplanationMethod"
+            },
+            "title": "Explanation Methods",
+            "type": "array"
+          },
+          "feature_names": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Feature Names",
+            "type": "array"
+          },
+          "inner_split": {
+            "$ref": "#/components/schemas/SplitStrategy",
+            "default": "station_group"
+          },
+          "lag_policy": {
+            "default": "none",
+            "title": "Lag Policy",
+            "type": "string"
+          },
+          "missing_data_policy": {
+            "default": "drop",
+            "title": "Missing Data Policy",
+            "type": "string"
+          },
+          "outer_split": {
+            "$ref": "#/components/schemas/SplitStrategy",
+            "default": "station_group"
+          },
+          "prediction_unit": {
+            "minLength": 1,
+            "title": "Prediction Unit",
+            "type": "string"
+          },
+          "primary_metric": {
+            "default": "rmse",
+            "title": "Primary Metric",
+            "type": "string"
+          },
+          "qc_policy": {
+            "default": "exclude_failed",
+            "title": "Qc Policy",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "search_budget": {
+            "default": 20,
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Search Budget",
+            "type": "integer"
+          },
+          "seed": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "setting": {
+            "$ref": "#/components/schemas/PredictionSetting"
+          },
+          "target_parameter_id": {
+            "minLength": 1,
+            "title": "Target Parameter Id",
+            "type": "string"
+          },
+          "uncertainty_method": {
+            "$ref": "#/components/schemas/UncertaintyMethod",
+            "default": "bootstrap_ensemble"
+          }
+        },
+        "required": [
+          "dataset_version_id",
+          "target_parameter_id",
+          "prediction_unit",
+          "setting",
+          "candidate_models"
+        ],
+        "title": "MLTask",
+        "type": "object"
+      },
       "MappedColumn": {
         "additionalProperties": false,
         "description": "One column of the source table and the role it plays.",
@@ -956,6 +1234,127 @@
           "role"
         ],
         "title": "MappedColumn",
+        "type": "object"
+      },
+      "ModelFamily": {
+        "description": "The approved model families, each backed by a registry adapter.\n\nThe baselines are implemented in :mod:`trendsmapp.ml.baselines`; the rest are\nadapters over documented estimators from scikit-learn or XGBoost.",
+        "enum": [
+          "mean_baseline",
+          "station_climatology",
+          "seasonal_climatology",
+          "elastic_net",
+          "random_forest",
+          "extra_trees",
+          "hist_gradient_boosting",
+          "xgboost"
+        ],
+        "title": "ModelFamily",
+        "type": "string"
+      },
+      "ModelRunResponse": {
+        "additionalProperties": false,
+        "description": "One model run with its results and explanations.",
+        "properties": {
+          "artifacts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ArtifactRef"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "dataset_version_id": {
+            "pattern": "^dsv_[0-9a-f]{32}$",
+            "title": "Dataset Version Id",
+            "type": "string"
+          },
+          "explanations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanations"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^job_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "results": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "task": {
+            "$ref": "#/components/schemas/MLTask"
+          },
+          "task_hash": {
+            "title": "Task Hash",
+            "type": "string"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "dataset_version_id",
+          "status",
+          "task",
+          "task_hash",
+          "created_at"
+        ],
+        "title": "ModelRunResponse",
         "type": "object"
       },
       "PageMeta": {
@@ -1056,6 +1455,17 @@
         ],
         "title": "PartUploadResponse",
         "type": "object"
+      },
+      "PredictionSetting": {
+        "description": "What the model is asked to predict; each has an allowed split family.",
+        "enum": [
+          "known_station_temporal",
+          "unseen_station_spatial",
+          "future_period",
+          "missing_reconstruction"
+        ],
+        "title": "PredictionSetting",
+        "type": "string"
       },
       "PreviewResponse": {
         "additionalProperties": false,
@@ -1430,6 +1840,20 @@
         "title": "SpatialSection",
         "type": "object"
       },
+      "SplitStrategy": {
+        "description": "How outer evaluation folds are generated.",
+        "enum": [
+          "station_group",
+          "spatial_block",
+          "leave_year_out",
+          "rolling_origin",
+          "sector",
+          "combined",
+          "random_row"
+        ],
+        "title": "SplitStrategy",
+        "type": "string"
+      },
       "TemporalSection": {
         "additionalProperties": false,
         "description": "The temporal configuration of a recipe.",
@@ -1484,6 +1908,15 @@
           "named"
         ],
         "title": "TimezonePolicy",
+        "type": "string"
+      },
+      "UncertaintyMethod": {
+        "description": "How prediction intervals are produced.",
+        "enum": [
+          "bootstrap_ensemble",
+          "quantile"
+        ],
+        "title": "UncertaintyMethod",
         "type": "string"
       },
       "UploadSessionResponse": {
@@ -2506,6 +2939,150 @@
         ]
       }
     },
+    "/api/v1/exports": {
+      "post": {
+        "description": "Enqueue the export of one succeeded run as a verified bundle.",
+        "operationId": "create_export_api_v1_exports_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateExportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Export",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/api/v1/exports/{export_id}": {
+      "get": {
+        "description": "Return one export with its bundle artifact and the manifest inside it.",
+        "operationId": "get_export_api_v1_exports__export_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "title": "Export Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Export",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/api/v1/exports/{export_id}/download": {
+      "get": {
+        "description": "Stream the verified ZIP bundle of one export.",
+        "operationId": "download_export_api_v1_exports__export_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "title": "Export Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Export",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
     "/api/v1/health/live": {
       "get": {
         "description": "Return the liveness state of the process.",
@@ -2639,6 +3216,334 @@
         "summary": "Cancel Job",
         "tags": [
           "jobs"
+        ]
+      }
+    },
+    "/api/v1/model-runs": {
+      "post": {
+        "description": "Validate a task against a sealed dataset version and enqueue the training job.\n\nThe task hash is the idempotency key of the run: reposting the same task on\nthe same dataset version returns the existing run instead of enqueueing a\nduplicate job.",
+        "operationId": "create_model_run_api_v1_model_runs_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MLTask"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateModelRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Model Run",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/model-runs/{run_id}": {
+      "get": {
+        "description": "Return one model run with its task, results, explanations, and artifacts.",
+        "operationId": "get_model_run_api_v1_model_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Model Run",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/model-runs/{run_id}/artifacts": {
+      "get": {
+        "description": "Return every artifact a model run produced.",
+        "operationId": "list_model_run_artifacts_api_v1_model_runs__run_id__artifacts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Model Run Artifacts Api V1 Model Runs  Run Id  Artifacts Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Model Run Artifacts",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/model-runs/{run_id}/explanations": {
+      "get": {
+        "description": "Return the stored explanations document of a model run.",
+        "operationId": "get_model_run_explanations_api_v1_model_runs__run_id__explanations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Model Run Explanations Api V1 Model Runs  Run Id  Explanations Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Model Run Explanations",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/model-runs/{run_id}/folds": {
+      "get": {
+        "description": "Return the per-fold metrics of every evaluated family of a model run.",
+        "operationId": "get_model_run_folds_api_v1_model_runs__run_id__folds_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Model Run Folds Api V1 Model Runs  Run Id  Folds Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Model Run Folds",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/model-runs/{run_id}/metrics": {
+      "get": {
+        "description": "Return the stored metrics document of a model run.",
+        "operationId": "get_model_run_metrics_api_v1_model_runs__run_id__metrics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Model Run Metrics Api V1 Model Runs  Run Id  Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Model Run Metrics",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/model-runs/{run_id}/predictions": {
+      "get": {
+        "description": "Return the held-out observed-versus-predicted table of a model run.",
+        "operationId": "get_model_run_predictions_api_v1_model_runs__run_id__predictions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Model Run Predictions Api V1 Model Runs  Run Id  Predictions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Model Run Predictions",
+        "tags": [
+          "models"
         ]
       }
     },

@@ -13,17 +13,22 @@ export default async function DatasetsPage() {
   try {
     body = await client.getJson("/api/v1/datasets", datasetListSchema);
   } catch (error) {
-    loadError = error instanceof Error ? error.message : "The dataset list could not be loaded.";
+    loadError =
+      error instanceof Error
+        ? error.message
+        : "The dataset list could not be loaded.";
   }
 
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Datasets</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Datasets
+          </h1>
           <p className="max-w-3xl text-sm leading-6 text-slate-700">
-            Every dataset version created from an upload. Versions are sealed and immutable
-            once the ingest job succeeds.
+            Every dataset version created from an upload. Versions are sealed
+            and immutable once the ingest job succeeds.
           </p>
         </div>
         <Link
@@ -35,7 +40,10 @@ export default async function DatasetsPage() {
       </header>
 
       {loadError !== null ? (
-        <p role="alert" className="rounded border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+        <p
+          role="alert"
+          className="rounded border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-900"
+        >
           {loadError}
         </p>
       ) : null}
@@ -54,17 +62,23 @@ export default async function DatasetsPage() {
               className="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-sky-400"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="text-sm font-semibold text-slate-900">{dataset.name}</span>
+                <span className="text-sm font-semibold text-slate-900">
+                  {dataset.name}
+                </span>
                 <span className="font-mono text-xs text-slate-500">
                   {dataset.dataset_id.slice(0, 12)}…
                 </span>
               </div>
-              {dataset.description !== null && dataset.description !== undefined ? (
-                <p className="mt-1 text-sm text-slate-600">{dataset.description}</p>
+              {dataset.description !== null &&
+              dataset.description !== undefined ? (
+                <p className="mt-1 text-sm text-slate-600">
+                  {dataset.description}
+                </p>
               ) : null}
               <p className="mt-1 text-xs text-slate-500">
                 Updated {formatTimestamp(dataset.updated_at)}
-                {dataset.current_version_id !== null && dataset.current_version_id !== undefined
+                {dataset.current_version_id !== null &&
+                dataset.current_version_id !== undefined
                   ? ` · current version ${dataset.current_version_id.slice(0, 12)}…`
                   : " · no sealed version yet"}
               </p>

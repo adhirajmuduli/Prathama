@@ -7,7 +7,7 @@ whether the change is compatible.
 The digest below pins the snapshot that this note describes. CI fails when the
 snapshot changes without an updated note.
 
-OpenAPI snapshot SHA-256: `bfad1d48cef44d6bf4907ec0ba310cad65b66aecc30650f40ab42af882cc8ed3`
+OpenAPI snapshot SHA-256: `67c0ae11b2a88349053656adb084423503b114fc49f59939ae03d981b69b75f1`
 
 ## API major version 1
 
@@ -44,6 +44,16 @@ The first published contract of the rebuilt API.
 | GET | `/api/v1/analyses/{run_id}/artifacts` | Every artifact a run produced. |
 | GET | `/api/v1/analyses/{run_id}/results` | The stored results document of a run. |
 | POST | `/api/v1/analyses/{run_id}/animations` | Enqueue an animation job over the run's stored rasters. |
+| POST | `/api/v1/model-runs` | Validate an ML task against a sealed dataset version and enqueue the training job. The task hash is the idempotency key. |
+| GET | `/api/v1/model-runs/{run_id}` | One model run with its task, results, explanations, artifacts, and warnings. |
+| GET | `/api/v1/model-runs/{run_id}/metrics` | The stored metrics document of a model run (aggregated, per-family, uncertainty). |
+| GET | `/api/v1/model-runs/{run_id}/folds` | The per-fold metrics of every evaluated family. |
+| GET | `/api/v1/model-runs/{run_id}/predictions` | The held-out observed-versus-predicted table of a model run. |
+| GET | `/api/v1/model-runs/{run_id}/explanations` | The stored explanations document (importance rows and recorded limitations). |
+| GET | `/api/v1/model-runs/{run_id}/artifacts` | Every artifact a model run produced (`model`, `metrics`, `predictions`, `explanations`). |
+| POST | `/api/v1/exports` | Enqueue the export of one succeeded run as a checksum-verified bundle. Idempotent per run. |
+| GET | `/api/v1/exports/{export_id}` | One export with its `export_bundle` artifact and the manifest inside the bundle. |
+| GET | `/api/v1/exports/{export_id}/download` | Stream the verified ZIP bundle with its SHA-256 header. |
 
 ### Conventions
 

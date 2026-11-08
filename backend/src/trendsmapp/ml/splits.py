@@ -9,6 +9,7 @@ the task contract restricts (see `SETTING_SPLIT_FAMILIES`).
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 import numpy as np
 
@@ -29,7 +30,7 @@ class FrameTable:
     years: list[int]
     sectors: list[str]
     coords_m: np.ndarray  # (N, 2) projected coordinates
-    timestamps: list  # datetime list
+    timestamps: list[datetime | None]
 
     def __post_init__(self) -> None:
         n = len(self.station_ids)
@@ -76,7 +77,7 @@ def _group_folds(keys: list[str], label: str) -> list[Fold]:
             details={"groups": len(unique), "label": label},
         )
     n = len(keys)
-    key_index: dict[str, np.ndarray] = {}
+    key_index: dict[str, list[int]] = {}
     for index, key in enumerate(keys):
         key_index.setdefault(key, []).append(index)
     folds: list[Fold] = []

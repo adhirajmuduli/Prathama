@@ -39,8 +39,8 @@ export default async function HomePage() {
         <p className="max-w-3xl text-base leading-7 text-slate-700">
           Trendsmapp ingests environmental observations, normalizes them into a
           canonical record, validates them explicitly, and produces spatial
-          surfaces, temporal animations, and machine-learning results that can be
-          traced back to the exact bytes, code version, and parameters that
+          surfaces, temporal animations, and machine-learning results that can
+          be traced back to the exact bytes, code version, and parameters that
           produced them.
         </p>
         <p className="max-w-3xl text-sm leading-6 text-slate-600">
@@ -50,11 +50,16 @@ export default async function HomePage() {
         </p>
       </section>
 
-      <ApiStatusPanel initialStatus={status} publicApiBaseUrl={publicApiBaseUrl} />
+      <ApiStatusPanel
+        initialStatus={status}
+        publicApiBaseUrl={publicApiBaseUrl}
+      />
 
       <section className="grid gap-6 lg:grid-cols-2">
         <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Available in this deployment</h2>
+          <h2 className="text-lg font-semibold">
+            Available in this deployment
+          </h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-700">
             {AVAILABLE_NOW.map((item) => (
               <li key={item}>{item}</li>

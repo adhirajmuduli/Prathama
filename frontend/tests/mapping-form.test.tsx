@@ -2,10 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { MappingForm } from "@/components/upload/mapping-form";
-import {
-  columnMappingSchema,
-  type Probe,
-} from "@/lib/contracts/ingest";
+import { columnMappingSchema, type Probe } from "@/lib/contracts/ingest";
 
 function makeProbe(): Probe {
   const probe = {
@@ -72,10 +69,14 @@ describe("MappingForm", () => {
   it("reflects a role change in the submitted mapping", () => {
     const onSubmit = vi.fn();
     render(<MappingForm probe={makeProbe()} onSubmit={onSubmit} />);
-    fireEvent.change(screen.getByLabelText("Role for notes"), { target: { value: "value" } });
+    fireEvent.change(screen.getByLabelText("Role for notes"), {
+      target: { value: "value" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /confirm mapping/i }));
     const submitted = onSubmit.mock.calls[0]?.[0];
-    const notes = submitted.columns.find((item: { column: string }) => item.column === "notes");
+    const notes = submitted.columns.find(
+      (item: { column: string }) => item.column === "notes",
+    );
     expect(notes?.role).toBe("value");
   });
 

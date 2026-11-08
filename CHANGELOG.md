@@ -13,6 +13,55 @@ API major version.
 
 ### Added
 
+- Model-runs API (`/api/v1/model-runs`) and `train` worker job: ML tasks are
+  validated against a sealed dataset version, executed with leakage-resistant
+  fold-local preprocessing, and their metrics, per-fold results, held-out
+  predictions, uncertainty intervals, and explanations are stored as
+  content-addressed artifacts. Reposting a task is idempotent by task hash.
+- Exports API (`/api/v1/exports`) and `export` worker job: one succeeded run
+  becomes a deterministic, checksum-verified ZIP bundle (manifest, methods
+  record, data dictionary, CSV tables, all run and dataset artifacts) that the
+  bundle verifies itself before it is stored. The CLI gains
+  `trendsmapp reproduce <bundle.zip>`, and `backend/scripts/reproduce_run.py`
+  re-executes a bundle's recipe against the deployment database and compares
+  every stored metric within a declared tolerance.
+- Contact page and `/api/contact` route: Turnstile siteverify (mandatory
+  server-side), HMAC-hashed IP/email sliding-window rate limits in Upstash,
+  idempotent duplicate suppression, delivery through Resend, honeypot
+  rejection, generic responses, and redacted logging. The route answers 503
+  when the providers are not configured.
+- Frontend model panel (task form, comparison table, per-fold metrics,
+  uncertainty coverage, explanation importances) and export panel with the
+  verified bundle download, wired into the dataset version explorer.
+- Playwright E2E specs for the ML run + export flow and the contact form, plus
+  a 72-row ML fixture.
+- CI/release machinery: `integration.yml` (PostgreSQL + S3-compatible store,
+  migrations up/down/up, full suite), `e2e.yml` (full-stack Playwright),
+  `reproducibility.yml` (bundle determinism, verification, reproduction),
+  `release.yml` (semver tag gate, changelog gate, contract checks, image
+  build/push with provenance, Trivy scan, SBOM, GitHub release), and
+  `CODEOWNERS`.
+- Migration `0003_artifact_links`: artifact ownership moves to a many-to-many
+  link table so content-addressed artifacts can be shared across runs without
+  stealing the original run's linkage.
+
+### Fixed
+
+- Artifact registration no longer loses run/version ownership when identical
+  bytes are registered again; `list_for_run`/`list_for_version` join through
+  `artifact_links` (previously a re-run with identical raster bytes listed no
+  artifacts of its own and animation export failed).
+- `services/model_training.py` imported its artifact-id constructor, stored
+  artifacts under the allowed `runs/` key prefix, attached the job id to the
+  run row, and now computes the uncertainty stage it previously skipped.
+
+### Contract-visible
+
+- Added `/api/v1/model-runs` (POST, GET run/metrics/folds/predictions/
+  explanations/artifacts) and `/api/v1/exports` (POST, GET, download) under
+  `/api/v1`; the OpenAPI snapshot, `contracts/COMPATIBILITY.md`, and the
+  generated frontend types were regenerated.
+
 - Chunked upload API and service: session creation with a validated part plan,
   per-part range, size, and digest verification, content-addressed assembly of
   the immutable raw artifact, idempotent completion that enqueues the ingest

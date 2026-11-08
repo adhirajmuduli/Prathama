@@ -24,15 +24,17 @@ afterAll(() => {
 function installHappyPath() {
   server.use(
     // happy-dom performs CORS preflights; answer them like the backend does.
-    http.options(`${API_ORIGIN}/*`, () =>
-      new HttpResponse(null, {
-        status: 204,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "*",
-          "Access-Control-Allow-Methods": "*",
-        },
-      }),
+    http.options(
+      `${API_ORIGIN}/*`,
+      () =>
+        new HttpResponse(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "*",
+          },
+        }),
     ),
     http.post(`${API_ORIGIN}/api/v1/analyses`, () =>
       HttpResponse.json(
@@ -75,38 +77,43 @@ function installHappyPath() {
         finished_at: "2026-11-06T10:01:00Z",
       }),
     ),
-    http.get(`${API_ORIGIN}/api/v1/analyses/run_${"a".repeat(32)}/results`, () =>
-      HttpResponse.json({
-        run_id: "run_" + "a".repeat(32),
-        frames: [
-          {
-            parameter_id: "dissolved_oxygen",
-            sampled_at: "2024-01-15T00:00:00+00:00",
-            point_count: 4,
-            skipped_reason: null,
-            methods: [
-              {
-                method: "idw",
-                rmse: 0.1,
-                mae: 0.08,
-                bias: 0.01,
-                folds: 4,
-                geotiff_key: "k1",
-                png_key: "p1",
-                uncertainty_kind: "support_only",
-              },
-            ],
-            decisions: [{ selected: "idw", rule: "best_rmse", evidence: { idw: 0.1 } }],
-          },
-        ],
-        grid_cells: 120,
-        masked_cells: 31,
-        boundary_sha256: "f".repeat(64),
-        temporal: null,
-      }),
+    http.get(
+      `${API_ORIGIN}/api/v1/analyses/run_${"a".repeat(32)}/results`,
+      () =>
+        HttpResponse.json({
+          run_id: "run_" + "a".repeat(32),
+          frames: [
+            {
+              parameter_id: "dissolved_oxygen",
+              sampled_at: "2024-01-15T00:00:00+00:00",
+              point_count: 4,
+              skipped_reason: null,
+              methods: [
+                {
+                  method: "idw",
+                  rmse: 0.1,
+                  mae: 0.08,
+                  bias: 0.01,
+                  folds: 4,
+                  geotiff_key: "k1",
+                  png_key: "p1",
+                  uncertainty_kind: "support_only",
+                },
+              ],
+              decisions: [
+                { selected: "idw", rule: "best_rmse", evidence: { idw: 0.1 } },
+              ],
+            },
+          ],
+          grid_cells: 120,
+          masked_cells: 31,
+          boundary_sha256: "f".repeat(64),
+          temporal: null,
+        }),
     ),
-    http.get(`${API_ORIGIN}/api/v1/analyses/run_${"a".repeat(32)}/artifacts`, () =>
-      HttpResponse.json({ run_id: "run_" + "a".repeat(32), items: [] }),
+    http.get(
+      `${API_ORIGIN}/api/v1/analyses/run_${"a".repeat(32)}/artifacts`,
+      () => HttpResponse.json({ run_id: "run_" + "a".repeat(32), items: [] }),
     ),
   );
 }

@@ -1,0 +1,51 @@
+{
+  "application_version": "0.1.0",
+  "boundary_id": "relation/1917079",
+  "completed": true,
+  "dataset_id": "ds_3c25533678384c6a8e5eb8787cec9f25",
+  "dataset_version_id": "dsv_2848274466d048bd95f1d821cc71300c",
+  "fail_count": 0,
+  "flagged_count": 3,
+  "flags": [
+    {
+      "code": "outside_boundary",
+      "count": 3,
+      "detail": "relation/1917079",
+      "source_rows": [
+        5,
+        9,
+        13
+      ]
+    }
+  ],
+  "observation_count": 12,
+  "parameters": [
+    {
+      "flag_counts": {
+        "outside_boundary": 3
+      },
+      "flagged_count": 3,
+      "observation_count": 12,
+      "parameter_id": "dissolved_oxygen"
+    }
+  ],
+  "pass_count": 9,
+  "rules_applied": [
+    "ranges",
+    "detection_limits",
+    "completeness",
+    "duplicate_locations",
+    "boundary_and_drift",
+    "outliers",
+    "temporal"
+  ],
+  "rules_skipped": [],
+  "schema_version": "1.0.0",
+  "warning_count": 3,
+  "warnings": [
+    "group St. A/dissolved_oxygen has 3 values; outlier detection needs at least 5",
+    "group St. B/dissolved_oxygen has 3 values; outlier detection needs at least 5",
+    "group St. C/dissolved_oxygen has 3 values; outlier detection needs at least 5",
+    "group St. D/dissolved_oxygen has 3 values; outlier detection needs at least 5"
+  ]
+}
