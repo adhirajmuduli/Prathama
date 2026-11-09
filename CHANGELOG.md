@@ -47,6 +47,32 @@ API major version.
 
 ### Fixed
 
+- CI: contract snapshot exporters now write LF-normalized bytes (the recorded
+  digest differed between Windows and Linux runners); pytest gets
+  `pythonpath = ["."]` so `uv run pytest` can import sibling `scripts`/`tests`
+  packages; the backend image smoke test runs against PostgreSQL + local object
+  store (the production image ships no dev-group aiosqlite); the E2E webServer
+  backend command is cross-platform; MinIO is pinned to a release tag with a
+  port-wait instead of an in-image healthcheck; trivy-action is pinned to a
+  resolvable tag; the legacy workflow pins ubuntu-24.04 (Python 3.10), pulls
+  Git LFS objects (the demo dataset is LFS, so its checksum verification failed
+  on pointer files), passes a placeholder SECRET_KEY to the non-root container,
+  and scopes its ruff run to the legacy tree only.
+- `frontend/src/lib/env`: empty or whitespace-only environment variables are
+  treated as unset (`readEnv`), so a blank Netlify variable can no longer fail
+  schema validation and take down every page at module load.
+- Netlify CSP now permits the Turnstile origins and cross-origin API images;
+  `productionBrowserSourceMaps` is pinned off.
+
+### Dependencies
+
+- pyarrow 21 → 26 (fixes PYSEC-2026-113), fastapi 0.141 → 0.162, pytest 9.1 →
+  9.2, pytest-asyncio 1.4.1.post1, python-multipart 0.0.33, typing-inspection
+  0.4.5; frontend @tanstack/react-query 5.105.1 and @types/node 26.6.6; all
+  GitHub Actions bumped to current majors. ESLint 10 / TypeScript 7 majors and
+  the legacy Docker base image are ignored in `dependabot.yml` until the
+  toolchain supports them.
+
 - Artifact registration no longer loses run/version ownership when identical
   bytes are registered again; `list_for_run`/`list_for_version` join through
   `artifact_links` (previously a re-run with identical raster bytes listed no

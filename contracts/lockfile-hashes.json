@@ -1,4 +1,4 @@
 {
-  "backend/uv.lock": "9fb459885482e1b3ec735f19a6ee7ff5d2e4ba96bd4003e489ff0a22df784ea1",
-  "frontend/pnpm-lock.yaml": "4b3b0451bcfc48ed2498786247acea858ea1c072d59749cf1909180a989414ec"
+  "backend/uv.lock": "128e55d79a46e9acc32583f303d328171cb52e5db405735c07897edeb59db43e",
+  "frontend/pnpm-lock.yaml": "0a04866328949859e135c2809ac5cdb80219a19807e5528c8da024b1680b3af3"
 }

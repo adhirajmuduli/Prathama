@@ -27,6 +27,13 @@ updates:
       frontend:
         patterns:
           - "*"
+    ignore:
+      # typescript-eslint and eslint-config-next do not support the TS 7
+      # (Go) compiler or ESLint 10 yet; revisit when they do.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "docker"
     directory: "/backend"
@@ -37,6 +44,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # The root Dockerfile builds the frozen legacy prototype on Python
+      # 3.10; its lockfile does not resolve for newer interpreters.
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   - package-ecosystem: "pip"
     directory: "/"

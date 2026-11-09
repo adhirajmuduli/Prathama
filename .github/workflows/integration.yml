@@ -64,8 +64,8 @@ jobs:
       TRENDSMAPP_TRUSTED_HOSTS: '["localhost","127.0.0.1","testserver"]'
       TRENDSMAPP_LOG_LEVEL: warning
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
           python-version: "3.13"
