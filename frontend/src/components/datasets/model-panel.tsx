@@ -377,7 +377,9 @@ export function ModelPanel({ datasetVersionId }: ModelPanelProps) {
         <ExplanationsView explanations={explanationDoc} />
       ) : null}
 
-      {run !== null && run.status === "succeeded" ? <ExportPanel runId={run.run_id} /> : null}
+      {run !== null && run.status === "succeeded" ? (
+        <ExportPanel runId={run.run_id} />
+      ) : null}
     </div>
   );
 }

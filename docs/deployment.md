@@ -150,7 +150,43 @@ uv run uvicorn trendsmapp.api.app:create_app --factory --port 8000
 uv run trendsmapp worker
 ```
 
-## 4. Release checklist
+## 4. Troubleshooting "deployed but the page does not render"
+
+Work top-down; most blank-page reports are one of the first three items.
+
+1. **Is the Next.js runtime actually serving the deploy?** A deploy can be
+   "successful" while publishing raw build output. Check, in order:
+   - The Netlify **deploy log** contains the adapter install/run lines for
+     `@netlify/nextjs` (it is auto-provisioned when absent from
+     `package.json`; if you pin it, keep it in `frontend/package.json`).
+   - Site **settings → Build & deploy**: the publish directory must be empty
+     (auto) when the adapter is used; a manually set publish directory
+     overrides it and serves `.next` as plain files.
+   - `curl -sI https://<site>/` shows an `x-nf-request-id` header (served by
+     the Next runtime) rather than a plain static response.
+   - The Netlify **Functions** tab lists the Next handler functions.
+2. **Do the page chunks load?** In the browser Network tab, every
+   `/_next/static/*.js` referenced by the HTML must return 200. A 404 there
+   means the publish directory is wrong (item 1) — the SSR HTML may still
+   show, but hydration never runs and the page looks dead on interaction.
+3. **Is an environment variable present but blank?** Deployment UIs often
+   keep a variable set to `""` to mean "unset". Blank values are normalized
+   to unset by `src/lib/env/read-env.ts`; before that fix, a blank
+   `NEXT_PUBLIC_SITE_URL` or `BACKEND_API_ORIGIN` failed schema validation at
+   module load and errored every page. Check the site's environment variable
+   list for blank values and clear them.
+4. **Check the function logs** (Netlify → Functions → logs) for the request
+   identifier shown by `app/error.tsx`, and the browser **console** for
+   hydration errors. The reported Firefox "Source map error: URL constructor:
+   is not a valid URL" with `Resource URL: about:srcdoc` and an empty Source
+   Map URL comes from devtools' own source-map worker and is noise — ignore
+   it; it is not a page failure.
+5. **Verify the backend origin** used at request time: the home page calls
+   `BACKEND_API_ORIGIN` server-side on every request (`dynamic =
+   "force-dynamic"`); failures are caught and shown as a status banner, not a
+   blank page, but a wrong origin still means no live data.
+
+## 5. Release checklist
 
 1. `make contracts` regenerates and verifies the contract artifacts.
 2. `make lint`, `make typecheck`, `make test`, and `make coverage` are green.

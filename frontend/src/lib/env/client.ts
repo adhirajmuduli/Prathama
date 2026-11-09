@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { readEnv } from "./read-env";
+
 /**
  * Public environment.
  *
@@ -13,9 +15,9 @@ const clientEnvironmentSchema = z.object({
 });
 
 export const clientEnvironment = clientEnvironmentSchema.parse({
-  NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
-  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-  NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+  NEXT_PUBLIC_API_BASE_URL: readEnv("NEXT_PUBLIC_API_BASE_URL"),
+  NEXT_PUBLIC_SITE_URL: readEnv("NEXT_PUBLIC_SITE_URL"),
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: readEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY"),
 });
 
 export const publicApiBaseUrl =

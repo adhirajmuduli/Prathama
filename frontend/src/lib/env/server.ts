@@ -2,6 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 
+import { readEnv } from "./read-env";
+
 /**
  * Server-side environment.
  *
@@ -45,23 +47,23 @@ const serverEnvironmentSchema = z.object({
 });
 
 export const serverEnvironment = serverEnvironmentSchema.parse({
-  BACKEND_API_ORIGIN: process.env.BACKEND_API_ORIGIN ?? "http://localhost:8000",
+  BACKEND_API_ORIGIN: readEnv("BACKEND_API_ORIGIN") ?? "http://localhost:8000",
   NEXT_PUBLIC_SITE_URL:
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  TRENDSMAPP_API_TIMEOUT_MS: process.env.TRENDSMAPP_API_TIMEOUT_MS ?? "10000",
-  TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
-  UPSTASH_REST_URL: process.env.UPSTASH_REST_URL,
-  UPSTASH_REST_TOKEN: process.env.UPSTASH_REST_TOKEN,
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
-  CONTACT_FROM_EMAIL: process.env.CONTACT_FROM_EMAIL,
-  CONTACT_TO_EMAIL: process.env.CONTACT_TO_EMAIL,
-  CONTACT_HASH_SECRET: process.env.CONTACT_HASH_SECRET,
+    readEnv("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
+  TRENDSMAPP_API_TIMEOUT_MS: readEnv("TRENDSMAPP_API_TIMEOUT_MS") ?? "10000",
+  TURNSTILE_SECRET_KEY: readEnv("TURNSTILE_SECRET_KEY"),
+  UPSTASH_REST_URL: readEnv("UPSTASH_REST_URL"),
+  UPSTASH_REST_TOKEN: readEnv("UPSTASH_REST_TOKEN"),
+  RESEND_API_KEY: readEnv("RESEND_API_KEY"),
+  CONTACT_FROM_EMAIL: readEnv("CONTACT_FROM_EMAIL"),
+  CONTACT_TO_EMAIL: readEnv("CONTACT_TO_EMAIL"),
+  CONTACT_HASH_SECRET: readEnv("CONTACT_HASH_SECRET"),
   CONTACT_RATE_LIMIT_WINDOW_MS:
-    process.env.CONTACT_RATE_LIMIT_WINDOW_MS ?? "3600000",
+    readEnv("CONTACT_RATE_LIMIT_WINDOW_MS") ?? "3600000",
   CONTACT_RATE_LIMIT_IP_PER_WINDOW:
-    process.env.CONTACT_RATE_LIMIT_IP_PER_WINDOW ?? "5",
+    readEnv("CONTACT_RATE_LIMIT_IP_PER_WINDOW") ?? "5",
   CONTACT_RATE_LIMIT_EMAIL_PER_WINDOW:
-    process.env.CONTACT_RATE_LIMIT_EMAIL_PER_WINDOW ?? "3",
+    readEnv("CONTACT_RATE_LIMIT_EMAIL_PER_WINDOW") ?? "3",
   CONTACT_IDEMPOTENCY_TTL_SECONDS:
-    process.env.CONTACT_IDEMPOTENCY_TTL_SECONDS ?? "86400",
+    readEnv("CONTACT_IDEMPOTENCY_TTL_SECONDS") ?? "86400",
 });

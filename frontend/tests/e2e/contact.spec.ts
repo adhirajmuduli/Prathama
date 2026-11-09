@@ -7,7 +7,9 @@ const hasProviders = Boolean(process.env.CONTACT_E2E_PROVIDERS);
 
 test.setTimeout(120_000);
 
-test("contact form renders and requires the human check before sending", async ({ page }) => {
+test("contact form renders and requires the human check before sending", async ({
+  page,
+}) => {
   await page.goto("/contact");
   await expect(page.getByRole("heading", { name: "Contact" })).toBeVisible();
   const submit = page.getByRole("button", { name: /send message/i });
@@ -21,33 +23,53 @@ test("contact form validates required fields", async ({ page }) => {
   const submit = page.getByRole("button", { name: /send message/i });
   await expect(submit).toBeEnabled({ timeout: 60_000 });
   await page.getByRole("button", { name: /send message/i }).click();
-  await expect(page.getByText(/the message was not sent/i)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/the message was not sent/i)).toBeVisible({
+    timeout: 10_000,
+  });
 });
 
-test("contact submission reports when the deployment is not configured", async ({ page }) => {
-  test.skip(hasProviders, "provider-backed happy path runs when credentials exist");
+test("contact submission reports when the deployment is not configured", async ({
+  page,
+}) => {
+  test.skip(
+    hasProviders,
+    "provider-backed happy path runs when credentials exist",
+  );
   await page.goto("/contact");
   await page.getByLabel("Name", { exact: true }).fill("Ada Lovelace");
   await page.getByLabel("Email", { exact: true }).fill("ada@example.org");
   await page.getByLabel("Subject", { exact: true }).fill("Question");
-  await page.getByLabel("Message", { exact: true }).fill("A sufficiently long message body.");
+  await page
+    .getByLabel("Message", { exact: true })
+    .fill("A sufficiently long message body.");
   await page.getByRole("checkbox").check();
   const submit = page.getByRole("button", { name: /send message/i });
   await expect(submit).toBeEnabled({ timeout: 60_000 });
   await submit.click();
-  await expect(page.getByText(/could not be sent|not available/i)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/could not be sent|not available/i)).toBeVisible({
+    timeout: 30_000,
+  });
 });
 
-test("contact submission succeeds with provider test credentials", async ({ page }) => {
-  test.skip(!hasProviders, "needs CONTACT_E2E_PROVIDERS with Upstash/Resend test credentials");
+test("contact submission succeeds with provider test credentials", async ({
+  page,
+}) => {
+  test.skip(
+    !hasProviders,
+    "needs CONTACT_E2E_PROVIDERS with Upstash/Resend test credentials",
+  );
   await page.goto("/contact");
   await page.getByLabel("Name", { exact: true }).fill("Ada Lovelace");
   await page.getByLabel("Email", { exact: true }).fill("ada@example.org");
   await page.getByLabel("Subject", { exact: true }).fill("E2E question");
-  await page.getByLabel("Message", { exact: true }).fill("A sufficiently long message body.");
+  await page
+    .getByLabel("Message", { exact: true })
+    .fill("A sufficiently long message body.");
   await page.getByRole("checkbox").check();
   const submit = page.getByRole("button", { name: /send message/i });
   await expect(submit).toBeEnabled({ timeout: 60_000 });
   await submit.click();
-  await expect(page.getByText(/message sent/i)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/message sent/i)).toBeVisible({
+    timeout: 30_000,
+  });
 });
