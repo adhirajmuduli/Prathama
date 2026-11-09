@@ -29,8 +29,11 @@ X-Content-Type-Options = "nosniff"
 X-Frame-Options = "DENY"
 Referrer-Policy = "strict-origin-when-cross-origin"
 Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https:; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+  Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+  # script/frame/connect include challenges.cloudflare.com for the Turnstile
+  # widget on /contact; img/connect include https: so artifacts served by the
+  # cross-origin API container render in the dataset explorer.
+  Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https: https://challenges.cloudflare.com; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 [[headers]]
 for = "/api/*"

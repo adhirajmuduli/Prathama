@@ -8,6 +8,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Production builds ship no browser source maps; devtools otherwise tries to
+  // fetch an empty sourceMappingURL from srcdoc/worker contexts and logs
+  // "URL constructor: is not a valid URL" noise that looks like a page failure.
+  productionBrowserSourceMaps: false,
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   turbopack: {
     root: import.meta.dirname,
