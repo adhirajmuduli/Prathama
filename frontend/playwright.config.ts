@@ -25,8 +25,12 @@ export default defineConfig({
   webServer: [
     {
       name: "backend",
+      // Cross-platform launcher: the venv entry point on Windows, `uv run`
+      // elsewhere so CI needs no pre-created venv path.
       command:
-        "..\\backend\\.venv\\Scripts\\trendsmapp.exe dev --host 127.0.0.1 --port 8000",
+        process.platform === "win32"
+          ? "..\\backend\\.venv\\Scripts\\trendsmapp.exe dev --host 127.0.0.1 --port 8000"
+          : "uv run --project . trendsmapp dev --host 127.0.0.1 --port 8000",
       cwd: "../backend",
       url: `${apiURL}/api/v1/health/live`,
       // Always start a fresh backend: a reused one may hold a stale database.

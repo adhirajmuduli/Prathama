@@ -103,7 +103,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: scan the released image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.gates.outputs.version }}
           format: sarif
@@ -117,7 +117,7 @@ jobs:
           sarif_file: trivy-release.sarif
           category: trivy-release
       - name: generate and attach the SBOM
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.gates.outputs.version }}
           format: cyclonedx

@@ -134,6 +134,28 @@ jobs:
     name: backend container
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: trendsmapp
+          POSTGRES_PASSWORD: trendsmapp
+          POSTGRES_DB: trendsmapp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U trendsmapp -d trendsmapp"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      # The production image intentionally ships no aiosqlite (the dev/test
+      # SQLite driver lives in the dev group); smoke-test it against the same
+      # PostgreSQL the integration job uses, with a local object store.
+      TRENDSMAPP_ENVIRONMENT: development
+      TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://trendsmapp:trendsmapp@localhost:5432/trendsmapp
+      TRENDSMAPP_OBJECT_STORE_BACKEND: local
+      TRENDSMAPP_LOCAL_STORAGE_ROOT: /tmp/trendsmapp/objects
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -144,12 +166,18 @@ jobs:
           push: false
           load: true
           tags: trendsmapp-backend:ci
+      - name: apply migrations through the image
+        run: |
+          docker run --rm --network host \
+            --env TRENDSMAPP_DATABASE_URL="$TRENDSMAPP_DATABASE_URL" \
+            trendsmapp-backend:ci alembic upgrade head
       - name: start the container
         run: |
           docker run --detach --name trendsmapp-backend \
             --publish 8000:8000 \
-            --env TRENDSMAPP_ENVIRONMENT=development \
-            --env "TRENDSMAPP_DATABASE_URL=sqlite+aiosqlite:////tmp/trendsmapp/trendsmapp.db" \
+            --env TRENDSMAPP_ENVIRONMENT="$TRENDSMAPP_ENVIRONMENT" \
+            --env "TRENDSMAPP_DATABASE_URL=$TRENDSMAPP_DATABASE_URL" \
+            --env TRENDSMAPP_OBJECT_STORE_BACKEND=local \
             --env TRENDSMAPP_LOCAL_STORAGE_ROOT=/tmp/trendsmapp/objects \
             trendsmapp-backend:ci
       - name: wait for the liveness probe

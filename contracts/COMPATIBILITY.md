@@ -7,7 +7,10 @@ whether the change is compatible.
 The digest below pins the snapshot that this note describes. CI fails when the
 snapshot changes without an updated note.
 
-OpenAPI snapshot SHA-256: `67c0ae11b2a88349053656adb084423503b114fc49f59939ae03d981b69b75f1`
+OpenAPI snapshot SHA-256: `74c4ab0a08a1d4673a2218fceeecc03c8a422e37cc1904608cc5612a807ca134`
+
+The digest is computed over the LF-normalized bytes: the exporter writes bytes
+directly so the snapshot is identical on Windows and Linux runners.
 
 ## API major version 1
 

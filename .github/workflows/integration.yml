@@ -41,17 +41,15 @@ jobs:
           --health-timeout 5s
           --health-retries 20
       minio:
-        image: minio/minio:latest
+        # Pinned release tag: `latest` is subject to registry rate limits and
+        # the minio image ships no shell tools for a health-cmd, so the job
+        # waits for the port itself below.
+        image: minio/minio:RELEASE.2024-11-18T13-15-44Z
         env:
           MINIO_ROOT_USER: trendsmapp
           MINIO_ROOT_PASSWORD: trendsmapp-secret
         ports:
           - 9000:9000
-        options: >-
-          --health-cmd "mc ready local"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
     env:
       TRENDSMAPP_ENVIRONMENT: development
       TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://trendsmapp:trendsmapp@localhost:5432/trendsmapp
@@ -75,9 +73,20 @@ jobs:
           cache-dependency-glob: backend/uv.lock
       - name: install dependencies
         run: uv sync --frozen --all-groups
+      - name: wait for the object store to accept connections
+        run: |
+          for attempt in $(seq 1 30); do
+            if (echo > /dev/tcp/localhost/9000) 2>/dev/null; then
+              echo "minio is accepting connections"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "minio did not become ready" >&2
+          exit 1
       - name: create the object-store bucket
         run: |
-          docker run --network host minio/mc:latest \
+          docker run --network host minio/mc:RELEASE.2024-11-18T13-06-05Z \
             sh -c "mc alias set local http://localhost:9000 trendsmapp trendsmapp-secret && mc mb --ignore-existing local/trendsmapp"
       - name: apply migrations
         run: uv run alembic upgrade head

@@ -31,7 +31,7 @@ dependencies = [
     "pint>=0.24,<1.0",
     "pydantic>=2.9,<3.0",
     "pydantic-settings>=2.6,<3.0",
-    "pyarrow>=17,<22",
+    "pyarrow>=23.0.1,<27",
     "pykrige>=1.6,<2.0",
     "pyyaml>=6.0,<7.0",
     "pyproj>=3.7,<4.0",
@@ -130,6 +130,10 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
+# `pythonpath` puts the project root on sys.path for every runner invocation
+# (`uv run pytest` does not add the CWD the way `python -m pytest` does), so
+# tests can import the sibling `scripts` and `tests` packages.
+pythonpath = ["."]
 addopts = "-ra --strict-markers --strict-config"
 
 [tool.coverage.run]

@@ -31,9 +31,14 @@ def render() -> str:
 
 
 def export(output: Path) -> Path:
-    """Write the OpenAPI document to ``output`` and return the path."""
+    """Write the OpenAPI document to ``output`` and return the path.
+
+    The document is written as bytes so the snapshot is byte-identical on
+    every platform: ``write_text`` would emit CRLF on Windows and change the
+    recorded SHA-256 between runners.
+    """
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render(), encoding="utf-8")
+    output.write_bytes(render().encode("utf-8"))
     return output
 
 
@@ -42,7 +47,7 @@ def check(output: Path) -> int:
     if not output.exists():
         print(f"export_openapi: {output} does not exist")
         return 1
-    if output.read_text(encoding="utf-8") != render():
+    if output.read_bytes() != render().encode("utf-8"):
         print(
             f"export_openapi: {output} is out of date; "
             "run 'uv run python scripts/export_openapi.py --output "

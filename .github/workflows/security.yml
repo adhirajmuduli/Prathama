@@ -73,7 +73,7 @@ jobs:
           load: true
           tags: trendsmapp-backend:scan
       - name: scan the image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: trendsmapp-backend:scan
           format: sarif
@@ -102,7 +102,7 @@ jobs:
           load: true
           tags: trendsmapp-backend:sbom
       - name: generate the bill of materials
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: trendsmapp-backend:sbom
           format: cyclonedx

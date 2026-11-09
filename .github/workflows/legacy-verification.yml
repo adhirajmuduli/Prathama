@@ -18,7 +18,9 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # ubuntu-24.04 still provides Python 3.10 for setup-python; the legacy
+    # lockfile is frozen and must not be re-resolved for a newer interpreter.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +44,7 @@ jobs:
       - run: node --check static/js/tour.js
 
   container:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +55,10 @@ jobs:
           push: false
           load: true
           tags: trendsmapp:ci
-      - run: docker run --detach --name trendsmapp-ci --publish 8000:8000 trendsmapp:ci
+      # The prototype writes an ephemeral secret file into its workdir when
+      # SECRET_KEY is unset; the container runs as non-root, so pass a
+      # placeholder key instead (CI only, never a real secret).
+      - run: docker run --detach --name trendsmapp-ci --publish 8000:8000 -e SECRET_KEY=ci-verification-placeholder trendsmapp:ci
       - run: |
           for attempt in $(seq 1 30); do
             curl --fail http://127.0.0.1:8000/api/health && exit 0

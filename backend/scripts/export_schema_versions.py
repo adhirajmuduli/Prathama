@@ -47,9 +47,13 @@ def render() -> str:
 
 
 def export(output: Path) -> Path:
-    """Write the version document to ``output`` and return the path."""
+    """Write the version document to ``output`` and return the path.
+
+    Written as bytes so the document is byte-identical on every platform
+    (``write_text`` would emit CRLF on Windows and change the recorded hash).
+    """
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render(), encoding="utf-8")
+    output.write_bytes(render().encode("utf-8"))
     return output
 
 
@@ -58,7 +62,7 @@ def check(output: Path) -> int:
     if not output.exists():
         print(f"export_schema_versions: {output} does not exist")
         return 1
-    if output.read_text(encoding="utf-8") != render():
+    if output.read_bytes() != render().encode("utf-8"):
         print(
             f"export_schema_versions: {output} is out of date; "
             f"run 'uv run python scripts/export_schema_versions.py --output {output}'"
