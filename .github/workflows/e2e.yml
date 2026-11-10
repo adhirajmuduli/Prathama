@@ -22,7 +22,8 @@ jobs:
   playwright:
     name: full-stack Playwright on Chromium
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The ML E2E trains real models through the worker; allow generous headroom.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
         with:

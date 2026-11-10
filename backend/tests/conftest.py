@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
@@ -17,6 +18,19 @@ from trendsmapp.storage.local import LocalObjectStore
 
 TEST_DATABASE_URL_TEMPLATE = "sqlite+aiosqlite:///{path}"
 TESTDATA_DIRECTORY = Path(__file__).resolve().parents[1] / "testdata"
+
+
+@pytest.fixture(autouse=True)
+def _isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Clear TRENDSMAPP_* env vars so tests see defaults, not the CI job env.
+
+    The integration job exports TRENDSMAPP_* to point the suite at PostgreSQL
+    and S3; without this fixture, tests that assert default settings would
+    inherit those values and fail.
+    """
+    for name in list(os.environ):
+        if name.startswith("TRENDSMAPP_"):
+            monkeypatch.delenv(name, raising=False)
 
 
 @pytest.fixture
