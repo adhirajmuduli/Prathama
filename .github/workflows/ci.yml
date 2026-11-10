@@ -149,7 +149,7 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: trendsmapp
+          POSTGRES_USER: ci-test-user
           # Ephemeral credential for the throwaway CI service container only;
           # override with a repository variable, never a production secret.
           POSTGRES_PASSWORD: ${{ vars.CI_POSTGRES_PASSWORD || 'ci-ephemeral-placeholder' }}
@@ -157,7 +157,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U trendsmapp -d trendsmapp"
+          --health-cmd "pg_isready -U ci-test-user -d trendsmapp"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20

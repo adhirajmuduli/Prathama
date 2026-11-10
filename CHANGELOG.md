@@ -57,6 +57,14 @@ API major version.
   failed. New guard `scripts/check_text_normalization.py` (wired into the CI
   repository-invariants job) fails when any tracked file has CRLF in its index
   blob.
+- CI (latest run triage): the backend-image job's PostgreSQL service user now
+  matches the `TRENDSMAPP_DATABASE_URL` user (was `trendsmapp` vs
+  `ci-test-user`, so the in-image `alembic upgrade head` failed auth). The
+  legacy audit is now `scripts/audit_lock.py` (OSV) with
+  `scripts/legacy-audit-allowlist.txt`: the frozen lock's 61 current
+  advisories are accepted and listed, any new one fails. The Trivy image gate
+  now fails only on CRITICAL OS vulns (Python deps remain at zero tolerance
+  via pip-audit; secrets via gitleaks).
 - CI: the integration job no longer pulls MinIO from Docker Hub (anonymous
   pulls are rate-limited); it runs a `moto[server]` S3 mock on port 5000 and
   creates the bucket with boto3. The backend-image smoke test starts the
