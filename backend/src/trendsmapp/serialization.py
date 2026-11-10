@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 from collections.abc import Mapping, Sequence, Set
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime
@@ -43,7 +44,7 @@ _SEPARATORS = (",", ":")
 
 
 def _normalize_number(value: float) -> int | float:
-    if value != value or value in (float("inf"), float("-inf")):
+    if math.isnan(value) or math.isinf(value):
         raise ValueError("Canonical JSON does not permit non-finite numbers.")
     if value.is_integer() and abs(value) < 2**53:
         return int(value)
@@ -59,9 +60,29 @@ def normalize_for_canonical(value: Any) -> Any:
     :class:`TypeError` so that a serialization change cannot slip through
     unnoticed.
     """
-    if value is None or isinstance(value, (bool, str)):
-        return value
-    if isinstance(value, int):
+    primitive = _normalize_primitive(value)
+    if primitive is not _NOT_PRIMITIVE:
+        return primitive
+    if isinstance(value, Mapping):
+        return {str(key): normalize_for_canonical(item) for key, item in value.items()}
+    if isinstance(value, Set):
+        normalized = [normalize_for_canonical(item) for item in value]
+        return sorted(normalized, key=canonical_json)
+    if isinstance(value, Sequence):
+        return [normalize_for_canonical(item) for item in value]
+    raise TypeError(f"Object of type {type(value).__name__} is not canonically serializable.")
+
+
+class _NotPrimitive:
+    """Sentinel: the value is not a primitive the scalar normalizer handles."""
+
+
+_NOT_PRIMITIVE = _NotPrimitive()
+
+
+def _normalize_primitive(value: Any) -> Any:
+    """Normalize one scalar value, or return ``_NOT_PRIMITIVE`` for containers."""
+    if value is None or isinstance(value, (bool, str, int)):
         return value
     if isinstance(value, float):
         return _normalize_number(value)
@@ -85,14 +106,7 @@ def normalize_for_canonical(value: Any) -> Any:
         return normalize_for_canonical(asdict(value))
     if isinstance(value, bytes):
         return base64.b64encode(value).decode("ascii")
-    if isinstance(value, Mapping):
-        return {str(key): normalize_for_canonical(item) for key, item in value.items()}
-    if isinstance(value, Set):
-        normalized = [normalize_for_canonical(item) for item in value]
-        return sorted(normalized, key=canonical_json)
-    if isinstance(value, Sequence):
-        return [normalize_for_canonical(item) for item in value]
-    raise TypeError(f"Object of type {type(value).__name__} is not canonically serializable.")
+    return _NOT_PRIMITIVE
 
 
 def canonical_json(value: Any) -> str:

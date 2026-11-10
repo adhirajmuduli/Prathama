@@ -21,6 +21,7 @@ be mapped, and the validation says so instead of choosing a label.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Final, Literal
 
@@ -423,45 +424,38 @@ def resolve_mapping(
     )
 
 
-def propose_mapping(
+@dataclass(frozen=True, slots=True)
+class _DetectedFields:
+    """Candidate columns found by header hints and type evidence."""
+
+    timestamp: str | None
+    parameter: str | None
+    value: str | None
+    station: str | None
+    latitude: str | None
+    longitude: str | None
+    unit: str | None
+    qualifier: str | None
+    depth: str | None
+    sector: str | None
+
+
+def _detect_fields(
     fields: tuple[str, ...],
-    *,
+    normalized: dict[str, str],
     numeric_fields: frozenset[str],
     date_fields: frozenset[str],
-    layout: LayoutKind,
-    wide_axis: Literal["stations", "parameters"] | None = None,
-) -> ProposedMapping:
-    """Propose a mapping from header names and column evidence.
-
-    The proposal is deterministic: the same fields and the same evidence always
-    produce the same proposal. It is not validated for completeness on purpose,
-    because a proposal is the start of a conversation with the analyst, not a
-    confirmed document.
-    """
-    normalized = {field: normalize_header_name(field) for field in fields}
-    warnings: list[str] = []
-    axis = wide_axis
-    claimed: set[str] = set()
-    columns: list[MappedColumn] = []
-
-    def claim(field: str | None, role: ColumnRole, **attributes: str | None) -> None:
-        """Assign a field to a role unless another role already claimed it.
-
-        A header can suggest two roles at once — a station column named
-        "Central Sector" also matches the sector hint. The first claim wins in
-        a fixed order, and the losing hint simply has no effect, so a proposal
-        can never name one column twice.
-        """
-        if field is None or field in claimed:
-            return
-        claimed.add(field)
-        columns.append(MappedColumn(column=field, role=role, **attributes))
+) -> _DetectedFields:
+    """Find the candidate column for each role from names and type evidence."""
 
     def named(hints: tuple[str, ...]) -> str | None:
         for field in fields:
             if any(hint in normalized[field] for hint in hints):
                 return field
         return None
+
+    def typed(hints: tuple[str, ...]) -> str | None:
+        return next((field for field in fields if _matches(normalized[field], hints)), None)
 
     timestamp = named(TIMESTAMP_NAME_HINTS)
     if timestamp is None:
@@ -479,103 +473,150 @@ def propose_mapping(
             ),
             None,
         )
-    station = named(STATION_NAME_HINTS)
-    latitude = next(
-        (field for field in fields if _matches(normalized[field], ("lat",))),
-        None,
-    )
-    longitude = next(
-        (field for field in fields if _matches(normalized[field], ("lon", "long"))),
-        None,
-    )
-    unit = next(
-        (field for field in fields if _matches(normalized[field], _UNIT_HINTS)),
-        None,
-    )
-    qualifier = next(
-        (field for field in fields if _matches(normalized[field], _QUALIFIER_HINTS)),
-        None,
-    )
-    depth = next(
-        (field for field in fields if _matches(normalized[field], _DEPTH_HINTS)),
-        None,
-    )
-    sector = next(
-        (field for field in fields if _matches(normalized[field], _SECTOR_HINTS)),
-        None,
+    return _DetectedFields(
+        timestamp=timestamp,
+        parameter=parameter,
+        value=value,
+        station=named(STATION_NAME_HINTS),
+        latitude=typed(("lat",)),
+        longitude=typed(("lon", "long")),
+        unit=typed(_UNIT_HINTS),
+        qualifier=typed(_QUALIFIER_HINTS),
+        depth=typed(_DEPTH_HINTS),
+        sector=typed(_SECTOR_HINTS),
     )
 
-    if timestamp is not None:
-        claim(timestamp, ColumnRole.TIMESTAMP)
+
+def _propose_long(
+    detected: _DetectedFields, claim: Callable[..., None], warnings: list[str]
+) -> None:
+    """Claim the long-layout roles: timestamp, parameter, value, station, and friends."""
+    # A long layout, and an undetermined one, get a long-style proposal:
+    # most tables are long, and an undetermined table must be mapped
+    # explicitly anyway.
+    if detected.parameter is not None:
+        claim(detected.parameter, ColumnRole.PARAMETER)
+    else:
+        warnings.append(
+            "No parameter column was found; declare the parameter this table holds or map one."
+        )
+    if detected.value is not None:
+        claim(detected.value, ColumnRole.VALUE)
+    else:
+        warnings.append("No value column could be proposed; map one explicitly.")
+    claim(detected.station, ColumnRole.STATION)
+    if detected.latitude is not None and detected.longitude is not None:
+        claim(detected.latitude, ColumnRole.LATITUDE)
+        claim(detected.longitude, ColumnRole.LONGITUDE)
+    if detected.unit is not None:
+        claim(detected.unit, ColumnRole.UNIT)
+    else:
+        warnings.append("No unit column was found; declare a default unit or map one.")
+
+
+def _propose_wide(
+    fields: tuple[str, ...],
+    normalized: dict[str, str],
+    detected: _DetectedFields,
+    wide_axis: Literal["stations", "parameters"] | None,
+    numeric_fields: frozenset[str],
+    claim: Callable[..., None],
+    warnings: list[str],
+) -> Literal["stations", "parameters"]:
+    """Claim the wide-layout roles and return the resolved wide axis."""
+    axis = wide_axis or "stations"
+    if wide_axis is None:
+        warnings.append(
+            "The wide axis was assumed to be 'stations'; confirm or correct it in the mapping."
+        )
+    value_fields = [
+        field
+        for field in fields
+        if field in numeric_fields
+        and field != detected.timestamp
+        and not any(hint in normalized[field] for hint in COORDINATE_NAME_HINTS)
+    ]
+    hinted_value = [
+        field
+        for field in fields
+        if field != detected.timestamp
+        and _matches(normalized[field], VALUE_NAME_HINTS)
+        and field not in value_fields
+        and not any(hint in normalized[field] for hint in COORDINATE_NAME_HINTS)
+    ]
+    # A column whose header names the value role belongs in the value set
+    # even when a small sample obscures its numericity: the name is
+    # evidence the analyst sees and can correct, while omitting the column
+    # silently loses a measurement axis.
+    value_fields = value_fields + hinted_value
+    if not value_fields:
+        warnings.append("No numeric value columns could be proposed for the wide layout.")
+    for field in value_fields:
+        claim(
+            field,
+            ColumnRole.VALUE,
+            station_label=field if axis == "stations" else None,
+            parameter_label=field if axis == "parameters" else None,
+        )
+    if axis == "parameters":
+        claim(detected.station, ColumnRole.STATION)
+    if axis == "stations":
+        warnings.append(
+            "Confirm the parameter this wide table holds; the proposal cannot "
+            "derive it from the headers."
+        )
+    return axis
+
+
+def propose_mapping(
+    fields: tuple[str, ...],
+    *,
+    numeric_fields: frozenset[str],
+    date_fields: frozenset[str],
+    layout: LayoutKind,
+    wide_axis: Literal["stations", "parameters"] | None = None,
+) -> ProposedMapping:
+    """Propose a mapping from header names and column evidence.
+
+    The proposal is deterministic: the same fields and the same evidence always
+    produce the same proposal. It is not validated for completeness on purpose,
+    because a proposal is the start of a conversation with the analyst, not a
+    confirmed document.
+    """
+    normalized = {field: normalize_header_name(field) for field in fields}
+    warnings: list[str] = []
+    claimed: set[str] = set()
+    columns: list[MappedColumn] = []
+
+    def claim(field: str | None, role: ColumnRole, **attributes: str | None) -> None:
+        """Assign a field to a role unless another role already claimed it.
+
+        A header can suggest two roles at once — a station column named
+        "Central Sector" also matches the sector hint. The first claim wins in
+        a fixed order, and the losing hint simply has no effect, so a proposal
+        can never name one column twice.
+        """
+        if field is None or field in claimed:
+            return
+        claimed.add(field)
+        columns.append(MappedColumn(column=field, role=role, **attributes))
+
+    detected = _detect_fields(fields, normalized, numeric_fields, date_fields)
+
+    if detected.timestamp is not None:
+        claim(detected.timestamp, ColumnRole.TIMESTAMP)
     else:
         warnings.append("No timestamp column could be proposed; map one explicitly.")
     if layout is not LayoutKind.WIDE:
-        # A long layout, and an undetermined one, get a long-style proposal:
-        # most tables are long, and an undetermined table must be mapped
-        # explicitly anyway.
-        if parameter is not None:
-            claim(parameter, ColumnRole.PARAMETER)
-        else:
-            warnings.append(
-                "No parameter column was found; declare the parameter this table holds or map one."
-            )
-        if value is not None:
-            claim(value, ColumnRole.VALUE)
-        else:
-            warnings.append("No value column could be proposed; map one explicitly.")
-        claim(station, ColumnRole.STATION)
-        if latitude is not None and longitude is not None:
-            claim(latitude, ColumnRole.LATITUDE)
-            claim(longitude, ColumnRole.LONGITUDE)
-        if unit is not None:
-            claim(unit, ColumnRole.UNIT)
-        else:
-            warnings.append("No unit column was found; declare a default unit or map one.")
+        _propose_long(detected, claim, warnings)
+        axis = wide_axis
     else:
-        axis = wide_axis or "stations"
-        if wide_axis is None:
-            warnings.append(
-                "The wide axis was assumed to be 'stations'; confirm or correct it in the mapping."
-            )
-        value_fields = [
-            field
-            for field in fields
-            if field in numeric_fields
-            and field != timestamp
-            and not any(hint in normalized[field] for hint in COORDINATE_NAME_HINTS)
-        ]
-        hinted_value = [
-            field
-            for field in fields
-            if field != timestamp
-            and _matches(normalized[field], VALUE_NAME_HINTS)
-            and field not in value_fields
-            and not any(hint in normalized[field] for hint in COORDINATE_NAME_HINTS)
-        ]
-        # A column whose header names the value role belongs in the value set
-        # even when a small sample obscures its numericity: the name is
-        # evidence the analyst sees and can correct, while omitting the column
-        # silently loses a measurement axis.
-        value_fields = value_fields + hinted_value
-        if not value_fields:
-            warnings.append("No numeric value columns could be proposed for the wide layout.")
-        for field in value_fields:
-            claim(
-                field,
-                ColumnRole.VALUE,
-                station_label=field if axis == "stations" else None,
-                parameter_label=field if axis == "parameters" else None,
-            )
-        if axis == "parameters":
-            claim(station, ColumnRole.STATION)
-        if axis == "stations":
-            warnings.append(
-                "Confirm the parameter this wide table holds; the proposal cannot "
-                "derive it from the headers."
-            )
-    claim(qualifier, ColumnRole.QUALIFIER)
-    claim(depth, ColumnRole.DEPTH)
-    claim(sector, ColumnRole.SECTOR)
+        axis = _propose_wide(
+            fields, normalized, detected, wide_axis, numeric_fields, claim, warnings
+        )
+    claim(detected.qualifier, ColumnRole.QUALIFIER)
+    claim(detected.depth, ColumnRole.DEPTH)
+    claim(detected.sector, ColumnRole.SECTOR)
     for field in fields:
         if field not in claimed:
             claim(field, ColumnRole.IGNORED)

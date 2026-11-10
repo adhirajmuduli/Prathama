@@ -67,7 +67,6 @@ __all__ = [
     "ApiError",
     "ArtifactRef",
     "ArtifactRefKind",
-    "ArtifactSchemaMigrations",
     "CreateExportRequest",
     "CreateExportResponse",
     "CreateModelRunResponse",

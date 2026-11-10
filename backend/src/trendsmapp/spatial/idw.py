@@ -24,6 +24,9 @@ from trendsmapp.spatial.base import (
 
 __all__ = ["IDWParams", "IdwInterpolator", "fit_idw"]
 
+#: Distances at or below this many meters count as a coincident observation.
+_COINCIDENT_EPS_M: Final[float] = 1e-9
+
 #: Default IDW power.
 DEFAULT_IDW_POWER: Final[float] = 2.0
 
@@ -124,16 +127,21 @@ class IdwInterpolator:
             selected_weights = 1.0 / (np.maximum(selected_distances, floor) ** power)
             numerator = (selected_weights * self.values[selected]).sum(axis=1)
             denominator = selected_weights.sum(axis=1)
-            values = numerator / np.where(denominator == 0, 1.0, denominator)
+            values = numerator / np.where(
+                np.isclose(denominator, 0.0, atol=1e-12), 1.0, denominator
+            )
         else:
             numerator = (weights * self.values[None, :]).sum(axis=1)
             denominator = weights.sum(axis=1)
-            values = numerator / np.where(denominator == 0, 1.0, denominator)
+            values = numerator / np.where(
+                np.isclose(denominator, 0.0, atol=1e-12), 1.0, denominator
+            )
         # Coincident observations (distance zero) take their average; a unique
-        # exact match takes its value directly.
-        exact = nearest == 0.0
+        # exact match takes its value directly. Distances are non-negative, so
+        # a <= epsilon test replaces a float == 0.0 comparison.
+        exact = nearest <= _COINCIDENT_EPS_M
         if np.any(exact):
-            coincident = distances[exact] == 0.0
+            coincident = distances[exact] <= _COINCIDENT_EPS_M
             values[exact] = (self.values[None, :] * coincident).sum(axis=1) / coincident.sum(axis=1)
         return Prediction(values=values, uncertainty=None, support=nearest)
 

@@ -23,6 +23,66 @@ from trendsmapp.explainability.stability import importance_stability
 __all__ = ["explain_model"]
 
 
+def _explain_permutation(**kwargs: Any) -> tuple[list[FeatureImportance], list[str]]:
+    """Permutation importance rows."""
+    rows = [
+        _to_importance(row)
+        for row in permutation_importance(
+            kwargs["predict"],
+            kwargs["x"],
+            kwargs["y"],
+            kwargs["feature_names"],
+            repeats=kwargs["repeats"],
+            seed=kwargs["seed"],
+            primary_metric=kwargs["primary_metric"],
+        )
+    ]
+    return rows, []
+
+
+def _explain_shap(**kwargs: Any) -> tuple[list[FeatureImportance], list[str]]:
+    """SHAP tree rows, with an additivity self-check."""
+    family = kwargs["family"]
+    estimator = kwargs["estimator"]
+    if estimator is None:
+        return [], ["shap_tree requires the fitted estimator, which was not provided"]
+    if not supports_shap(family):
+        return [], [f"shap_tree is not supported for model family '{family.value}'"]
+    result = shap_importance(
+        estimator,
+        kwargs["x"],
+        kwargs["feature_names"],
+        background=kwargs["background"],
+        seed=kwargs["seed"],
+    )
+    rows = [_to_importance(row) for row in result["rows"]]
+    limitations: list[str] = []
+    if result["additivity_max_error"] > 1e-4:
+        limitations.append(
+            "the SHAP additivity check exceeded the tolerance: "
+            f"{result['additivity_max_error']:.3g}"
+        )
+    return rows, limitations
+
+
+def _explain_partial_dependence(**kwargs: Any) -> tuple[list[FeatureImportance], list[str]]:
+    """Partial-dependence rows and their recorded limitations."""
+    estimator = kwargs["estimator"]
+    if estimator is None:
+        return [], ["partial_dependence requires the fitted estimator, which was not provided"]
+    result = partial_dependence_effects(
+        estimator, kwargs["x"], kwargs["feature_names"], family=kwargs["family"]
+    )
+    return [_to_importance(row) for row in result["rows"]], list(result["limitations"])
+
+
+_EXPLAINERS: dict[ExplanationMethod, Callable[..., tuple[list[FeatureImportance], list[str]]]] = {
+    ExplanationMethod.PERMUTATION: _explain_permutation,
+    ExplanationMethod.SHAP_TREE: _explain_shap,
+    ExplanationMethod.PARTIAL_DEPENDENCE: _explain_partial_dependence,
+}
+
+
 def explain_model(
     *,
     family: ModelFamily,
@@ -45,53 +105,20 @@ def explain_model(
     limitations: list[str] = []
 
     for method in methods:
-        if method is ExplanationMethod.PERMUTATION:
-            for row in permutation_importance(
-                predict,
-                x,
-                y,
-                feature_names,
-                repeats=repeats,
-                seed=seed,
-                primary_metric=primary_metric,
-            ):
-                rows.append(_to_importance(row))
-        elif method is ExplanationMethod.SHAP_TREE:
-            if estimator is None:
-                limitations.append(
-                    "shap_tree requires the fitted estimator, which was not provided"
-                )
-            elif not supports_shap(family):
-                limitations.append(f"shap_tree is not supported for model family '{family.value}'")
-            else:
-                result = shap_importance(
-                    estimator,
-                    x,
-                    feature_names,
-                    background=background,
-                    seed=seed,
-                )
-                for row in result["rows"]:
-                    rows.append(_to_importance(row))
-                if result["additivity_max_error"] > 1e-4:
-                    limitations.append(
-                        "the SHAP additivity check exceeded the tolerance: "
-                        f"{result['additivity_max_error']:.3g}"
-                    )
-        elif method is ExplanationMethod.PARTIAL_DEPENDENCE:
-            if estimator is None:
-                limitations.append(
-                    "partial_dependence requires the fitted estimator, which was not provided"
-                )
-            else:
-                result = partial_dependence_effects(estimator, x, feature_names, family=family)
-                for row in result["rows"]:
-                    rows.append(_to_importance(row))
-                limitations.extend(result["limitations"])
-        else:
-            limitations.append(  # type: ignore[unreachable]
-                f"unknown explanation method '{getattr(method, 'value', method)}'"
-            )
+        method_rows, method_limitations = _EXPLAINERS[method](
+            family=family,
+            predict=predict,
+            x=x,
+            y=y,
+            feature_names=feature_names,
+            estimator=estimator,
+            background=background,
+            seed=seed,
+            primary_metric=primary_metric,
+            repeats=repeats,
+        )
+        rows.extend(method_rows)
+        limitations.extend(method_limitations)
 
     if groups is not None and len(set(groups)) > 1:
         importances_by_group: dict[str, dict[str, float]] = {}

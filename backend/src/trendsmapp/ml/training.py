@@ -73,6 +73,111 @@ class TrainingResult:
     final_preprocessor: Any = None
 
 
+@dataclass(frozen=True, slots=True)
+class _FoldData:
+    """One outer fold's train/test split, pre-indexed for evaluation."""
+
+    x_train: np.ndarray
+    y_train: np.ndarray
+    x_test: np.ndarray
+    y_test: np.ndarray
+    groups_train: list[str]
+    groups_test: list[str]
+    years_train: list[int]
+    sectors_train: list[str]
+    coords_train: np.ndarray
+    train_size: int
+    test_size: int
+    test_index: tuple[int, ...]
+
+
+def _evaluate_candidate(
+    family: ModelFamily,
+    fold: _FoldData,
+    fold_index: int,
+    task: MLTask,
+    feature_names: Sequence[str],
+    warnings: list[str],
+) -> FoldResult:
+    """Search and fit one candidate model on one outer fold."""
+    best = bounded_search(
+        family,
+        fold.x_train,
+        fold.y_train,
+        fold.groups_train,
+        budget=task.search_budget,
+        seed=task.seed,
+        primary_metric=task.primary_metric,
+        inner_strategy=task.inner_split,
+        years=fold.years_train,
+        sectors=fold.sectors_train,
+        coords_m=fold.coords_train,
+    )
+    result = fit_fold_model(
+        family,
+        best.best_params,
+        task.seed,
+        feature_names,
+        fold.x_train,
+        fold.y_train,
+        fold.groups_train,
+        fold.x_test,
+        fold.y_test,
+        fold.groups_test,
+        fold_index,
+        warnings,
+    )
+    return FoldResult(
+        fold_index=fold_index,
+        family=family,
+        train_size=fold.train_size,
+        test_size=fold.test_size,
+        metrics=result.metrics,
+        y_true=result.y_true,
+        y_pred=result.y_pred,
+        warnings=result.warnings,
+        preprocessor=result.preprocessor,
+        test_index=fold.test_index,
+    )
+
+
+def _evaluate_baseline(
+    family: ModelFamily, fold: _FoldData, fold_index: int, task: MLTask
+) -> FoldResult:
+    """Fit one baseline on one outer fold (no hyperparameter search)."""
+    model = make_model(ModelSpec(family=family, seed=task.seed))
+    model.fit(fold.x_train, fold.y_train, fold.groups_train)
+    y_pred = np.asarray(model.predict(fold.x_test, fold.groups_test), dtype=float)
+    return FoldResult(
+        fold_index=fold_index,
+        family=family,
+        train_size=fold.train_size,
+        test_size=fold.test_size,
+        metrics=regression_metrics(fold.y_test, y_pred),
+        y_true=fold.y_test,
+        y_pred=y_pred,
+        warnings=(),
+    )
+
+
+def _aggregate_folds(
+    fold_results: dict[ModelFamily, list[FoldResult]],
+    all_families: list[ModelFamily],
+    task: MLTask,
+) -> dict[str, dict[str, Any]]:
+    """Aggregate per-fold metrics per family, with bootstrap CIs on the primary metric."""
+    aggregated: dict[str, dict[str, Any]] = {}
+    for family in all_families:
+        folds = fold_results[family]
+        aggregated[family.value] = aggregate_fold_metrics([fold.metrics for fold in folds])
+        if folds:
+            all_true = np.concatenate([fold.y_true for fold in folds])
+            all_pred = np.concatenate([fold.y_pred for fold in folds])
+            low, high = bootstrap_ci(all_true, all_pred, seed=task.seed, metric=task.primary_metric)
+            aggregated[family.value][f"{task.primary_metric}_ci95"] = [low, high]
+    return aggregated
+
+
 def train_and_evaluate(
     task: MLTask,
     *,
@@ -106,84 +211,28 @@ def train_and_evaluate(
     warnings: list[str] = []
 
     for fold_index, (train_idx, test_idx) in enumerate(outer_folds):
-        x_train, y_train = x[train_idx], y[train_idx]
-        x_test, y_test = x[test_idx], y[test_idx]
-        groups_train = [groups[i] for i in train_idx]
-        groups_test = [groups[i] for i in test_idx]
-        years_train = [years[i] for i in train_idx]
-        sectors_train = [sectors[i] for i in train_idx]
-        coords_train = coords_m[train_idx]
-
+        fold_data = _FoldData(
+            x_train=x[train_idx],
+            y_train=y[train_idx],
+            x_test=x[test_idx],
+            y_test=y[test_idx],
+            groups_train=[groups[i] for i in train_idx],
+            groups_test=[groups[i] for i in test_idx],
+            years_train=[years[i] for i in train_idx],
+            sectors_train=[sectors[i] for i in train_idx],
+            coords_train=coords_m[train_idx],
+            train_size=len(train_idx),
+            test_size=len(test_idx),
+            test_index=tuple(int(index) for index in test_idx),
+        )
         for family in families:
-            best = bounded_search(
-                family,
-                x_train,
-                y_train,
-                groups_train,
-                budget=task.search_budget,
-                seed=task.seed,
-                primary_metric=task.primary_metric,
-                inner_strategy=task.inner_split,
-                years=years_train,
-                sectors=sectors_train,
-                coords_m=coords_train,
-            )
-            fold = fit_fold_model(
-                family,
-                best.best_params,
-                task.seed,
-                feature_names,
-                x_train,
-                y_train,
-                groups_train,
-                x_test,
-                y_test,
-                groups_test,
-                fold_index,
-                warnings,
-            )
             fold_results[family].append(
-                FoldResult(
-                    fold_index=fold_index,
-                    family=family,
-                    train_size=len(train_idx),
-                    test_size=len(test_idx),
-                    metrics=fold.metrics,
-                    y_true=fold.y_true,
-                    y_pred=fold.y_pred,
-                    warnings=fold.warnings,
-                    preprocessor=fold.preprocessor,
-                    test_index=tuple(int(index) for index in test_idx),
-                )
+                _evaluate_candidate(family, fold_data, fold_index, task, feature_names, warnings)
             )
-
         for family in BASELINE_FAMILIES:
-            model = make_model(ModelSpec(family=family, seed=task.seed))
-            model.fit(x_train, y_train, groups_train)
-            y_pred = np.asarray(model.predict(x_test, groups_test), dtype=float)
-            metrics = regression_metrics(y_test, y_pred)
-            fold_results[family].append(
-                FoldResult(
-                    fold_index=fold_index,
-                    family=family,
-                    train_size=len(train_idx),
-                    test_size=len(test_idx),
-                    metrics=metrics,
-                    y_true=y_test,
-                    y_pred=y_pred,
-                    warnings=(),
-                )
-            )
+            fold_results[family].append(_evaluate_baseline(family, fold_data, fold_index, task))
 
-    aggregated: dict[str, dict[str, Any]] = {}
-    for family in all_families:
-        folds = fold_results[family]
-        aggregated[family.value] = aggregate_fold_metrics([fold.metrics for fold in folds])
-        if folds:
-            all_true = np.concatenate([fold.y_true for fold in folds])
-            all_pred = np.concatenate([fold.y_pred for fold in folds])
-            low, high = bootstrap_ci(all_true, all_pred, seed=task.seed, metric=task.primary_metric)
-            aggregated[family.value][f"{task.primary_metric}_ci95"] = [low, high]
+    aggregated = _aggregate_folds(fold_results, all_families, task)
 
     # every ML candidate must beat or match the best baseline on the primary metric
     baseline_scores = {

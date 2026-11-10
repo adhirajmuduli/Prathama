@@ -30,13 +30,15 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: trendsmapp
-          POSTGRES_PASSWORD: trendsmapp
+          # Ephemeral credentials for the throwaway CI container only; override
+          # with repository variables, never production secrets.
+          POSTGRES_USER: ci-test-user
+          POSTGRES_PASSWORD: ${{ vars.CI_POSTGRES_PASSWORD || 'ci-ephemeral-placeholder' }}
           POSTGRES_DB: trendsmapp
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U trendsmapp -d trendsmapp"
+          --health-cmd "pg_isready -U ci-test-user -d trendsmapp"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
@@ -53,22 +55,22 @@ jobs:
           --health-timeout 5s
           --health-retries 20
         env:
-          AWS_ACCESS_KEY_ID: trendsmapp
-          AWS_SECRET_ACCESS_KEY: trendsmapp-secret
+          AWS_ACCESS_KEY_ID: ci-test-user
+          AWS_SECRET_ACCESS_KEY: ${{ vars.CI_S3_SECRET || 'ci-ephemeral-placeholder' }}
         command: >-
           sh -c "pip install --quiet 'moto[server]' && python -m moto.server -H 0.0.0.0 -p 5000"
     env:
       TRENDSMAPP_ENVIRONMENT: development
-      TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://trendsmapp:trendsmapp@localhost:5432/trendsmapp
+      TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://ci-test-user:${{ vars.CI_POSTGRES_PASSWORD || 'ci-ephemeral-placeholder' }}@localhost:5432/trendsmapp
       TRENDSMAPP_OBJECT_STORE_BACKEND: s3
       TRENDSMAPP_S3_BUCKET: trendsmapp
       TRENDSMAPP_S3_ENDPOINT_URL: http://localhost:5000
       TRENDSMAPP_S3_REGION: us-east-1
-      TRENDSMAPP_S3_ACCESS_KEY_ID: trendsmapp
-      TRENDSMAPP_S3_SECRET_ACCESS_KEY: trendsmapp-secret
+      TRENDSMAPP_S3_ACCESS_KEY_ID: ci-test-user
+      TRENDSMAPP_S3_SECRET_ACCESS_KEY: ${{ vars.CI_S3_SECRET || 'ci-ephemeral-placeholder' }}
       TRENDSMAPP_S3_FORCE_PATH_STYLE: "true"
-      AWS_ACCESS_KEY_ID: trendsmapp
-      AWS_SECRET_ACCESS_KEY: trendsmapp-secret
+      AWS_ACCESS_KEY_ID: ci-test-user
+      AWS_SECRET_ACCESS_KEY: ${{ vars.CI_S3_SECRET || 'ci-ephemeral-placeholder' }}
       TRENDSMAPP_CORS_ALLOW_ORIGINS: '["http://localhost:3000"]'
       TRENDSMAPP_TRUSTED_HOSTS: '["localhost","127.0.0.1","testserver"]'
       TRENDSMAPP_LOG_LEVEL: warning
@@ -102,8 +104,8 @@ jobs:
           s3 = boto3.client(
               "s3",
               endpoint_url="http://localhost:5000",
-              aws_access_key_id="trendsmapp",
-              aws_secret_access_key="trendsmapp-secret",
+              aws_access_key_id="ci-test-user",
+              aws_secret_access_key="ci-ephemeral-placeholder",
               region_name="us-east-1",
           )
           existing = [b["Name"] for b in s3.list_buckets()["Buckets"]]

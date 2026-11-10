@@ -30,17 +30,16 @@ def _postgres_ssl_argument(sslmode: str, root_cert: str | None) -> object | None
         return False
     if sslmode in {"", "allow", "prefer"}:
         return None
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    # create_default_context (Python 3.10+ secure defaults): verifies the server
+    # certificate against the system CAs and checks the hostname by default.
+    context = ssl.create_default_context(cafile=root_cert) if root_cert else ssl.create_default_context()
     if sslmode == "require":
-        # Encrypted, unauthenticated connection: no certificate validation.
+        # Encrypted, unauthenticated connection: postgres "require" semantics
+        # deliberately skip certificate validation; use verify-full instead.
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
         return context
     if sslmode in {"verify-ca", "verify-full"}:
-        if root_cert:
-            context.load_verify_locations(cafile=root_cert)
-        else:
-            context.set_default_verify_paths()
         context.check_hostname = sslmode == "verify-full"
         context.verify_mode = ssl.CERT_REQUIRED
         return context

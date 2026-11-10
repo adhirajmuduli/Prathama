@@ -27,8 +27,11 @@ LONG_FIELDS = (
     "notes",
 )
 
+STATION_A = "St. A"
+STATION_B = "St. B"
+
 FIRST_DATA_ROW = (
-    "St. A",
+    STATION_A,
     "19.7350",
     "85.4700",
     "2024-01-15T09:30:00Z",
@@ -90,7 +93,7 @@ def test_reader_keeps_the_physical_row_order(testdata_path: Path) -> None:
     )
     batch = batches[0]
     stations = [row[0] for row in batch.rows]
-    assert stations == ["St. A", "St. A", "St. B", "St. B"] * 3
+    assert stations == [STATION_A, STATION_A, STATION_B, STATION_B] * 3
 
 
 def test_reader_skips_leading_rows_on_request(testdata_path: Path) -> None:
@@ -118,7 +121,7 @@ def test_reader_reads_tab_delimited_files(testdata_path: Path) -> None:
     )
     batches = list(read_csv_batches(_open_csv(testdata_path, "observations.tsv"), options))
     assert count_rows(batches) == 4
-    assert batches[0].rows[1] == ("St. B", "2024-01-15T10:05:00Z", "salinity", "12.4", "psu")
+    assert batches[0].rows[1] == (STATION_B, "2024-01-15T10:05:00Z", "salinity", "12.4", "psu")
 
 
 def test_reader_transcodes_non_utf8_files(testdata_path: Path) -> None:
@@ -129,8 +132,8 @@ def test_reader_transcodes_non_utf8_files(testdata_path: Path) -> None:
     )
     batches = list(read_csv_batches(_open_csv(testdata_path, "cp1252_non_utf8.csv"), options))
     assert batches[0].rows[0] == ("station", "sampled_at", "parameter", "value", "unit")
-    assert batches[0].rows[1] == ("St. A", "2024-01-15T09:30:00Z", "temperature", "21.4", "°C")
-    assert batches[0].rows[2] == ("St. B", "2024-01-15T10:05:00Z", "phosphat", "0.03", "µg/l")
+    assert batches[0].rows[1] == (STATION_A, "2024-01-15T09:30:00Z", "temperature", "21.4", "°C")
+    assert batches[0].rows[2] == (STATION_B, "2024-01-15T10:05:00Z", "phosphat", "0.03", "µg/l")
 
 
 def test_reader_reports_inconsistent_field_counts_without_leaking_content(

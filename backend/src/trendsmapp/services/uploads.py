@@ -14,10 +14,11 @@ from __future__ import annotations
 
 import tempfile
 from datetime import UTC, datetime, timedelta
-from typing import BinaryIO, Final, cast
+from typing import Any, BinaryIO, Final, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from trendsmapp.async_io import run_blocking
 from trendsmapp.clock import utc_now
 from trendsmapp.constants import (
     CHUNK_SIZE_BOUNDS_BYTES,
@@ -269,28 +270,33 @@ class UploadService:
             for plan in plans
         )
 
-        with tempfile.TemporaryFile() as raw_spool:
-            assembled: BinaryIO = cast(BinaryIO, raw_spool)
-            result = assemble_parts(
-                store=self._store,
-                parts=refs,
-                destination=assembled,
-                expected_total_bytes=row.total_bytes,
-                expected_sha256=row.expected_sha256,
-            )
-            assembled.seek(0)
-            head = assembled.read(_HEAD_BYTES)
-            assembled.seek(0)
-            verdict = inspect_file_type(
-                filename=row.filename, content_type=row.content_type, head=head
-            )
-            raw_key = build_raw_upload_key(upload_id, result.sha256, row.filename)
-            stored = self._store.put_stream(
-                raw_key,
-                cast(BinaryIO, raw_spool),
-                content_type=verdict.content_type or "application/octet-stream",
-                expected_size=result.size_bytes,
-            )
+        def _assemble_and_store() -> tuple[Any, str, Any]:
+            """Blocking part assembly, type sniffing, and raw storage (off-loop)."""
+            with tempfile.TemporaryFile() as raw_spool:
+                assembled: BinaryIO = cast(BinaryIO, raw_spool)
+                result = assemble_parts(
+                    store=self._store,
+                    parts=refs,
+                    destination=assembled,
+                    expected_total_bytes=row.total_bytes,
+                    expected_sha256=row.expected_sha256,
+                )
+                assembled.seek(0)
+                head = assembled.read(_HEAD_BYTES)
+                assembled.seek(0)
+                verdict = inspect_file_type(
+                    filename=row.filename, content_type=row.content_type, head=head
+                )
+                raw_key = build_raw_upload_key(upload_id, result.sha256, row.filename)
+                stored = self._store.put_stream(
+                    raw_key,
+                    cast(BinaryIO, raw_spool),
+                    content_type=verdict.content_type or "application/octet-stream",
+                    expected_size=result.size_bytes,
+                )
+            return verdict, raw_key, stored
+
+        verdict, raw_key, stored = await run_blocking(_assemble_and_store)
 
         artifact_id = new_artifact_id()
         artifact_row = await self._artifacts.register(

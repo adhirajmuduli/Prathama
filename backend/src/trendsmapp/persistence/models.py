@@ -26,7 +26,11 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+#: Shared foreign-key target for every table that references a dataset version.
+DATASET_VERSIONS_ID_REF = "dataset_versions.id"
+
 __all__ = [
+    "DATASET_VERSIONS_ID_REF",
     "ArtifactLinkRow",
     "ArtifactRow",
     "Base",
@@ -178,7 +182,7 @@ class RunRow(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     dataset_version_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("dataset_versions.id", ondelete="RESTRICT"), nullable=False
+        String(64), ForeignKey(DATASET_VERSIONS_ID_REF, ondelete="RESTRICT"), nullable=False
     )
     job_id: Mapped[str | None] = mapped_column(String(64))
     recipe_id: Mapped[str | None] = mapped_column(String(64))
@@ -271,7 +275,7 @@ class StationRow(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     dataset_version_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("dataset_versions.id", ondelete="CASCADE"), nullable=False
+        String(64), ForeignKey(DATASET_VERSIONS_ID_REF, ondelete="CASCADE"), nullable=False
     )
     label: Mapped[str | None] = mapped_column(String(255))
     latitude_wgs84: Mapped[float] = mapped_column(Float, nullable=False)
@@ -297,7 +301,7 @@ class ParameterRow(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     dataset_version_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("dataset_versions.id", ondelete="CASCADE"), nullable=False
+        String(64), ForeignKey(DATASET_VERSIONS_ID_REF, ondelete="CASCADE"), nullable=False
     )
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     canonical_unit: Mapped[str | None] = mapped_column(String(64))

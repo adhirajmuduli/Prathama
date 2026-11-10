@@ -40,7 +40,7 @@ from trendsmapp.normalization.parameters import (
 )
 from trendsmapp.normalization.timestamps import parse_timestamp
 from trendsmapp.normalization.units import normalize_unit, normalize_value
-from trendsmapp.normalization.values import parse_value
+from trendsmapp.normalization.values import ValueParseResult, parse_value
 
 __all__ = [
     "CanonicalizationResult",
@@ -166,26 +166,10 @@ def canonicalize_row(
     units = unit_registry or get_unit_registry()
     issues: list[RowIssue] = []
 
-    sampled_at: datetime | None = None
-    timestamp_text = row.cell("sampled_at")
-    if row.is_missing("sampled_at") or not timestamp_text.strip():
-        return _skipped(row, "missing_timestamp", "sampled_at", "the row has no timestamp")
-    try:
-        sampled_at = parse_timestamp(
-            timestamp_text,
-            date_order=mapping.date_order,
-            timezone_policy=mapping.timezone_policy,
-            timezone_name=mapping.timezone_name,
-        )
-    except ValidationError as exc:
-        reason = exc.details.get("reason", "unparsable_timestamp")
-        code = {
-            "empty_timestamp": QcFlagCode.MISSING_TIMESTAMP,
-            "missing_offset": QcFlagCode.AMBIGUOUS_TIMESTAMP,
-            "invalid_date": QcFlagCode.IMPOSSIBLE_TIMESTAMP,
-            "invalid_time": QcFlagCode.IMPOSSIBLE_TIMESTAMP,
-        }.get(reason, QcFlagCode.AMBIGUOUS_TIMESTAMP)
-        return _skipped(row, code.value, "sampled_at", str(exc))
+    resolved_timestamp = _resolve_timestamp(row, mapping)
+    if isinstance(resolved_timestamp, CanonicalizationResult):
+        return resolved_timestamp
+    sampled_at = resolved_timestamp
 
     parameter_label = row.cell("parameter")
     resolution = registry.resolve(parameter_label)
@@ -204,82 +188,10 @@ def canonicalize_row(
     raw_value = row.cell("value")
     raw_unit = row.cell("unit")
     value_result = parse_value(raw_value, style=decimal_style)
-    if value_result.reason == "missing_value":
-        issues.append(
-            RowIssue(
-                code=QcFlagCode.MISSING_VALUE.value,
-                field="value",
-                message="the row has no value",
-                source_row=row.source_row,
-            )
-        )
-    elif value_result.reason == "non_finite":
-        issues.append(
-            RowIssue(
-                code=QcFlagCode.NON_FINITE_VALUE.value,
-                field="value",
-                message=f"'{raw_value}' is not a finite number",
-                source_row=row.source_row,
-            )
-        )
-    elif value_result.reason is not None:
-        issues.append(
-            RowIssue(
-                code=QcFlagCode.NON_FINITE_VALUE.value
-                if value_result.reason == "non_finite"
-                else "invalid_value",
-                field="value",
-                message=f"'{raw_value}' could not be parsed as a number ({value_result.reason})",
-                source_row=row.source_row,
-            )
-        )
-
-    canonical_value: float | None = None
-    canonical_unit: str | None = None
-    detection_limit: float | None = None
-    conversion_factor: float | None = None
-    if parameter is not None:
-        unit_norm = normalize_unit(raw_unit, parameter=parameter, unit_registry=units)
-        if not row.is_missing("unit") and unit_norm.issue:
-            issues.append(
-                RowIssue(
-                    code=(
-                        QcFlagCode.UNKNOWN_UNIT.value
-                        if unit_norm.issue == "unknown_unit"
-                        else QcFlagCode.INCOMPATIBLE_UNIT.value
-                    ),
-                    field="unit",
-                    message=f"unit '{raw_unit}': {unit_norm.issue}",
-                    source_row=row.source_row,
-                )
-            )
-        value_norm = normalize_value(
-            value_result, unit_norm, parameter=parameter, unit_registry=units
-        )
-        canonical_value = value_norm.canonical_value
-        canonical_unit = value_norm.canonical_unit
-        detection_limit = value_norm.detection_limit
-        conversion_factor = value_norm.conversion.factor if value_norm.conversion else None
-        for issue_text in value_norm.issues:
-            issues.append(
-                RowIssue(
-                    code="unit_conversion"
-                    if "case corrected" in issue_text
-                    else QcFlagCode.INCOMPATIBLE_UNIT.value,
-                    field="unit",
-                    message=issue_text,
-                    source_row=row.source_row,
-                )
-            )
-    elif not row.is_missing("unit") and raw_unit.strip():
-        issues.append(
-            RowIssue(
-                code=QcFlagCode.UNKNOWN_UNIT.value,
-                field="unit",
-                message=f"unit '{raw_unit}' cannot be checked without a known parameter",
-                source_row=row.source_row,
-            )
-        )
+    _flag_value_issue(row, value_result, raw_value, issues)
+    canonical_value, canonical_unit, detection_limit, conversion_factor = _normalize_row_value(
+        row, parameter, units, raw_unit, value_result, issues
+    )
 
     coordinates = _resolve_coordinates(row, mapping, station_coordinates, analysis_crs, issues)
     if coordinates is None:
@@ -297,23 +209,7 @@ def canonicalize_row(
         )
         return _skipped(row, QcFlagCode.COORDINATE_OUT_OF_RANGE.value, "latitude/longitude", reason)
 
-    depth_text = row.cell("depth_m")
-    depth: float | None = None
-    if not row.is_missing("depth_m") and depth_text.strip():
-        try:
-            depth = float(depth_text)
-            if not math.isfinite(depth):
-                raise ValueError
-        except ValueError:
-            issues.append(
-                RowIssue(
-                    code="invalid_depth",
-                    field="depth_m",
-                    message=f"'{depth_text}' is not a finite depth",
-                    source_row=row.source_row,
-                )
-            )
-            depth = None
+    depth = _parse_row_depth(row, issues)
 
     station_label = row.cell("station")
     station_key = derive_station_key(station_label)
@@ -365,6 +261,143 @@ def canonicalize_row(
         issues=tuple(issues),
         skipped=None,
     )
+
+
+def _resolve_timestamp(
+    row: NormalizedRow, mapping: ColumnMapping
+) -> datetime | CanonicalizationResult:
+    """Parse the row timestamp, or return the skip result when it is unusable."""
+    timestamp_text = row.cell("sampled_at")
+    if row.is_missing("sampled_at") or not timestamp_text.strip():
+        return _skipped(row, "missing_timestamp", "sampled_at", "the row has no timestamp")
+    try:
+        return parse_timestamp(
+            timestamp_text,
+            date_order=mapping.date_order,
+            timezone_policy=mapping.timezone_policy,
+            timezone_name=mapping.timezone_name,
+        )
+    except ValidationError as exc:
+        reason = exc.details.get("reason", "unparsable_timestamp")
+        code = {
+            "empty_timestamp": QcFlagCode.MISSING_TIMESTAMP,
+            "missing_offset": QcFlagCode.AMBIGUOUS_TIMESTAMP,
+            "invalid_date": QcFlagCode.IMPOSSIBLE_TIMESTAMP,
+            "invalid_time": QcFlagCode.IMPOSSIBLE_TIMESTAMP,
+        }.get(reason, QcFlagCode.AMBIGUOUS_TIMESTAMP)
+        return _skipped(row, code.value, "sampled_at", str(exc))
+
+
+def _flag_value_issue(
+    row: NormalizedRow, value_result: ValueParseResult, raw_value: str, issues: list[RowIssue]
+) -> None:
+    """Record the QC issue for an unparsable, missing, or non-finite value."""
+    if value_result.reason == "missing_value":
+        issues.append(
+            RowIssue(
+                code=QcFlagCode.MISSING_VALUE.value,
+                field="value",
+                message="the row has no value",
+                source_row=row.source_row,
+            )
+        )
+    elif value_result.reason == "non_finite":
+        issues.append(
+            RowIssue(
+                code=QcFlagCode.NON_FINITE_VALUE.value,
+                field="value",
+                message=f"'{raw_value}' is not a finite number",
+                source_row=row.source_row,
+            )
+        )
+    elif value_result.reason is not None:
+        issues.append(
+            RowIssue(
+                code="invalid_value",
+                field="value",
+                message=f"'{raw_value}' could not be parsed as a number ({value_result.reason})",
+                source_row=row.source_row,
+            )
+        )
+
+
+def _normalize_row_value(
+    row: NormalizedRow,
+    parameter: Parameter | None,
+    units: UnitRegistry,
+    raw_unit: str,
+    value_result: ValueParseResult,
+    issues: list[RowIssue],
+) -> tuple[float | None, str | None, float | None, float | None]:
+    """Normalize value and unit against the parameter registry.
+
+    Returns ``(canonical_value, canonical_unit, detection_limit, conversion_factor)``.
+    """
+    if parameter is None:
+        if not row.is_missing("unit") and raw_unit.strip():
+            issues.append(
+                RowIssue(
+                    code=QcFlagCode.UNKNOWN_UNIT.value,
+                    field="unit",
+                    message=f"unit '{raw_unit}' cannot be checked without a known parameter",
+                    source_row=row.source_row,
+                )
+            )
+        return None, None, None, None
+    unit_norm = normalize_unit(raw_unit, parameter=parameter, unit_registry=units)
+    if not row.is_missing("unit") and unit_norm.issue:
+        issues.append(
+            RowIssue(
+                code=(
+                    QcFlagCode.UNKNOWN_UNIT.value
+                    if unit_norm.issue == "unknown_unit"
+                    else QcFlagCode.INCOMPATIBLE_UNIT.value
+                ),
+                field="unit",
+                message=f"unit '{raw_unit}': {unit_norm.issue}",
+                source_row=row.source_row,
+            )
+        )
+    value_norm = normalize_value(value_result, unit_norm, parameter=parameter, unit_registry=units)
+    for issue_text in value_norm.issues:
+        issues.append(
+            RowIssue(
+                code="unit_conversion"
+                if "case corrected" in issue_text
+                else QcFlagCode.INCOMPATIBLE_UNIT.value,
+                field="unit",
+                message=issue_text,
+                source_row=row.source_row,
+            )
+        )
+    return (
+        value_norm.canonical_value,
+        value_norm.canonical_unit,
+        value_norm.detection_limit,
+        value_norm.conversion.factor if value_norm.conversion else None,
+    )
+
+
+def _parse_row_depth(row: NormalizedRow, issues: list[RowIssue]) -> float | None:
+    """Parse the optional depth column, flagging non-finite values."""
+    depth_text = row.cell("depth_m")
+    if row.is_missing("depth_m") or not depth_text.strip():
+        return None
+    try:
+        depth = float(depth_text)
+        if not math.isfinite(depth):
+            raise ValueError
+    except ValueError:
+        issues.append(
+            RowIssue(
+                code="invalid_depth",
+                field="depth_m",
+                message=f"'{depth_text}' is not a finite depth",
+                source_row=row.source_row,
+            )
+        )
+        return None
+    return depth
 
 
 def _resolve_coordinates(

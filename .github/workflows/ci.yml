@@ -150,7 +150,9 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: trendsmapp
-          POSTGRES_PASSWORD: trendsmapp
+          # Ephemeral credential for the throwaway CI service container only;
+          # override with a repository variable, never a production secret.
+          POSTGRES_PASSWORD: ${{ vars.CI_POSTGRES_PASSWORD || 'ci-ephemeral-placeholder' }}
           POSTGRES_DB: trendsmapp
         ports:
           - 5432:5432
@@ -164,7 +166,7 @@ jobs:
       # SQLite driver lives in the dev group); smoke-test it against the same
       # PostgreSQL the integration job uses, with a local object store.
       TRENDSMAPP_ENVIRONMENT: development
-      TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://trendsmapp:trendsmapp@localhost:5432/trendsmapp
+      TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://ci-test-user:${{ vars.CI_POSTGRES_PASSWORD || 'ci-ephemeral-placeholder' }}@localhost:5432/trendsmapp
       TRENDSMAPP_OBJECT_STORE_BACKEND: local
       TRENDSMAPP_LOCAL_STORAGE_ROOT: /tmp/trendsmapp/objects
     steps:

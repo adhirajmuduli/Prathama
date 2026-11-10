@@ -101,11 +101,9 @@ class MigrationRegistry:
         if target_version == self._baseline_version:
             return ()
         chain: list[Migration] = []
-        current = self._baseline_version
         for migration in self._migrations:
             chain.append(migration)
-            current = migration.to_version
-            if current == target_version:
+            if migration.to_version == target_version:
                 return tuple(chain)
         raise CompatibilityError(
             f"No {self._name} migration path reaches version '{target_version}'.",

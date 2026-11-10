@@ -296,7 +296,7 @@ def detect_delimiter(
             best = DelimiterDetection(
                 delimiter=candidate, field_counts=counts, confidence=round(confidence, 3)
             )
-    if best.confidence == 0.0 and fallback_counts:
+    if best.confidence <= 0.0 and fallback_counts:
         return DelimiterDetection(delimiter=",", field_counts=fallback_counts, confidence=0.0)
     return best
 
@@ -429,71 +429,98 @@ def sample_columns(
     return tuple(collected)
 
 
-def detect_layout(
-    *,
-    fields: Sequence[str],
-    columns: Sequence[ColumnSample],
-    has_header: bool,
-) -> LayoutDetection:
-    """Return the layout the column evidence supports."""
-    evidence: list[str] = []
-    warnings: list[str] = []
+@dataclass(frozen=True, slots=True)
+class _LayoutEvidence:
+    """Column evidence buckets used to classify a table's layout."""
+
+    evidence: tuple[str, ...]
+    timestamp_columns: tuple[ColumnSample, ...]
+    named_timestamp: tuple[str, ...]
+    parameter_columns: tuple[ColumnSample, ...]
+    value_columns: tuple[ColumnSample, ...]
+    numeric_columns: tuple[ColumnSample, ...]
+
+
+def _collect_layout_evidence(
+    fields: Sequence[str], columns: Sequence[ColumnSample]
+) -> _LayoutEvidence:
+    """Group columns by role and build the human-readable evidence lines."""
+    lines: list[str] = []
     normalized = tuple(_normalize_name(name) for name in fields)
-    timestamp_columns = [column for column in columns if column.is_date_like]
-    named_timestamp = [name for name in normalized if _matches_any(name, TIMESTAMP_NAME_HINTS)]
-    parameter_columns = [
+    timestamp_columns = tuple(column for column in columns if column.is_date_like)
+    named_timestamp = tuple(name for name in normalized if _matches_any(name, TIMESTAMP_NAME_HINTS))
+    parameter_columns = tuple(
         column
         for column, name in zip(columns, normalized, strict=True)
         if _matches_any(name, PARAMETER_NAME_HINTS)
-    ]
-    value_columns = [
+    )
+    value_columns = tuple(
         column
         for column, name in zip(columns, normalized, strict=True)
         if _matches_any(name, VALUE_NAME_HINTS)
-    ]
+    )
     coordinate_names = [name for name in normalized if _matches_any(name, COORDINATE_NAME_HINTS)]
     if coordinate_names:
-        evidence.append(
+        lines.append(
             f"{len(coordinate_names)} column(s) look like coordinates "
             f"({', '.join(coordinate_names[:3])}) and were excluded from the value axis."
         )
-    numeric_columns = [
+    numeric_columns = tuple(
         column
         for column, name in zip(columns, normalized, strict=True)
         if column.is_numeric
         and not _matches_any(name, COORDINATE_NAME_HINTS)
         and not column.is_date_like
-    ]
-
+    )
     if timestamp_columns:
-        evidence.append(
+        lines.append(
             f"{len(timestamp_columns)} column(s) contain date-like values "
             f"({', '.join(column.name for column in timestamp_columns[:3])})."
         )
     if named_timestamp:
-        evidence.append(f"Header name(s) indicate a time column: {', '.join(named_timestamp[:3])}.")
+        lines.append(f"Header name(s) indicate a time column: {', '.join(named_timestamp[:3])}.")
     if parameter_columns:
-        evidence.append(
+        lines.append(
             f"Header name(s) indicate a parameter column: "
             f"{', '.join(column.name for column in parameter_columns[:3])}."
         )
     if value_columns:
-        evidence.append(
+        lines.append(
             f"Header name(s) indicate a value column: "
             f"{', '.join(column.name for column in value_columns[:3])}."
         )
     if numeric_columns:
-        evidence.append(
+        lines.append(
             f"{len(numeric_columns)} column(s) are numeric outside coordinate and time "
             f"roles ({', '.join(column.name for column in numeric_columns[:3])})."
         )
+    return _LayoutEvidence(
+        evidence=tuple(lines),
+        timestamp_columns=timestamp_columns,
+        named_timestamp=named_timestamp,
+        parameter_columns=parameter_columns,
+        value_columns=value_columns,
+        numeric_columns=numeric_columns,
+    )
 
-    time_evidence = bool(timestamp_columns) or bool(named_timestamp)
-    parameter_evidence = bool(parameter_columns)
-    value_evidence = bool(value_columns) or bool(numeric_columns)
+
+def _classify_layout(
+    *,
+    columns: Sequence[ColumnSample],
+    fields: Sequence[str],
+    has_header: bool,
+    found: _LayoutEvidence,
+) -> LayoutDetection:
+    """Reduce the evidence buckets to one layout verdict."""
+    normalized = tuple(_normalize_name(name) for name in fields)
+    evidence = list(found.evidence)
+    warnings: list[str] = []
+    time_evidence = bool(found.timestamp_columns) or bool(found.named_timestamp)
+    parameter_evidence = bool(found.parameter_columns)
+    value_evidence = bool(found.value_columns) or bool(found.numeric_columns)
 
     if time_evidence and parameter_evidence and value_evidence:
-        confidence = 0.9 if (parameter_columns and value_columns) else 0.7
+        confidence = 0.9 if (found.parameter_columns and found.value_columns) else 0.7
         return LayoutDetection(
             layout=LayoutKind.LONG,
             confidence=confidence,
@@ -501,14 +528,14 @@ def detect_layout(
             warnings=(),
         )
 
-    if time_evidence and len(numeric_columns) >= 2:
+    if time_evidence and len(found.numeric_columns) >= 2:
         non_role = [
             column
             for column, name in zip(columns, normalized, strict=True)
             if not _matches_any(name, TIMESTAMP_NAME_HINTS)
             and not _matches_any(name, COORDINATE_NAME_HINTS)
         ]
-        ratio = len(numeric_columns) / len(non_role) if non_role else 0.0
+        ratio = len(found.numeric_columns) / len(non_role) if non_role else 0.0
         warnings.append(
             "The table looks wide: one axis is time and the other axis is carried "
             "by the column headers. The mapping step must confirm which axis the "
@@ -521,7 +548,7 @@ def detect_layout(
             warnings=tuple(warnings),
         )
 
-    if time_evidence and len(numeric_columns) == 1 and not has_header:
+    if time_evidence and len(found.numeric_columns) == 1 and not has_header:
         warnings.append(
             "The table has one date-like column and one numeric column; the layout "
             "cannot be decided from the data alone."
@@ -545,6 +572,17 @@ def detect_layout(
         evidence=tuple(evidence),
         warnings=tuple(warnings),
     )
+
+
+def detect_layout(
+    *,
+    fields: Sequence[str],
+    columns: Sequence[ColumnSample],
+    has_header: bool,
+) -> LayoutDetection:
+    """Return the layout the column evidence supports."""
+    found = _collect_layout_evidence(fields, columns)
+    return _classify_layout(columns=columns, fields=fields, has_header=has_header, found=found)
 
 
 def sniff(
@@ -637,7 +675,7 @@ def sniff_delimited_bytes(
     text = _decode_sample(trimmed, encoding.encoding, truncated)
     delimiter_detection = detect_delimiter(text)
     warnings = list(encoding.warnings)
-    if delimiter_detection.confidence == 0.0:
+    if delimiter_detection.confidence <= 0.0:
         warnings.append(
             "No delimiter produced a consistent field count; a single-column table is assumed."
         )

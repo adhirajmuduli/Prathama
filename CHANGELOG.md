@@ -94,6 +94,44 @@ API major version.
 - Netlify CSP now permits the Turnstile origins and cross-origin API images;
   `productionBrowserSourceMaps` is pinned off.
 
+### Refactored (static-analysis findings)
+
+- Cognitive-complexity hotspots split into helpers without behavior change:
+  `propose_mapping` (54 → detection + long/wide proposers), `detect_layout`
+  (43 → evidence collection + classification), `canonicalize_row` (39 →
+  timestamp/value/depth helpers), `build_feature_frame` (39 → row selection,
+  lag matrix, feature rows), `train_and_evaluate` (22 → per-fold candidate /
+  baseline / aggregation helpers), `explain_model` (22 → per-method explainer
+  table), `normalize_for_canonical` (22 → primitive/container split).
+- Duplicated literals replaced by constants: `DATASET_VERSIONS_ID_REF`
+  (persistence models), `HTTP_RESPONSE_START` (API middleware), `STATION_A` /
+  `STATION_B` (CSV reader tests).
+- `contracts.__all__` no longer exports the undefined name
+  `"ArtifactSchemaMigrations"`.
+- The NaN check in `serialization.py` uses `math.isnan` instead of
+  `value != value`; raster nodata masks use `np.equal`/`np.not_equal`; IDW
+  zero-distance tests use an epsilon comparison; sniffing confidence checks
+  use `<= 0.0` — no float `==`/`!=` operators remain.
+- Unused `current` assignment in `contracts/migrations.py` removed.
+- Sync `tempfile.TemporaryFile()` in async worker code replaced by
+  `trendsmapp/async_io.py` (`run_blocking` via `asyncio.to_thread` +
+  `new_spool`), so blocking disk I/O stays off the event loop.
+- Legacy `db.py` builds its TLS context with `ssl.create_default_context()`
+  (Python 3.10+ secure defaults); hostname verification stays on for
+  `verify-full`.
+
+### Security
+
+- No hardcoded credentials remain in tracked files. `docker-compose.yml` now
+  refuses to start without `POSTGRES_*`/`MINIO_ROOT_*` set in `.env` (`:?`
+  required-variable errors; no inline fallbacks). `.env.example` documents
+  every variable for both stacks with placeholder values only, including the
+  contact providers (Turnstile/Upstash/Resend), the S3 credentials, and the
+  CI ephemeral placeholders. CI workflows source service credentials from
+  repository variables with clearly-labeled ephemeral fallbacks, and the
+  frontend contact tests use `test-…-not-real` fake tokens. Backend settings
+  keep credentials as `SecretStr` with no defaults.
+
 ### Dependencies
 
 - pyarrow 21 → 26 (fixes PYSEC-2026-113), fastapi 0.141 → 0.162, pytest 9.1 →

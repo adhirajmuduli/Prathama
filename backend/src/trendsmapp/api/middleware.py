@@ -31,6 +31,9 @@ request_id_context: ContextVar[str | None] = ContextVar("trendsmapp_request_id",
 
 _REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
+#: ASGI message type that opens a response (referenced by every send wrapper).
+HTTP_RESPONSE_START = "http.response.start"
+
 SECURITY_HEADERS: dict[str, str] = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
@@ -67,7 +70,7 @@ async def _send_error(
         (b"content-type", b"application/json"),
         (b"content-length", str(len(body)).encode("ascii")),
     ]
-    await send({"type": "http.response.start", "status": status_code, "headers": headers})
+    await send({"type": HTTP_RESPONSE_START, "status": status_code, "headers": headers})
     await send({"type": "http.response.body", "body": body})
 
 
@@ -89,7 +92,7 @@ class RequestContextMiddleware:
         started_at = time.perf_counter()
 
         async def send_with_context(message: Message) -> None:
-            if message["type"] == "http.response.start":
+            if message["type"] == HTTP_RESPONSE_START:
                 elapsed_ms = (time.perf_counter() - started_at) * 1000.0
                 response_headers = [
                     (key.lower(), value) for key, value in message.get("headers", [])
@@ -158,7 +161,7 @@ class BodyLimitMiddleware:
 
         async def limited_send(message: Message) -> None:
             nonlocal response_started
-            if message["type"] == "http.response.start":
+            if message["type"] == HTTP_RESPONSE_START:
                 response_started = True
             await send(message)
 
@@ -196,7 +199,7 @@ class SecurityHeadersMiddleware:
             return
 
         async def send_with_headers(message: Message) -> None:
-            if message["type"] == "http.response.start":
+            if message["type"] == HTTP_RESPONSE_START:
                 response_headers = [
                     (key.lower(), value) for key, value in message.get("headers", [])
                 ]

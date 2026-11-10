@@ -59,8 +59,9 @@ def grid_from_geotiff(payload: bytes) -> tuple[Grid, np.ndarray]:
     y_min = y_max - n_rows * resolution
     nodata = float(tags.get("nodata", str(NODATA)))
     values = np.asarray(data, dtype=float)
-    values[data == nodata] = np.nan  # nodata cells are excluded from scales and statistics
-    mask = data != nodata
+    # np.equal keeps the exact sentinel match without a float == operator.
+    values[np.equal(data, nodata)] = np.nan  # nodata cells are excluded from scales and statistics
+    mask = np.not_equal(data, nodata)
     grid = Grid(
         crs=crs,
         x_min=x_min,

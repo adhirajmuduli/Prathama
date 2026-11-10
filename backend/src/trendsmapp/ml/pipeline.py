@@ -122,12 +122,8 @@ def _parse_bound(text: str | None) -> datetime | None:
     return parsed.astimezone(UTC)
 
 
-def build_feature_frame(observations: Sequence[Observation], task: MLTask) -> FeatureFrame:
-    """Build the feature frame for a task from sealed observations.
-
-    Rows are filtered by the task's target parameter, eligible date range,
-    eligible stations, QC/exclusion policy, and presence of a canonical value.
-    """
+def _select_rows(observations: Sequence[Observation], task: MLTask) -> list[Observation]:
+    """Apply the task's eligibility filters; raise when too few rows remain."""
     start = _parse_bound(task.eligible_start)
     end = _parse_bound(task.eligible_end)
     if start is not None and end is not None and start > end:
@@ -137,7 +133,6 @@ def build_feature_frame(observations: Sequence[Observation], task: MLTask) -> Fe
         )
     stations = set(task.eligible_station_ids) if task.eligible_station_ids else None
     exclude_failed = task.qc_policy == "exclude_failed"
-
     selected = [
         o
         for o in observations
@@ -155,9 +150,39 @@ def build_feature_frame(observations: Sequence[Observation], task: MLTask) -> Fe
             f"{MIN_FRAME_ROWS} are required.",
             details={"rows": len(selected), "min_rows": MIN_FRAME_ROWS},
         )
+    return selected
 
-    lag_names = LAG_POLICIES.get(task.lag_policy, LAG_POLICIES["all"])
-    feature_names = lag_names + CALENDAR_FEATURES + SPATIAL_FEATURES
+
+def _lag_matrix(selected: list[Observation], lag_names: Sequence[str]) -> dict[str, list[float]]:
+    """Compute per-row lag features from each station's own time series.
+
+    Only a strictly earlier observation may supply a lag value; the row itself
+    must never be its own lag.
+    """
+    series_pos: dict[str, list[int]] = {}
+    for row_index, o in enumerate(selected):
+        series_pos.setdefault(o.station_id, []).append(row_index)
+    lag_values: dict[str, list[float]] = {
+        name: [float("nan")] * len(selected) for name in lag_names
+    }
+    for positions in series_pos.values():
+        times = np.asarray([selected[p].sampled_at.timestamp() for p in positions], dtype=float)
+        values = np.asarray([_require_value(selected[p]) for p in positions], dtype=float)
+        for name, (offset_days, tol_days) in _LAGS.items():
+            if name not in lag_names:
+                continue
+            target = times - offset_days * 86_400.0
+            pos = np.searchsorted(times, target)
+            for local_i, p in enumerate(pos):
+                if p >= local_i or p >= len(times):
+                    continue
+                if abs(times[p] - target[local_i]) <= tol_days * 86_400.0:
+                    lag_values[name][positions[local_i]] = float(values[p])
+    return lag_values
+
+
+def _feature_lineage(lag_names: Sequence[str]) -> dict[str, str]:
+    """Human-readable lineage for every feature column."""
     lineage: dict[str, str] = {
         name: f"value of the same station {offset}d earlier"
         for name, (offset, _tol) in _LAGS.items()
@@ -172,56 +197,45 @@ def build_feature_frame(observations: Sequence[Observation], task: MLTask) -> Fe
             "y_m": "northing in the analysis CRS",
         }
     )
+    return lineage
 
-    # Per-station series for lag features. Rows keep the order of `selected`;
-    # lag values are stored by the row's position in `selected`.
-    series_pos: dict[str, list[int]] = {}
-    for row_index, o in enumerate(selected):
-        series_pos.setdefault(o.station_id, []).append(row_index)
-    lag_values: dict[str, list[float]] = {
-        name: [float("nan")] * len(selected) for name in lag_names
-    }
-    for _station, positions in series_pos.items():
-        times = np.asarray([selected[p].sampled_at.timestamp() for p in positions], dtype=float)
-        values = np.asarray([_require_value(selected[p]) for p in positions], dtype=float)
-        for name, (offset_days, tol_days) in _LAGS.items():
-            if name not in lag_names:
-                continue
-            target = times - offset_days * 86_400.0
-            pos = np.searchsorted(times, target)
-            for local_i, p in enumerate(pos):
-                # Only a strictly earlier observation may supply a lag value;
-                # the row itself must never be its own lag.
-                if p >= local_i or p >= len(times):
-                    continue
-                if abs(times[p] - target[local_i]) <= tol_days * 86_400.0:
-                    lag_values[name][positions[local_i]] = float(values[p])
 
+def _feature_rows(
+    selected: list[Observation], lag_names: Sequence[str], lag_values: dict[str, list[float]]
+) -> tuple[list[list[float]], np.ndarray]:
+    """Build the numeric matrix plus the projected coordinates array."""
     season_labels = sorted({label_for(o.sampled_at) or "unlabeled" for o in selected})
     season_index = {label: index for index, label in enumerate(season_labels)}
-
     lonlat = np.asarray([[o.longitude_wgs84, o.latitude_wgs84] for o in selected], dtype=float)
     coords = transform_points(lonlat, source_crs="EPSG:4326", target_crs=DEFAULT_ANALYSIS_CRS)
-
     rows: list[list[float]] = []
-    y: list[float] = []
-    groups: list[str] = []
-    years: list[int] = []
-    sectors: list[str] = []
     for row_index, o in enumerate(selected):
-        row: list[float] = []
-        for name in lag_names:
-            row.append(lag_values[name][row_index])
+        row = [lag_values[name][row_index] for name in lag_names]
         row.append(float(o.sampled_at.timetuple().tm_yday))
         row.append(float(o.sampled_at.month))
         row.append(float(season_index[label_for(o.sampled_at) or "unlabeled"]))
         row.append(float(coords[row_index, 0]))
         row.append(float(coords[row_index, 1]))
         rows.append(row)
-        y.append(_require_value(o))
-        groups.append(o.station_id)
-        years.append(o.sampled_at.year)
-        sectors.append(o.sector or "unassigned")
+    return rows, coords
+
+
+def build_feature_frame(observations: Sequence[Observation], task: MLTask) -> FeatureFrame:
+    """Build the feature frame for a task from sealed observations.
+
+    Rows are filtered by the task's target parameter, eligible date range,
+    eligible stations, QC/exclusion policy, and presence of a canonical value.
+    """
+    selected = _select_rows(observations, task)
+    lag_names = LAG_POLICIES.get(task.lag_policy, LAG_POLICIES["all"])
+    feature_names = lag_names + CALENDAR_FEATURES + SPATIAL_FEATURES
+    lineage = _feature_lineage(lag_names)
+    lag_values = _lag_matrix(selected, lag_names)
+    rows, coords = _feature_rows(selected, lag_names, lag_values)
+    y = [_require_value(o) for o in selected]
+    groups = [o.station_id for o in selected]
+    years = [o.sampled_at.year for o in selected]
+    sectors = [o.sector or "unassigned" for o in selected]
 
     x = np.asarray(rows, dtype=float)
     y_arr = np.asarray(y, dtype=float)

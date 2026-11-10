@@ -12,9 +12,9 @@ from __future__ import annotations
 import hashlib
 import io
 import json
-import tempfile
-from typing import Any, BinaryIO, Final, cast
+from typing import Any, BinaryIO, Final
 
+from trendsmapp.async_io import new_spool, run_blocking
 from trendsmapp.contracts.versions import ARTIFACT_SCHEMA_VERSION
 from trendsmapp.domain.enums import JobType
 from trendsmapp.domain.identifiers import new_artifact_id
@@ -82,8 +82,9 @@ class IngestWorkflow:
         mapping = ColumnMapping.model_validate(mapping_dict)
 
         await self._progress(context, 0.05, _STAGE_PARSE)
-        with tempfile.TemporaryFile() as raw_spool:
-            spool: BinaryIO = cast(BinaryIO, raw_spool)
+        raw_spool = await run_blocking(new_spool)
+        try:
+            spool: BinaryIO = raw_spool
             await self._spool_raw(context, raw_artifact_id, spool)
             spool.seek(0)
             session = ParseSession(
@@ -100,6 +101,8 @@ class IngestWorkflow:
             )
             batches = list(session)
             parse_report = session.report
+        finally:
+            await run_blocking(raw_spool.close)
         if parse_report.failure is not None:
             raise JobError(
                 "The upload could not be parsed under the confirmed mapping.",
@@ -175,11 +178,14 @@ class IngestWorkflow:
         from trendsmapp.ingestion.parser import probe_parse
 
         await self._progress(context, 0.1, _STAGE_PARSE)
-        with tempfile.TemporaryFile() as raw_spool:
-            spool: BinaryIO = cast(BinaryIO, raw_spool)
+        raw_spool = await run_blocking(new_spool)
+        try:
+            spool: BinaryIO = raw_spool
             await self._spool_raw(context, raw_artifact_id, spool)
             spool.seek(0)
             head = spool.read(_PROBE_BYTES)
+        finally:
+            await run_blocking(raw_spool.close)
         probe = probe_parse(
             io.BytesIO(head),
             filename=str(payload.get("filename", "upload")),
@@ -236,13 +242,17 @@ class IngestWorkflow:
             artifacts = ArtifactRepository(session)
             row = await artifacts.require(artifact_id)
             key = row.storage_key
-        with context.object_store.open_stream(key) as handle:
-            while True:
-                chunk = handle.read(1024 * 1024)
-                if not chunk:
-                    break
-                spool.write(chunk)
-        spool.flush()
+
+        def _copy() -> None:
+            with context.object_store.open_stream(key) as handle:
+                while True:
+                    chunk = handle.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    spool.write(chunk)
+            spool.flush()
+
+        await run_blocking(_copy)
 
     async def _store_artifacts(
         self,

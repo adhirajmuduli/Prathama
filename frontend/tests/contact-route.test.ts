@@ -25,8 +25,8 @@ vi.mock("@/lib/env/server", () => ({
     TRENDSMAPP_API_TIMEOUT_MS: 10_000,
     TURNSTILE_SECRET_KEY: "turnstile-secret",
     UPSTASH_REST_URL: "https://upstash.test",
-    UPSTASH_REST_TOKEN: "upstash-token",
-    RESEND_API_KEY: "re_test",
+  UPSTASH_REST_TOKEN: "test-token-not-real",
+  RESEND_API_KEY: "re_test_not_real",
     CONTACT_FROM_EMAIL: "contact@example.org",
     CONTACT_TO_EMAIL: "ops@example.org",
     CONTACT_HASH_SECRET: null,
@@ -59,7 +59,7 @@ function validBody(overrides: Record<string, unknown> = {}) {
     subject: "Question about the API",
     message: "Hello, this is a sufficiently long message.",
     consent: true,
-    turnstileToken: "token-abc",
+    turnstileToken: "test-token-not-real",
     ...overrides,
   };
 }

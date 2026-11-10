@@ -66,7 +66,7 @@ jobs:
       # The prototype writes an ephemeral secret file into its workdir when
       # SECRET_KEY is unset; the container runs as non-root, so pass a
       # placeholder key instead (CI only, never a real secret).
-      - run: docker run --detach --name trendsmapp-ci --publish 8000:8000 -e SECRET_KEY=ci-verification-placeholder trendsmapp:ci
+      - run: docker run --detach --name trendsmapp-ci --publish 8000:8000 -e SECRET_KEY=ci-ephemeral-placeholder-not-a-real-secret trendsmapp:ci
       - run: |
           for attempt in $(seq 1 30); do
             curl --fail http://127.0.0.1:8000/api/health && exit 0
