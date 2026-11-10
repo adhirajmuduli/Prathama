@@ -5,7 +5,7 @@
 # without a visible change to this document.
 schema_version: "1.0.0"
 resource: default_boundary.geojson
-sha256: "6a18811f70f56e4f4b3455b6e376470da447483821faeaef93147fc0100b9775"
+sha256: "cba9aca4143d9d11a0433a99ce43205a56c6368a000c26545bb8505dabbfe8fa"
 source: "https://www.openstreetmap.org/relation/1917079"
 description: >-
   OpenStreetMap relation 1917079, name=Chilika Lake, natural=water,
