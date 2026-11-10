@@ -47,6 +47,22 @@ API major version.
 
 ### Fixed
 
+- CI checkouts now pull Git LFS objects (`lfs: true` on every
+  `actions/checkout`), so the binary test fixtures (`*.xlsx`, `*.parquet`)
+  are real files instead of pointer text on runners.
+- `default_boundary.geojson` is renormalized to LF in the git index and its
+  provenance digest re-recorded (`cba9aca4…`); the old blob was CRLF while
+  `.gitattributes` forces `eol=lf`, so Linux CI checked out different bytes
+  than the digest was recorded over and every boundary/QC/spatial check
+  failed. New guard `scripts/check_text_normalization.py` (wired into the CI
+  repository-invariants job) fails when any tracked file has CRLF in its index
+  blob.
+- The legacy prototype's untracked vendor bundle
+  (`static/vendor/ag-grid-community/dist/…`) is force-tracked so the container
+  image contains the assets `scripts/verify_assets.py` hashes; committed
+  `backend/var/e2e-objects` junk is untracked (already gitignored).
+- The legacy lint step is back to `ruff check .` — the root `ruff.toml`
+  already `extend-exclude`s the rebuilt `backend`/`frontend`/`scripts` trees.
 - CI: contract snapshot exporters now write LF-normalized bytes (the recorded
   digest differed between Windows and Linux runners); pytest gets
   `pythonpath = ["."]` so `uv run pytest` can import sibling `scripts`/`tests`

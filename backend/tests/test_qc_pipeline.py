@@ -84,7 +84,10 @@ def test_boundary_loads_with_verified_provenance() -> None:
     assert boundary.boundary_id == "relation/1917079"
     assert boundary.license == "ODbL 1.0"
     assert "openstreetmap.org" in boundary.attribution
-    assert boundary.sha256 == "6a18811f70f56e4f4b3455b6e376470da447483821faeaef93147fc0100b9775"
+    # LF-normalized digest of resources/default_boundary.geojson; the
+    # provenance sidecar records the same value (guarded by
+    # scripts/check_text_normalization.py so the blob stays LF on every runner).
+    assert boundary.sha256 == "cba9aca4143d9d11a0433a99ce43205a56c6368a000c26545bb8505dabbfe8fa"
     assert boundary.contains_lonlat(85.47, 19.73) is True
     assert boundary.contains_lonlat(80.0, 10.0) is False
 

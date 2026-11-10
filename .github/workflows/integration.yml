@@ -65,6 +65,8 @@ jobs:
       TRENDSMAPP_LOG_LEVEL: warning
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}

@@ -1,0 +1,67 @@
+{
+  "application_version": "0.1.0",
+  "boundary_id": "relation/1917079",
+  "completed": true,
+  "dataset_id": "ds_86288456e1ad4270afe933d8a46a37b8",
+  "dataset_version_id": "dsv_15eefd35a6434ef8877eca95b2c42be0",
+  "fail_count": 0,
+  "flagged_count": 24,
+  "flags": [
+    {
+      "code": "outside_boundary",
+      "count": 24,
+      "detail": "relation/1917079",
+      "source_rows": [
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73
+      ]
+    }
+  ],
+  "observation_count": 72,
+  "parameters": [
+    {
+      "flag_counts": {
+        "outside_boundary": 24
+      },
+      "flagged_count": 24,
+      "observation_count": 72,
+      "parameter_id": "dissolved_oxygen"
+    }
+  ],
+  "pass_count": 48,
+  "rules_applied": [
+    "ranges",
+    "detection_limits",
+    "completeness",
+    "duplicate_locations",
+    "boundary_and_drift",
+    "outliers",
+    "temporal"
+  ],
+  "rules_skipped": [],
+  "schema_version": "1.0.0",
+  "warning_count": 24,
+  "warnings": []
+}

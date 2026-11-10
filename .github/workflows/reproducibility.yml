@@ -30,6 +30,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}

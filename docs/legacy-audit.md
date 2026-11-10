@@ -124,7 +124,7 @@ and a single global token for every data and compute route.
 | Retrieved | `2025-07-03T11:02:23Z` (embedded `timestamp` property) |
 | License | ODbL 1.0 (`copyright` property: "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.") |
 | Geometry | one `Feature`, MultiPolygon, 847,454 bytes |
-| SHA-256 | `6a18811f70f56e4f4b3455b6e376470da447483821faeaef93147fc0100b9775` |
+| SHA-256 | `cba9aca4143d9d11a0433a99ce43205a56c6368a000c26545bb8505dabbfe8fa` (LF-normalized; see `scripts/check_text_normalization.py`) |
 
 The source and reuse rights are known, so the boundary may be used as the
 versioned `default_boundary.geojson` resource in the rebuild, with the ODbL

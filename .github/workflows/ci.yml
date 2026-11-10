@@ -26,6 +26,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
@@ -60,6 +62,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
@@ -83,6 +87,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
@@ -91,6 +97,8 @@ jobs:
         run: uv run --no-project python scripts/check_no_stubs.py
       - name: lockfile hashes are recorded
         run: uv run --no-project python scripts/hash_lockfiles.py --check
+      - name: tracked text files are LF-normalized in the index
+        run: uv run --no-project python scripts/check_text_normalization.py
       - name: lint repository scripts
         working-directory: backend
         run: >
@@ -99,6 +107,7 @@ jobs:
           ../scripts/hash_lockfiles.py
           ../scripts/verify_contract_examples.py
           ../scripts/check_contract_compatibility.py
+          ../scripts/check_text_normalization.py
 
   frontend:
     name: frontend lint, types, tests, build
@@ -109,6 +118,8 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - uses: pnpm/action-setup@v6
         with:
           version: 10
@@ -158,6 +169,8 @@ jobs:
       TRENDSMAPP_LOCAL_STORAGE_ROOT: /tmp/trendsmapp/objects
     steps:
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - uses: docker/setup-buildx-action@v4
       - name: build the image
         uses: docker/build-push-action@v7

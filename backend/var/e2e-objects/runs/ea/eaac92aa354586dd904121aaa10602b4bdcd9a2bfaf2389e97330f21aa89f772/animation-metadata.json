@@ -1,0 +1,29 @@
+{
+  "fps": 2,
+  "frames": [
+    {
+      "status": "observed",
+      "timestamp": "2024-01-15T09:30:00+00:00"
+    },
+    {
+      "status": "observed",
+      "timestamp": "2024-02-12T09:15:00+00:00"
+    },
+    {
+      "status": "observed",
+      "timestamp": "2024-03-10T09:00:00+00:00"
+    }
+  ],
+  "height": 172,
+  "method": "idw",
+  "palette": "viridis",
+  "parameter_id": "dissolved_oxygen",
+  "scale": {
+    "policy": "global_sequence",
+    "vmax": 7.241342067718506,
+    "vmin": 6.00435733795166
+  },
+  "sha256": "aba4118f676fc27791167b198c684c99236132fb06265bdbff5921831352ad48",
+  "unit": "",
+  "width": 468
+}
