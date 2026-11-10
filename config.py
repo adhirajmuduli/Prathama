@@ -135,8 +135,12 @@ class Settings:
             max_timestamps=_positive_integer("TRENDSMAPP_MAX_TIMESTAMPS", 100),
             max_stations_per_frame=_positive_integer("TRENDSMAPP_MAX_STATIONS_PER_FRAME", 500),
             max_concurrent_jobs=_positive_integer("TRENDSMAPP_MAX_CONCURRENT_JOBS", 1),
-            max_concurrent_surface_jobs=_positive_integer("TRENDSMAPP_MAX_CONCURRENT_SURFACE_JOBS", int(os.getenv("TRENDSMAPP_MAX_CONCURRENT_JOBS", 1))),
-            max_concurrent_video_jobs=_positive_integer("TRENDSMAPP_MAX_CONCURRENT_VIDEO_JOBS", int(os.getenv("TRENDSMAPP_MAX_CONCURRENT_JOBS", 1))),
+            max_concurrent_surface_jobs=_positive_integer(
+                "TRENDSMAPP_MAX_CONCURRENT_SURFACE_JOBS", int(os.getenv("TRENDSMAPP_MAX_CONCURRENT_JOBS", 1))
+            ),
+            max_concurrent_video_jobs=_positive_integer(
+                "TRENDSMAPP_MAX_CONCURRENT_VIDEO_JOBS", int(os.getenv("TRENDSMAPP_MAX_CONCURRENT_JOBS", 1))
+            ),
             upload_ttl_hours=_nonnegative_number("TRENDSMAPP_UPLOAD_TTL_HOURS", 24.0),
             max_video_frames=_positive_integer("TRENDSMAPP_MAX_VIDEO_FRAMES", 300),
             surface_resolution=_positive_integer("TRENDSMAPP_SURFACE_RESOLUTION", 220),

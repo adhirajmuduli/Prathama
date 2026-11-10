@@ -57,6 +57,20 @@ API major version.
   failed. New guard `scripts/check_text_normalization.py` (wired into the CI
   repository-invariants job) fails when any tracked file has CRLF in its index
   blob.
+- CI: the integration job no longer pulls MinIO from Docker Hub (anonymous
+  pulls are rate-limited); it runs a `moto[server]` S3 mock on port 5000 and
+  creates the bucket with boto3. The backend-image smoke test starts the
+  container with `--network host` so it reaches the runner's PostgreSQL. The
+  backend image base moved to `python:3.13-slim-trixie` so the Trivy gate
+  passes on a base without unfixed OS CVEs. The E2E job exports the
+  `NEXT_PUBLIC_*`/origin variables at job level so `next build` inlines them
+  regardless of webServer env timing.
+- The legacy prototype's lint (pinned ruff 0.8.4) is clean again: import
+  sorting, unused imports, whitespace, long-line wraps, a duplicated
+  `ensure_prepared` definition, and a missing `from None` were fixed in the
+  prototype tree. `scripts/verify_assets.py` records the committed blob digest
+  of `ag-theme-alpine.css` (the old value matched no checkout), and the file
+  is LF-normalized like every other tracked text file.
 - The legacy prototype's untracked vendor bundle
   (`static/vendor/ag-grid-community/dist/…`) is force-tracked so the container
   image contains the assets `scripts/verify_assets.py` hashes; committed

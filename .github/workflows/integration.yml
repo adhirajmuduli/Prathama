@@ -40,26 +40,35 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
-      minio:
-        # Pinned release tag: `latest` is subject to registry rate limits and
-        # the minio image ships no shell tools for a health-cmd, so the job
-        # waits for the port itself below.
-        image: minio/minio:RELEASE.2024-11-18T13-15-44Z
-        env:
-          MINIO_ROOT_USER: trendsmapp
-          MINIO_ROOT_PASSWORD: trendsmapp-secret
+      # No MinIO service container: Docker Hub rate-limits anonymous pulls.
+      # Instead the job runs a moto S3 server (pip package) on port 5000.
+      moto:
+        image: python:3.13-slim-bookworm
         ports:
-          - 9000:9000
+          - 5000:5000
+        options: >-
+          --entrypoint ""
+          --health-cmd "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/', timeout=3)\""
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+        env:
+          AWS_ACCESS_KEY_ID: trendsmapp
+          AWS_SECRET_ACCESS_KEY: trendsmapp-secret
+        command: >-
+          sh -c "pip install --quiet 'moto[server]' && python -m moto.server -H 0.0.0.0 -p 5000"
     env:
       TRENDSMAPP_ENVIRONMENT: development
       TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://trendsmapp:trendsmapp@localhost:5432/trendsmapp
       TRENDSMAPP_OBJECT_STORE_BACKEND: s3
       TRENDSMAPP_S3_BUCKET: trendsmapp
-      TRENDSMAPP_S3_ENDPOINT_URL: http://localhost:9000
+      TRENDSMAPP_S3_ENDPOINT_URL: http://localhost:5000
       TRENDSMAPP_S3_REGION: us-east-1
       TRENDSMAPP_S3_ACCESS_KEY_ID: trendsmapp
       TRENDSMAPP_S3_SECRET_ACCESS_KEY: trendsmapp-secret
       TRENDSMAPP_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: trendsmapp
+      AWS_SECRET_ACCESS_KEY: trendsmapp-secret
       TRENDSMAPP_CORS_ALLOW_ORIGINS: '["http://localhost:3000"]'
       TRENDSMAPP_TRUSTED_HOSTS: '["localhost","127.0.0.1","testserver"]'
       TRENDSMAPP_LOG_LEVEL: warning
@@ -78,18 +87,30 @@ jobs:
       - name: wait for the object store to accept connections
         run: |
           for attempt in $(seq 1 30); do
-            if (echo > /dev/tcp/localhost/9000) 2>/dev/null; then
-              echo "minio is accepting connections"
+            if (echo > /dev/tcp/localhost/5000) 2>/dev/null; then
+              echo "moto S3 is accepting connections"
               exit 0
             fi
             sleep 2
           done
-          echo "minio did not become ready" >&2
+          echo "moto S3 did not become ready" >&2
           exit 1
       - name: create the object-store bucket
         run: |
-          docker run --network host minio/mc:RELEASE.2024-11-18T13-06-05Z \
-            sh -c "mc alias set local http://localhost:9000 trendsmapp trendsmapp-secret && mc mb --ignore-existing local/trendsmapp"
+          uv run --with boto3 python - <<'PY'
+          import boto3
+          s3 = boto3.client(
+              "s3",
+              endpoint_url="http://localhost:5000",
+              aws_access_key_id="trendsmapp",
+              aws_secret_access_key="trendsmapp-secret",
+              region_name="us-east-1",
+          )
+          existing = [b["Name"] for b in s3.list_buckets()["Buckets"]]
+          if "trendsmapp" not in existing:
+              s3.create_bucket(Bucket="trendsmapp")
+          print("bucket trendsmapp ready")
+          PY
       - name: apply migrations
         run: uv run alembic upgrade head
       - name: migration rolls back one revision and reapplies

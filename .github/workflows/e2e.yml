@@ -51,9 +51,15 @@ jobs:
       - name: run the E2E suite
         working-directory: frontend
         env:
+          # Job-level too: NEXT_PUBLIC_* are inlined at `next build` time, and
+          # the build runs inside the Playwright webServer command.
+          CI: "true"
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+          BACKEND_API_ORIGIN: http://127.0.0.1:8000
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
           # The provider-backed contact happy path stays skipped without
           # Upstash/Resend test credentials; every other spec runs for real.
-          CI: "true"
         run: pnpm exec playwright test --project=chromium
       - uses: actions/upload-artifact@v7
         if: failure()

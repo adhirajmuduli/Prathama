@@ -5,7 +5,7 @@ ARG UV_VERSION=0.13.5
 
 FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
 
-FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
+FROM python:${PYTHON_VERSION}-slim-trixie AS builder
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -26,7 +26,7 @@ COPY alembic.ini ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-editable
 
-FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
+FROM python:${PYTHON_VERSION}-slim-trixie AS runtime
 
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONHASHSEED=0 \

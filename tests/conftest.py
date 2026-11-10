@@ -1,7 +1,7 @@
+
 import httpx
 import pytest
 import pytest_asyncio
-import os
 
 from db import Base, engine
 

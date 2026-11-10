@@ -32,19 +32,6 @@ def ensure_prepared(boundary):
     return boundary
 
 
-def ensure_prepared(boundary):
-    """Return the boundary with its GEOS preparation flag set.
-
-    shapely's vectorized ``contains_xy`` does not prepare geometries
-    automatically; against a detailed coastline (10k+ vertices) every grid-cell
-    test then costs O(vertices), which made surface generation ~1900x slower
-    than necessary. Preparation is idempotent and changes no results.
-    """
-    if not shapely.is_prepared(boundary):
-        shapely.prepare(boundary)
-    return boundary
-
-
 def _count_vertices(geometry) -> int:
     """Count total vertices in a geometry (exterior + interiors for all polygons)."""
     if geometry.geom_type == "Polygon":

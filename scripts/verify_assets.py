@@ -15,7 +15,7 @@ EXPECTED = {
         "90e29873aecc6657788eaa387ae756b4001a6846c0419df55712d13b6148c70d"
     ),
     "static/vendor/ag-grid-community/styles/ag-theme-alpine.css": (
-        "dabed091295a2b03dde5fd0f18b5c5583e2f319b5c41af86da7251f8e62d8ecd"
+        "d8a90ab1a5a51638274080ac6f788452bd8e65eb926141e1fbc23db488c99469"
     ),
     "static/vendor/bootstrap/css/bootstrap.min.css": (
         "7f1d37f0d90b6385354c2ac10e2bb91563c46bd7a266ed351222ebcac8496c2a"

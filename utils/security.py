@@ -12,7 +12,6 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from config import settings
 
-
 CHALLENGE_HEADER_VALUE = 'Basic realm="trendsmapp", Bearer'
 
 SECURITY_HEADERS = {
@@ -102,7 +101,8 @@ def _is_authorized(headers: Headers) -> bool:
     alternate = headers.get("x-trendsmapp-token", "").strip()
     if alternate:
         presented.append(alternate)
-    return any(secrets.compare_digest(candidate.encode("utf-8"), settings.auth_token.encode("utf-8")) for candidate in presented)
+    expected = settings.auth_token.encode("utf-8")
+    return any(secrets.compare_digest(candidate.encode("utf-8"), expected) for candidate in presented)
 
 
 async def require_auth(request: Request) -> None:
@@ -180,7 +180,7 @@ class BodyLimitMiddleware:
             try:
                 message = await asyncio.wait_for(receive(), timeout=RECEIVE_TIMEOUT)
             except asyncio.TimeoutError:
-                raise RequestBodyTooLarge("Request body timed out during upload.")
+                raise RequestBodyTooLarge("Request body timed out during upload.") from None
             if message["type"] == "http.request":
                 consumed += len(message.get("body", b""))
                 if consumed > self.maximum_bytes:

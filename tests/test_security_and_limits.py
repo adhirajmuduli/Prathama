@@ -1,16 +1,13 @@
 import base64
 import json
-from dataclasses import replace
 
 import httpx
 import pytest
-from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from starlette.applications import Starlette
 from starlette.routing import Route
 
-import utils.security as security_module
-from config import KNOWN_INSECURE_SECRET_KEYS, Settings, settings
+from config import KNOWN_INSECURE_SECRET_KEYS, Settings
 from utils.security import BodyLimitMiddleware
 
 BOUNDARY = {
@@ -22,7 +19,7 @@ BOUNDARY = {
 @pytest.mark.asyncio
 async def test_generate_heatmap_rejects_rows_beyond_limit(client, auth_token):
     """Test that heatmap generation rejects requests exceeding the row limit.
-    
+
     Since the default limit is 100,000 rows, we test the limit enforcement
     by directly testing the validation logic rather than patching settings.
     """
@@ -39,7 +36,7 @@ async def test_generate_heatmap_rejects_rows_beyond_limit(client, auth_token):
     assert uploaded.status_code == 200
     payload = uploaded.json()
     assert payload["total_records"] == 3
-    
+
     # Test that a valid heatmap request succeeds
     response = await client.post("/generate-heatmap", json={
         "data": payload["data"],
@@ -57,7 +54,7 @@ async def test_generate_heatmap_rejects_rows_beyond_limit(client, auth_token):
 @pytest.mark.asyncio
 async def test_generate_heatmap_rejects_timestamps_beyond_limit(client, auth_token):
     """Test that heatmap generation rejects requests with too many timestamps.
-    
+
     Since the default limit is 100 timestamps, we test the happy path
     since the default limit (100) is too high to practically test in CI.
     """
@@ -71,7 +68,7 @@ async def test_generate_heatmap_rejects_timestamps_beyond_limit(client, auth_tok
     assert uploaded.status_code == 200
     payload = uploaded.json()
     assert len(payload["timestamp_columns"]) == 2
-    
+
     # Test that a valid heatmap request succeeds
     headers = {"Authorization": f"Bearer {auth_token}"}
     response = await client.post("/generate-heatmap", json={

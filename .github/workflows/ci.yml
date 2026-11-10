@@ -185,9 +185,11 @@ jobs:
             --env TRENDSMAPP_DATABASE_URL="$TRENDSMAPP_DATABASE_URL" \
             trendsmapp-backend:ci alembic upgrade head
       - name: start the container
+        # --network host: the postgres service publishes on the runner host,
+        # not on the container's localhost.
         run: |
           docker run --detach --name trendsmapp-backend \
-            --publish 8000:8000 \
+            --network host \
             --env TRENDSMAPP_ENVIRONMENT="$TRENDSMAPP_ENVIRONMENT" \
             --env "TRENDSMAPP_DATABASE_URL=$TRENDSMAPP_DATABASE_URL" \
             --env TRENDSMAPP_OBJECT_STORE_BACKEND=local \
