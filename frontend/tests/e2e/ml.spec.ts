@@ -3,12 +3,14 @@ import path from "node:path";
 
 const FIXTURE = path.resolve(import.meta.dirname, "../fixtures/ml.csv");
 
-// Training runs the full cross-validation loop in the worker; allow minutes.
+// Training runs the full cross-validation loop in the worker; allow minutes,
+// but never retry this spec (each attempt trains from scratch).
 test.setTimeout(600_000);
 
 test("train a model run, read its results, and export the bundle", async ({
   page,
-}) => {
+}, testInfo) => {
+  test.skip(testInfo.retry > 0, "no retries: each attempt retrains the model");
   await page.goto("/upload");
   await page.locator('input[type="file"]').setInputFiles(FIXTURE);
   await expect(page.getByText(/detected csv layout/i)).toBeVisible({
@@ -22,6 +24,10 @@ test("train a model run, read its results, and export the bundle", async ({
   await expect(page).toHaveURL(/\/datasets\/ds_/);
 
   await page.getByRole("tab", { name: "Model" }).click();
+  // Keep the run cheap: one search trial and quantile uncertainty (no
+  // bootstrap refits).
+  await page.getByLabel(/search budget/i).fill("1");
+  await page.getByLabel(/uncertainty method/i).selectOption("quantile");
   await page.getByRole("button", { name: /train model run/i }).click();
 
   // The comparison table appears once the training job succeeds.

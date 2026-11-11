@@ -168,7 +168,7 @@ jobs:
       TRENDSMAPP_ENVIRONMENT: development
       TRENDSMAPP_DATABASE_URL: postgresql+asyncpg://ci-test-user:${{ vars.CI_POSTGRES_PASSWORD || 'ci-ephemeral-placeholder' }}@localhost:5432/trendsmapp
       TRENDSMAPP_OBJECT_STORE_BACKEND: local
-      TRENDSMAPP_LOCAL_STORAGE_ROOT: /tmp/trendsmapp/objects
+      TRENDSMAPP_LOCAL_STORAGE_ROOT: /app/var/objects
     steps:
       - uses: actions/checkout@v7
         with:
@@ -195,7 +195,7 @@ jobs:
             --env TRENDSMAPP_ENVIRONMENT="$TRENDSMAPP_ENVIRONMENT" \
             --env "TRENDSMAPP_DATABASE_URL=$TRENDSMAPP_DATABASE_URL" \
             --env TRENDSMAPP_OBJECT_STORE_BACKEND=local \
-            --env TRENDSMAPP_LOCAL_STORAGE_ROOT=/tmp/trendsmapp/objects \
+            --env TRENDSMAPP_LOCAL_STORAGE_ROOT=/app/var/objects \
             trendsmapp-backend:ci
       - name: wait for the liveness probe
         run: |

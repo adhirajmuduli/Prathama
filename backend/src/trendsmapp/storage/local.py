@@ -192,8 +192,9 @@ class LocalObjectStore:
                 yield path.relative_to(self._root).as_posix()
 
     def ping(self) -> bool:
-        """Return whether the store root exists and is writable."""
+        """Return whether the store root exists (creating it if needed) and is writable."""
         try:
+            self._root.mkdir(parents=True, exist_ok=True)
             return self._root.is_dir() and os.access(self._root, os.W_OK)
         except OSError:
             return False

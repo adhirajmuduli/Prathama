@@ -57,6 +57,16 @@ API major version.
   failed. New guard `scripts/check_text_normalization.py` (wired into the CI
   repository-invariants job) fails when any tracked file has CRLF in its index
   blob.
+- CI (latest run triage, continued): the legacy default boundary
+  `static/data/export.geojson` is now tracked (`.gitignore` `data/` rule
+  anchored to `/data/` so it only ignores the root dir), fixing the 8 legacy
+  heatmap/animation test failures on runners. The backend-image smoke test
+  uses `/app/var/objects` (created and chowned by the image) instead of
+  `/tmp/...`, and `LocalObjectStore.ping()` now creates the root if missing so
+  a readiness probe can heal instead of bricking. The Trivy SARIF upload runs
+  `if: always()` so a failed scan still produces the artifact naming the CVEs.
+  The E2E ML spec uses a 24-row fixture, search budget 1, quantile uncertainty,
+  and is never retried; Playwright CI retries dropped to 1.
 - CI (latest run triage): the backend-image job's PostgreSQL service user now
   matches the `TRENDSMAPP_DATABASE_URL` user (was `trendsmapp` vs
   `ci-test-user`, so the in-image `alembic upgrade head` failed auth). The

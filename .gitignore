@@ -34,10 +34,12 @@ out/
 *.db
 *.sqlite
 *.sqlite3
-data/
+/data/
 objects/
 uploads/
 !uploads/.gitkeep
+# The legacy prototype's default boundary is a tracked asset, not local data.
+!/static/data/export.geojson
 
 # Generated reports and caches
 reports/
