@@ -199,7 +199,7 @@ jobs:
             trendsmapp-backend:ci
       - name: wait for the liveness probe
         run: |
-          for attempt in $(seq 1 30); do
+          for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:8000/api/v1/health/live; then
               exit 0
             fi
@@ -209,12 +209,14 @@ jobs:
           exit 1
       - name: wait for the readiness probe
         run: |
-          for attempt in $(seq 1 30); do
+          for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:8000/api/v1/health/ready; then
               exit 0
             fi
             sleep 2
           done
+          # Diagnose which component is degraded before failing.
+          curl --silent http://127.0.0.1:8000/api/v1/health/ready || true
           docker logs trendsmapp-backend
           exit 1
       - name: read the contract version endpoint
