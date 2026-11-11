@@ -6,6 +6,13 @@ command = "pnpm run build"
 NODE_VERSION = "22.17.0"
 PNPM_VERSION = "11.22.0"
 NPM_FLAGS = "--version"
+# The built-in secrets scanner must not fail the deploy on false positives:
+# Netlify's own plugin installs land in .netlify/, vendored deps in
+# node_modules, and .env.example only contains placeholder values.
+SECRETS_SCAN_OMIT_PATHS = ".netlify/**, **/node_modules/**, .env.example, pnpm-lock.yaml, package-lock.json, uv.lock, requirements.lock.txt, backend/testdata/**, frontend/tests/fixtures/**"
+# Non-secret configuration keys (values, not credentials) that appear in
+# .env.example and the build environment are excluded from key matching.
+SECRETS_SCAN_OMIT_KEYS = "TRENDSMAPP_ENVIRONMENT, TRENDSMAPP_OBJECT_STORE_BACKEND, TRENDSMAPP_LOCAL_STORAGE_ROOT, TRENDSMAPP_S3_BUCKET, TRENDSMAPP_S3_ENDPOINT_URL, TRENDSMAPP_S3_REGION, TRENDSMAPP_S3_FORCE_PATH_STYLE, TRENDSMAPP_DATABASE_URL, TRENDSMAPP_API_TIMEOUT_MS, TRENDSMAPP_LOG_LEVEL, NEXT_PUBLIC_API_BASE_URL, NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_TURNSTILE_SITE_KEY"
 
 [dev]
 command = "pnpm run dev"

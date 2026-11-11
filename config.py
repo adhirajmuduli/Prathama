@@ -113,14 +113,27 @@ class Settings:
         else:
             secret_key = secrets.token_urlsafe(48)
             ephemeral_secret = True
-            # Persist generated key so sessions survive restarts
-            secret_file = root / ".secret"
-            secret_file.write_text(secret_key)
-            secret_file.chmod(0o600)
-            logger.warning(
-                "SECRET_KEY is not set; an ephemeral key was generated for this process. "
-                "Signed sessions reset on every restart. Set SECRET_KEY for stable sessions."
-            )
+            # Persist generated key so sessions survive restarts when the
+            # directory is writable; on read-only deployments (e.g. Render,
+            # where /app is not writable by the app user) fall back to an
+            # in-memory key instead of crashing at import time.
+            secret_file = Path(_nonempty_text("SECRET_FILE") or (root / ".secret"))
+            try:
+                secret_file.write_text(secret_key)
+                secret_file.chmod(0o600)
+            except OSError:
+                logger.warning(
+                    "SECRET_KEY is not set and %s is not writable; using an in-memory "
+                    "key for this process. Signed sessions reset on every restart. "
+                    "Set SECRET_KEY (or a writable SECRET_FILE) for stable sessions.",
+                    secret_file,
+                )
+            else:
+                logger.warning(
+                    "SECRET_KEY is not set; a key was persisted to %s. "
+                    "Set SECRET_KEY to control it explicitly.",
+                    secret_file,
+                )
 
         settings = cls(
             root=root,
