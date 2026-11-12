@@ -156,16 +156,18 @@ Work top-down; most blank-page reports are one of the first three items.
 
 1. **Is the Next.js runtime actually serving the deploy?** A deploy can be
    "successful" while publishing raw build output. Check, in order:
-   - `@netlify/nextjs` is pinned in `frontend/package.json` devDependencies
-     (Netlify auto-provisions it when absent, but pinning is deterministic).
-     After editing `package.json`, run `pnpm install` once on a networked
-     machine and commit the updated `pnpm-lock.yaml` — CI uses
-     `--frozen-lockfile`.
-   - Site **settings → Build & deploy → Publish directory: clear it (leave
-     empty)**. A UI-set publish directory shows as `publishOrigin: ui` in the
-     deploy log and overrides the adapter, serving the raw `frontend/`
-     directory instead of the Next.js output — the classic 404-everywhere.
+   - The deploy log line `Custom publish path detected. Proceeding with the
+     specified path: 'frontend'` is the tell: the site's **UI publish
+     directory is set to `frontend`**, which overrides the Next.js adapter and
+     serves raw source → 404 on every route. Fix in the Netlify UI: **Site
+     settings → Build & deploy → Publish directory → clear it (leave empty)**.
      Do not set `publish` in `netlify.toml` either; the adapter owns it.
+     (`publishOrigin: ui` in a deploy log's resolved config shows the same.)
+   - `@netlify/nextjs` is auto-provisioned by Netlify when absent from
+     `package.json`. If you pin it there, you MUST also regenerate
+     `frontend/pnpm-lock.yaml` (`pnpm install` on a networked machine, commit
+     it) — Netlify and CI install with frozen-lockfile and otherwise fail with
+     `ERR_PNPM_OUTDATED_LOCKFILE`.
    - The Netlify **deploy log** contains the adapter run lines and the route
      table (`ƒ /`, `ƒ /api/contact`, …), not just `next build`.
    - `curl -sI https://<site>/` shows an `x-nf-request-id` header (served by
