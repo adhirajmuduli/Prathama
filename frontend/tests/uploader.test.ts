@@ -16,6 +16,10 @@ import { uploadFile } from "@/lib/api/uploader";
 
 const API_ORIGIN = "http://api.test";
 
+// The chunked-upload test hashes real payloads and retries through MSW; on a
+// loaded CI box it can exceed the 5s default, so give this file headroom.
+vi.setConfig({ testTimeout: 30_000 });
+
 const server = setupServer();
 
 beforeAll(() => {

@@ -156,12 +156,18 @@ Work top-down; most blank-page reports are one of the first three items.
 
 1. **Is the Next.js runtime actually serving the deploy?** A deploy can be
    "successful" while publishing raw build output. Check, in order:
-   - The Netlify **deploy log** contains the adapter install/run lines for
-     `@netlify/nextjs` (it is auto-provisioned when absent from
-     `package.json`; if you pin it, keep it in `frontend/package.json`).
-   - Site **settings → Build & deploy**: the publish directory must be empty
-     (auto) when the adapter is used; a manually set publish directory
-     overrides it and serves `.next` as plain files.
+   - `@netlify/nextjs` is pinned in `frontend/package.json` devDependencies
+     (Netlify auto-provisions it when absent, but pinning is deterministic).
+     After editing `package.json`, run `pnpm install` once on a networked
+     machine and commit the updated `pnpm-lock.yaml` — CI uses
+     `--frozen-lockfile`.
+   - Site **settings → Build & deploy → Publish directory: clear it (leave
+     empty)**. A UI-set publish directory shows as `publishOrigin: ui` in the
+     deploy log and overrides the adapter, serving the raw `frontend/`
+     directory instead of the Next.js output — the classic 404-everywhere.
+     Do not set `publish` in `netlify.toml` either; the adapter owns it.
+   - The Netlify **deploy log** contains the adapter run lines and the route
+     table (`ƒ /`, `ƒ /api/contact`, …), not just `next build`.
    - `curl -sI https://<site>/` shows an `x-nf-request-id` header (served by
      the Next runtime) rather than a plain static response.
    - The Netlify **Functions** tab lists the Next handler functions.

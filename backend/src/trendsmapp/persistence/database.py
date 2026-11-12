@@ -21,7 +21,10 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from trendsmapp.errors import ConfigurationError
+from trendsmapp.logging_config import get_logger
 from trendsmapp.settings import Settings, get_settings
+
+logger = get_logger(__name__)
 
 __all__ = [
     "create_engine_for_settings",
@@ -86,7 +89,12 @@ async def database_health(engine: AsyncEngine) -> bool:
     try:
         async with engine.connect() as connection:
             await connection.execute(text("SELECT 1"))
-    except Exception:  # noqa: BLE001 - health probes must not raise
+    except Exception as exc:  # noqa: BLE001 - health probes must not raise
+        logger.warning(
+            "database health probe failed",
+            error=repr(exc),
+            url=engine.url.render_as_string(hide_password=True),
+        )
         return False
     return True
 
