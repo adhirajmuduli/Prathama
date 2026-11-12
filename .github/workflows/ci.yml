@@ -113,6 +113,13 @@ jobs:
     name: frontend lint, types, tests, build
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      # Set the public env vars so the CI production build exercises the same
+      # NEXT_PUBLIC_* inlining the deployed site relies on (an empty value
+      # silently disables the browser API client).
+      NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      BACKEND_API_ORIGIN: http://127.0.0.1:8000
     defaults:
       run:
         working-directory: frontend

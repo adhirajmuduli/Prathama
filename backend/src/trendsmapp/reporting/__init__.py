@@ -14,6 +14,7 @@ from trendsmapp.reporting.manifest import (
     runtime_environment,
 )
 from trendsmapp.reporting.methods import methods_record
+from trendsmapp.reporting.report import REPORT_SCHEMA_VERSION, build_report_pdf
 from trendsmapp.reporting.tables import (
     analysis_frames_table,
     explanations_table,
@@ -28,10 +29,12 @@ from trendsmapp.reporting.verify import BundleVerification, verify_bundle
 __all__ = [
     "BUNDLE_SCHEMA_VERSION",
     "MANIFEST_SCHEMA_VERSION",
+    "REPORT_SCHEMA_VERSION",
     "BundleVerification",
     "analysis_frames_table",
     "build_bundle",
     "build_manifest",
+    "build_report_pdf",
     "bundle_sha256",
     "dependency_lock_sha256",
     "explanations_table",

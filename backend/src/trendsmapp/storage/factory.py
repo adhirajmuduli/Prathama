@@ -28,13 +28,19 @@ def create_s3_client(settings: Settings) -> Any:
     secret_key = (
         settings.s3_secret_access_key.get_secret_value() if settings.s3_secret_access_key else None
     )
-    return boto3.client(
-        "s3",
-        endpoint_url=settings.s3_endpoint_url,
-        region_name=settings.s3_region,
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
+    kwargs: dict[str, Any] = {
+        "endpoint_url": settings.s3_endpoint_url,
+        "region_name": settings.s3_region,
+        "aws_access_key_id": access_key,
+        "aws_secret_access_key": secret_key,
+    }
+    if settings.s3_force_path_style:
+        # Required for hostname-style endpoints that do not resolve
+        # virtual-hosted buckets (e.g. MinIO on a compose network hostname).
+        from botocore.config import Config
+
+        kwargs["config"] = Config(s3={"addressing_style": "path"})
+    return boto3.client("s3", **kwargs)
 
 
 def create_object_store(settings: Settings | None = None) -> ObjectStore:

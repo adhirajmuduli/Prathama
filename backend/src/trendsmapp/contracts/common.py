@@ -63,6 +63,7 @@ ArtifactRefKind = Literal[
     "predictions",
     "explanations",
     "export_bundle",
+    "report",
     "boundary",
     "other",
 ]

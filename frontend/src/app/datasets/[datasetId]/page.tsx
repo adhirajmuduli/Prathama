@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { VersionExplorer } from "../../../components/datasets/version-explorer";
+import { ApiError } from "../../../lib/api/errors";
 import { createServerApiClient } from "../../../lib/api/server-client";
 import {
   datasetSchema,
@@ -17,14 +19,25 @@ export default async function DatasetDetailPage({
 }) {
   const { datasetId } = await params;
   const client = createServerApiClient();
-  const dataset = await client.getJson(
-    `/api/v1/datasets/${datasetId}`,
-    datasetSchema,
-  );
-  const versions = await client.getJson(
-    `/api/v1/datasets/${datasetId}/versions`,
-    datasetVersionListSchema,
-  );
+  // A down backend or an unknown dataset must render the app's 404/error
+  // boundary, not crash the page with an unhandled ApiError.
+  let dataset;
+  let versions;
+  try {
+    dataset = await client.getJson(
+      `/api/v1/datasets/${datasetId}`,
+      datasetSchema,
+    );
+    versions = await client.getJson(
+      `/api/v1/datasets/${datasetId}/versions`,
+      datasetVersionListSchema,
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      notFound();
+    }
+    throw error;
+  }
 
   return (
     <div className="space-y-6">

@@ -14,11 +14,17 @@ import {
   exportDownloadUrl,
   getExport,
 } from "../../lib/api/exports";
+import {
+  createReport,
+  getReport,
+  reportDownloadUrl,
+} from "../../lib/api/reports";
 import { pollJobUntilTerminal } from "../../lib/api/analyses";
 import { createApiClient } from "../../lib/api/client";
 import { ApiError } from "../../lib/api/errors";
 import { publicApiBaseUrl } from "../../lib/env/client";
 import type { ExportResponse } from "../../lib/contracts/exports";
+import type { ReportResponse } from "../../lib/contracts/reports";
 import type { Job } from "../../lib/contracts/analyses";
 import { formatBytes, formatTimestamp } from "../../lib/format";
 
@@ -38,6 +44,8 @@ export function ExportPanel({ runId }: ExportPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [job, setJob] = useState<Job | null>(null);
   const [exportInfo, setExportInfo] = useState<ExportResponse | null>(null);
+  const [reportInfo, setReportInfo] = useState<ReportResponse | null>(null);
+  const [reportBusy, setReportBusy] = useState(false);
 
   if (client === null) {
     return null;
@@ -74,6 +82,37 @@ export function ExportPanel({ runId }: ExportPanelProps) {
     }
   };
 
+  const startReport = async () => {
+    setReportBusy(true);
+    setError(null);
+    setReportInfo(null);
+    try {
+      const created = await createReport(client, runId);
+      const finishedJob = await pollJobUntilTerminal(
+        client,
+        created.job_id,
+        setJob,
+        {
+          timeoutMs: 10 * 60_000,
+        },
+      );
+      if (finishedJob.status !== "succeeded") {
+        throw new Error("The report job failed.");
+      }
+      setReportInfo(await getReport(client, created.report_id));
+    } catch (caught) {
+      setError(
+        caught instanceof ApiError
+          ? caught.message
+          : caught instanceof Error
+            ? caught.message
+            : "The request failed.",
+      );
+    } finally {
+      setReportBusy(false);
+    }
+  };
+
   const manifest = exportInfo?.manifest ?? {};
   const recipeHash =
     typeof manifest["recipe_hash"] === "string"
@@ -96,12 +135,28 @@ export function ExportPanel({ runId }: ExportPanelProps) {
         >
           {busy ? "Exporting…" : "Export bundle"}
         </button>
+        <button
+          type="button"
+          onClick={() => void startReport()}
+          disabled={busy || reportBusy}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-60"
+        >
+          {reportBusy ? "Rendering…" : "PDF report"}
+        </button>
         {exportInfo !== null ? (
           <a
             href={exportDownloadUrl(client, exportInfo.export_id)}
             className="rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
           >
             Download ZIP ({formatBytes(exportInfo.artifact.size_bytes)})
+          </a>
+        ) : null}
+        {reportInfo !== null ? (
+          <a
+            href={reportDownloadUrl(client, reportInfo.report_id)}
+            className="rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Download PDF ({formatBytes(reportInfo.artifact.size_bytes)})
           </a>
         ) : null}
       </div>
@@ -115,6 +170,13 @@ export function ExportPanel({ runId }: ExportPanelProps) {
       {job !== null ? (
         <p className="text-xs text-slate-500">
           Export job {job.status} — {(job.progress * 100).toFixed(0)}%
+        </p>
+      ) : null}
+      {reportInfo !== null ? (
+        <p className="text-xs text-slate-500">
+          {reportInfo.report_id} · PDF {reportInfo.artifact.sha256.slice(0, 12)}… ·{" "}
+          {String(reportInfo.summary["figures"] ?? 0)} figures ·{" "}
+          {String(reportInfo.summary["tables"] ?? 0)} tables
         </p>
       ) : null}
       {exportInfo !== null ? (

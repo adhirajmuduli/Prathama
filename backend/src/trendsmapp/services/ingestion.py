@@ -446,6 +446,7 @@ def build_default_registry() -> JobHandlerRegistry:
     from trendsmapp.services.animation import register_animate_handler
     from trendsmapp.services.exports import register_export_handler
     from trendsmapp.services.model_training import register_model_handler
+    from trendsmapp.services.reports import register_report_handler
 
     registry = JobHandlerRegistry()
     registry.register(JobType.INGEST, IngestWorkflow())
@@ -453,4 +454,5 @@ def build_default_registry() -> JobHandlerRegistry:
     register_animate_handler(registry)
     register_model_handler(registry)
     register_export_handler(registry)
+    register_report_handler(registry)
     return registry

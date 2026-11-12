@@ -35,7 +35,13 @@ __all__ = [
 ]
 
 
-def _connect_arguments(settings: Settings) -> dict[str, Any]:
+def _engine_kwargs(settings: Settings) -> dict[str, Any]:
+    """Engine-level kwargs; pool sizing applies only to the pooled PostgreSQL path.
+
+    These must NOT go into ``connect_args`` — that dict is passed to the DBAPI's
+    ``connect()`` (e.g. asyncpg), which rejects pool keywords with a TypeError.
+    SQLite keeps its default pool behavior.
+    """
     if settings.database_url.startswith("sqlite"):
         return {}
     return {
@@ -59,7 +65,7 @@ def create_engine_for_settings(settings: Settings | None = None) -> AsyncEngine:
         url,
         echo=resolved.database_echo,
         future=True,
-        connect_args=_connect_arguments(resolved),
+        **_engine_kwargs(resolved),
     )
 
 

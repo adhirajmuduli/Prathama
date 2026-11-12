@@ -8,6 +8,7 @@ from trendsmapp.api.routers import (
     health,
     jobs,
     models,
+    reports,
     uploads,
 )
 
@@ -19,5 +20,6 @@ __all__ = [
     "health",
     "jobs",
     "models",
+    "reports",
     "uploads",
 ]

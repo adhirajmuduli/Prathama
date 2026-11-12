@@ -99,6 +99,7 @@
               "predictions",
               "explanations",
               "export_bundle",
+              "report",
               "boundary",
               "other"
             ],
@@ -479,6 +480,55 @@
           "task_hash"
         ],
         "title": "CreateModelRunResponse",
+        "type": "object"
+      },
+      "CreateReportRequest": {
+        "additionalProperties": false,
+        "description": "The body of ``POST /api/v1/reports``.",
+        "properties": {
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "CreateReportRequest",
+        "type": "object"
+      },
+      "CreateReportResponse": {
+        "additionalProperties": false,
+        "description": "The 202 response of creating a report.",
+        "properties": {
+          "job_id": {
+            "pattern": "^job_[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "report_id": {
+            "pattern": "^rpt_[0-9a-f]{32}$",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "default": "accepted",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "job_id",
+          "run_id"
+        ],
+        "title": "CreateReportResponse",
         "type": "object"
       },
       "CreateUploadRequest": {
@@ -1779,6 +1829,54 @@
           "spatial"
         ],
         "title": "Recipe",
+        "type": "object"
+      },
+      "ReportResponse": {
+        "additionalProperties": false,
+        "description": "One report with its PDF artifact.",
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ArtifactRef"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "pattern": "^job_[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "report_id": {
+            "pattern": "^rpt_[0-9a-f]{32}$",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "run_id": {
+            "pattern": "^run_[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          }
+        },
+        "required": [
+          "report_id",
+          "run_id",
+          "status",
+          "artifact"
+        ],
+        "title": "ReportResponse",
         "type": "object"
       },
       "SpatialSection": {
@@ -3544,6 +3642,150 @@
         "summary": "Get Model Run Predictions",
         "tags": [
           "models"
+        ]
+      }
+    },
+    "/api/v1/reports": {
+      "post": {
+        "description": "Enqueue the PDF report of one succeeded run. Idempotent per run.",
+        "operationId": "create_report_api_v1_reports_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Report",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/{report_id}": {
+      "get": {
+        "description": "Return one report with its PDF artifact and summary.",
+        "operationId": "get_report_api_v1_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/reports/{report_id}/download": {
+      "get": {
+        "description": "Stream the rendered PDF report.",
+        "operationId": "download_report_api_v1_reports__report_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Report",
+        "tags": [
+          "reports"
         ]
       }
     },

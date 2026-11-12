@@ -169,12 +169,22 @@ class JobRepository:
             update(JobRow).where(JobRow.id == job_id).values(heartbeat_at=utc_now())
         )
 
-    async def complete(self, job_id: str, result: dict[str, Any]) -> None:
-        """Mark a job as succeeded and store its result."""
+    async def complete(
+        self, job_id: str, result: dict[str, Any], *, worker_id: str | None = None
+    ) -> None:
+        """Mark a job as succeeded and store its result.
+
+        The update is guarded by ``status = 'running'`` (and ``worker_id`` when
+        given) so a stale worker that lost its claim cannot overwrite the terminal
+        state written by the worker that re-claimed the job.
+        """
+        statement = update(JobRow).where(
+            JobRow.id == job_id, JobRow.status == JobStatus.RUNNING.value
+        )
+        if worker_id is not None:
+            statement = statement.where(JobRow.worker_id == worker_id)
         await self._session.execute(
-            update(JobRow)
-            .where(JobRow.id == job_id)
-            .values(
+            statement.values(
                 status=JobStatus.SUCCEEDED.value,
                 result=result,
                 progress=1.0,
@@ -183,12 +193,17 @@ class JobRepository:
             )
         )
 
-    async def fail(self, job_id: str, error: dict[str, Any]) -> None:
-        """Mark a job as failed and store its structured error."""
+    async def fail(
+        self, job_id: str, error: dict[str, Any], *, worker_id: str | None = None
+    ) -> None:
+        """Mark a job as failed; guarded like :meth:`complete` against stale workers."""
+        statement = update(JobRow).where(
+            JobRow.id == job_id, JobRow.status == JobStatus.RUNNING.value
+        )
+        if worker_id is not None:
+            statement = statement.where(JobRow.worker_id == worker_id)
         await self._session.execute(
-            update(JobRow)
-            .where(JobRow.id == job_id)
-            .values(
+            statement.values(
                 status=JobStatus.FAILED.value,
                 error=error,
                 finished_at=utc_now(),
@@ -208,12 +223,15 @@ class JobRepository:
         )
         return _affected_rows(result) == 1
 
-    async def mark_cancelled(self, job_id: str) -> None:
-        """Mark a job as cancelled."""
+    async def mark_cancelled(self, job_id: str, *, worker_id: str | None = None) -> None:
+        """Mark a job as cancelled; guarded like :meth:`complete`."""
+        statement = update(JobRow).where(
+            JobRow.id == job_id, JobRow.status == JobStatus.RUNNING.value
+        )
+        if worker_id is not None:
+            statement = statement.where(JobRow.worker_id == worker_id)
         await self._session.execute(
-            update(JobRow)
-            .where(JobRow.id == job_id)
-            .values(
+            statement.values(
                 status=JobStatus.CANCELLED.value,
                 finished_at=utc_now(),
                 heartbeat_at=utc_now(),

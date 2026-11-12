@@ -78,6 +78,7 @@ class Settings(BaseSettings):
     s3_endpoint_url: str | None = None
     s3_bucket: str | None = None
     s3_region: str | None = None
+    s3_force_path_style: bool = False
     s3_access_key_id: SecretStr | None = None
     s3_secret_access_key: SecretStr | None = None
 

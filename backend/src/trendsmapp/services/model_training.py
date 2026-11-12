@@ -64,8 +64,14 @@ class ModelService:
         self._jobs = JobRepository(session)
         self._artifacts = ArtifactRepository(session)
 
-    async def create(self, task: MLTask) -> dict[str, str]:
-        """Validate the task and enqueue the training job."""
+    async def create(self, task: MLTask, *, idempotency_key: str | None = None) -> dict[str, str]:
+        """Validate the task and enqueue the training job.
+
+        The task hash is the run's idempotency key: reposting the same task on the
+        same dataset version returns the existing run. An explicit
+        ``Idempotency-Key`` header additionally names the job, so distinct clients
+        never share one.
+        """
         version = await self._datasets.require_version(task.dataset_version_id)
         if version.sealed_at is None:
             raise ConflictError(
@@ -78,6 +84,7 @@ class ModelService:
                 details={"dataset_version_id": task.dataset_version_id},
             )
         digest = task_hash(task)
+        job_key = f"train:{digest}" + (f":{idempotency_key}" if idempotency_key else "")
         existing = await self._runs.find_by_recipe(version.id, digest)
         if existing is not None:
             job_id = existing.job_id
@@ -111,7 +118,7 @@ class ModelService:
                 "task": task.model_dump(mode="json"),
                 "task_hash": digest,
             },
-            idempotency_key=f"train:{digest}",
+            idempotency_key=job_key,
             request_hash=hashlib.sha256(digest.encode("utf-8")).hexdigest(),
             run_id=run_id,
             dataset_version_id=version.id,

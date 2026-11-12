@@ -190,17 +190,17 @@ class Worker:
     async def _mark_succeeded(self, job_id: str, result: dict[str, Any]) -> None:
         async with session_scope(self._session_factory) as session:
             repository = JobRepository(session)
-            await repository.complete(job_id, result)
+            await repository.complete(job_id, result, worker_id=self._worker_id)
 
     async def _mark_failed(self, job_id: str, error: dict[str, Any]) -> None:
         async with session_scope(self._session_factory) as session:
             repository = JobRepository(session)
-            await repository.fail(job_id, error)
+            await repository.fail(job_id, error, worker_id=self._worker_id)
 
     async def _mark_cancelled(self, job_id: str) -> None:
         async with session_scope(self._session_factory) as session:
             repository = JobRepository(session)
-            await repository.mark_cancelled(job_id)
+            await repository.mark_cancelled(job_id, worker_id=self._worker_id)
 
 
 async def run_worker(

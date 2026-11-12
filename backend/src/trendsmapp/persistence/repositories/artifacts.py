@@ -120,6 +120,18 @@ class ArtifactRepository:
             )
         return row
 
+    async def find_by_details(self, kind: str, details_key: str, value: str) -> ArtifactRow | None:
+        """Return the artifact of a kind whose details carry a key/value pair."""
+        result = await self._session.execute(
+            select(ArtifactRow)
+            .where(
+                ArtifactRow.kind == kind,
+                ArtifactRow.details[details_key].as_string() == value,
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
     async def find_by_export_id(self, export_id: str) -> ArtifactRow | None:
         """Return the export bundle registered under an export id, when any."""
         result = await self._session.execute(

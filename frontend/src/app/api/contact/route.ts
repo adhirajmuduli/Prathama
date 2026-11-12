@@ -22,6 +22,15 @@ const TURNSTILE_SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 const RESEND_API_URL = "https://api.resend.com/emails";
 
+/** Hard cap on the contact request body (the form is a few KB of text). */
+const MAX_BODY_BYTES = 64 * 1024;
+
+/** Per-call deadline for provider HTTP calls (platform functions time out at 10s). */
+const PROVIDER_TIMEOUT_MS = 4_000;
+
+const fetchWithTimeout: typeof fetch = (input, init) =>
+  fetch(input, { ...init, signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) });
+
 function jsonResponse(
   status: number,
   body: Record<string, unknown>,
@@ -41,7 +50,8 @@ function providerConfig(): ContactProviderConfig | null {
     !env.UPSTASH_REST_TOKEN ||
     !env.RESEND_API_KEY ||
     !env.CONTACT_FROM_EMAIL ||
-    !env.CONTACT_TO_EMAIL
+    !env.CONTACT_TO_EMAIL ||
+    !env.CONTACT_HASH_SECRET
   ) {
     return null;
   }
@@ -52,11 +62,22 @@ function providerConfig(): ContactProviderConfig | null {
     upstashRestToken: env.UPSTASH_REST_TOKEN,
     resendApiKey: env.RESEND_API_KEY,
     resendApiUrl: RESEND_API_URL,
-    hashSecret: env.CONTACT_HASH_SECRET ?? env.TURNSTILE_SECRET_KEY,
+    // Never reuse another protocol's key: a dedicated HMAC secret is required.
+    hashSecret: env.CONTACT_HASH_SECRET as string,
   };
 }
 
 function clientIp(request: Request): string {
+  // Netlify/Cloudflare set the real client IP here; x-forwarded-for is
+  // client-spoofable when a proxy appends instead of replacing.
+  const cfIp = request.headers.get("cf-connecting-ip")?.trim();
+  if (cfIp) {
+    return cfIp;
+  }
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) {
+    return realIp;
+  }
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded !== null) {
     const first = forwarded.split(",")[0]?.trim();
@@ -79,6 +100,16 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  // Reject oversized bodies before parsing, and bound the whole handler so a
+  // slow provider chain cannot hit the platform function timeout silently.
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonResponse(
+      413,
+      { error: "The request body is too large." },
+      requestId,
+    );
+  }
   let payload: unknown;
   try {
     payload = await request.json();
@@ -105,7 +136,12 @@ export async function POST(request: Request): Promise<Response> {
   const emailHash = hashIdentifier(data.email.toLowerCase(), config.hashSecret);
 
   try {
-    const turnstile = await verifyTurnstile(config, data.turnstileToken, ip);
+    const turnstile = await verifyTurnstile(
+      config,
+      data.turnstileToken,
+      ip,
+      fetchWithTimeout,
+    );
     if (!turnstile.success) {
       return jsonResponse(
         403,
@@ -119,6 +155,7 @@ export async function POST(request: Request): Promise<Response> {
       `ip:${ipHash}`,
       serverEnvironment.CONTACT_RATE_LIMIT_IP_PER_WINDOW,
       serverEnvironment.CONTACT_RATE_LIMIT_WINDOW_MS,
+      fetchWithTimeout,
     );
     if (!ipLimit.allowed) {
       return jsonResponse(
@@ -132,6 +169,7 @@ export async function POST(request: Request): Promise<Response> {
       `email:${emailHash}`,
       serverEnvironment.CONTACT_RATE_LIMIT_EMAIL_PER_WINDOW,
       serverEnvironment.CONTACT_RATE_LIMIT_WINDOW_MS,
+      fetchWithTimeout,
     );
     if (!emailLimit.allowed) {
       return jsonResponse(
@@ -149,6 +187,7 @@ export async function POST(request: Request): Promise<Response> {
       config,
       idempotencyKey,
       serverEnvironment.CONTACT_IDEMPOTENCY_TTL_SECONDS,
+      fetchWithTimeout,
     );
     if (!claimed) {
       // Duplicate of a recent submission: report success without resending.
@@ -163,13 +202,17 @@ export async function POST(request: Request): Promise<Response> {
       requestId,
       receivedAt: new Date().toISOString(),
     });
-    const result = await sendEmail(config, {
-      from: serverEnvironment.CONTACT_FROM_EMAIL as string,
-      to: serverEnvironment.CONTACT_TO_EMAIL as string,
-      subject: `Contact: ${data.subject}`,
-      html,
-      replyTo: data.email,
-    });
+    const result = await sendEmail(
+      config,
+      {
+        from: serverEnvironment.CONTACT_FROM_EMAIL as string,
+        to: serverEnvironment.CONTACT_TO_EMAIL as string,
+        subject: `Contact: ${data.subject}`,
+        html,
+        replyTo: data.email,
+      },
+      fetchWithTimeout,
+    );
 
     // Redacted log line: delivery id, request id, timestamp, hashed sender only.
     console.info(
@@ -184,12 +227,8 @@ export async function POST(request: Request): Promise<Response> {
     return jsonResponse(200, { ok: true }, requestId);
   } catch (error) {
     if (error instanceof ContactProviderError) {
-      const status =
-        error.code === "turnstile_unreachable"
-          ? 403
-          : error.code.startsWith("ratelimit")
-            ? 503
-            : 502;
+      // An unreachable verifier is a server fault, not a failed human check.
+      const status = error.code.startsWith("ratelimit") ? 503 : 502;
       return jsonResponse(
         status,
         { error: "The message could not be sent. Please try again later." },

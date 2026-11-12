@@ -10,7 +10,9 @@ NPM_FLAGS = "--version"
 # Netlify's own plugin installs land in .netlify/, vendored deps in
 # node_modules, .env.example only contains placeholders, and .next/ inlines
 # non-secret env defaults by design.
-SECRETS_SCAN_OMIT_PATHS = ".netlify/**, **/node_modules/**, .next/**, .env.example, pnpm-lock.yaml, package-lock.json, uv.lock, requirements.lock.txt, backend/testdata/**, frontend/tests/fixtures/**"
+# .next is intentionally NOT omitted: the client bundle is exactly where a
+# leaked server secret would surface, so it stays scanned.
+SECRETS_SCAN_OMIT_PATHS = ".netlify/**, **/node_modules/**, .env.example, pnpm-lock.yaml, package-lock.json, uv.lock, requirements.lock.txt, backend/testdata/**, frontend/tests/fixtures/**"
 # Only true credentials are scanned: every non-secret configuration key is
 # omitted, because their values (origins, CRS codes, limits, "trendsmapp")
 # legitimately appear in source and build output.
@@ -42,7 +44,7 @@ Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=
   # script/frame/connect include challenges.cloudflare.com for the Turnstile
   # widget on /contact; img/connect include https: so artifacts served by the
   # cross-origin API container render in the dataset explorer.
-  Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https: https://challenges.cloudflare.com; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+  Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https: https://challenges.cloudflare.com; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 [[headers]]
 for = "/api/*"

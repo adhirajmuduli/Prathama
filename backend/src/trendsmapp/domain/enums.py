@@ -217,7 +217,10 @@ class JobType(StrEnum):
     ANALYZE = "analyze"
     TRAIN = "train"
     ANIMATE = "animate"
+
     EXPORT = "export"
+
+    REPORT = "report"
 
 
 class JobStatus(StrEnum):

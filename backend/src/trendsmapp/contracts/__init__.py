@@ -38,6 +38,12 @@ from trendsmapp.contracts.migrations import (
     migrate_artifact_document,
 )
 from trendsmapp.contracts.models import CreateModelRunResponse, ModelRunResponse
+from trendsmapp.contracts.reports import (
+    CreateReportRequest,
+    CreateReportResponse,
+    ReportId,
+    ReportResponse,
+)
 from trendsmapp.contracts.tasks import (
     TASK_SCHEMA_VERSION,
     MLTask,
@@ -70,6 +76,8 @@ __all__ = [
     "CreateExportRequest",
     "CreateExportResponse",
     "CreateModelRunResponse",
+    "CreateReportRequest",
+    "CreateReportResponse",
     "DatasetId",
     "DatasetVersionId",
     "ErrorCode",
@@ -86,6 +94,8 @@ __all__ = [
     "ParameterId",
     "ProvenanceId",
     "ProvenanceRef",
+    "ReportId",
+    "ReportResponse",
     "ResponseCompatibility",
     "ResultMetadata",
     "RunId",

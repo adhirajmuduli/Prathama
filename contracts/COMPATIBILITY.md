@@ -7,7 +7,7 @@ whether the change is compatible.
 The digest below pins the snapshot that this note describes. CI fails when the
 snapshot changes without an updated note.
 
-OpenAPI snapshot SHA-256: `74c4ab0a08a1d4673a2218fceeecc03c8a422e37cc1904608cc5612a807ca134`
+OpenAPI snapshot SHA-256: `4962474e5b5bf897915eeb231ac495ee9b2ac53d6d215608589a6b291268be82`
 
 The digest is computed over the LF-normalized bytes: the exporter writes bytes
 directly so the snapshot is identical on Windows and Linux runners.
@@ -57,6 +57,9 @@ The first published contract of the rebuilt API.
 | POST | `/api/v1/exports` | Enqueue the export of one succeeded run as a checksum-verified bundle. Idempotent per run. |
 | GET | `/api/v1/exports/{export_id}` | One export with its `export_bundle` artifact and the manifest inside the bundle. |
 | GET | `/api/v1/exports/{export_id}/download` | Stream the verified ZIP bundle with its SHA-256 header. |
+| POST | `/api/v1/reports` | Enqueue the PDF report of one succeeded run. Idempotent per run. |
+| GET | `/api/v1/reports/{report_id}` | One report with its `report` PDF artifact and summary. |
+| GET | `/api/v1/reports/{report_id}/download` | Stream the rendered PDF report with its SHA-256 header. |
 
 ### Conventions
 

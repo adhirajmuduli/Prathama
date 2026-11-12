@@ -69,7 +69,7 @@ async def create_model_run(
     the same dataset version returns the existing run instead of enqueueing a
     duplicate job.
     """
-    created = await service.create(task)
+    created = await service.create(task, idempotency_key=idempotency_key)
     return CreateModelRunResponse(**created)
 
 

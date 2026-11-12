@@ -23,6 +23,7 @@ __all__ = [
     "new_observation_id",
     "new_parameter_id",
     "new_provenance_id",
+    "new_report_id",
     "new_run_id",
     "new_station_id",
     "new_upload_id",
@@ -43,6 +44,7 @@ _PREFIXES: Final[dict[str, re.Pattern[str]]] = {
     "prv": re.compile(r"^prv_[0-9a-f]{32}$"),
     "art": re.compile(r"^art_[0-9a-f]{32}$"),
     "exp": re.compile(r"^exp_[0-9a-f]{32}$"),
+    "rpt": re.compile(r"^rpt_[0-9a-f]{32}$"),
 }
 
 
@@ -103,6 +105,11 @@ def new_artifact_id() -> str:
 def new_export_id() -> str:
     """Return a new export identifier."""
     return _new_identifier("exp")
+
+
+def new_report_id() -> str:
+    """Return a new report identifier."""
+    return _new_identifier("rpt")
 
 
 def validate_identifier(prefix: str, value: str) -> str:

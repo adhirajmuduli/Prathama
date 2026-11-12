@@ -250,6 +250,28 @@ export const API_OPERATIONS: readonly ApiOperation[] = [
   },
   {
     method: "post",
+    path: "/api/v1/reports",
+    operationId: "create_report_api_v1_reports_post",
+    summary: "Create Report",
+    description:
+      "Enqueue the PDF report of one succeeded run. Idempotent per run.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/reports/{report_id}",
+    operationId: "get_report_api_v1_reports__report_id__get",
+    summary: "Get Report",
+    description: "Return one report with its PDF artifact and summary.",
+  },
+  {
+    method: "get",
+    path: "/api/v1/reports/{report_id}/download",
+    operationId: "download_report_api_v1_reports__report_id__download_get",
+    summary: "Download Report",
+    description: "Stream the rendered PDF report.",
+  },
+  {
+    method: "post",
     path: "/api/v1/uploads",
     operationId: "create_upload_api_v1_uploads_post",
     summary: "Create Upload",
@@ -325,6 +347,7 @@ export type ArtifactRef = {
     | "predictions"
     | "explanations"
     | "export_bundle"
+    | "report"
     | "boundary"
     | "other";
   media_type_detail?: Record<string, unknown>;
@@ -405,6 +428,17 @@ export type CreateModelRunResponse = {
   run_id: string;
   status?: string;
   task_hash: string;
+};
+
+export type CreateReportRequest = {
+  run_id: string;
+};
+
+export type CreateReportResponse = {
+  job_id: string;
+  report_id: string;
+  run_id: string;
+  status?: string;
 };
 
 export type CreateUploadRequest = {
@@ -629,6 +663,15 @@ export type Recipe = {
   seed?: number;
   spatial: unknown;
   temporal?: unknown | unknown;
+};
+
+export type ReportResponse = {
+  artifact: unknown;
+  job_id?: string | unknown;
+  report_id: string;
+  run_id: string;
+  status: string;
+  summary?: Record<string, unknown>;
 };
 
 export type SpatialSection = {
