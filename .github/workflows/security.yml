@@ -96,7 +96,7 @@ jobs:
         # always: a failed scan still produces the SARIF artifact that names
         # the offending CVEs, so the next fix can add a dated .trivyignore.
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
           category: trivy-backend
