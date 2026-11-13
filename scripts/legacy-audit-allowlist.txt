@@ -141,3 +141,11 @@ PYSEC-2026-4340
 PYSEC-2026-4341
 PYSEC-2026-4342
 PYSEC-2026-4343
+# Reviewed 2026-11-13: Pillow TIFF parsing/saving CVEs (fixed in 13.0.0) are NOT
+# reachable — the prototype only opens its own matplotlib-generated PNG frames
+# (utils/animation_generator.py), never user-supplied TIFFs. Re-review if the
+# lock is re-resolved or image upload paths are added.
+CVE-2026-128066
+CVE-2026-128067
+GHSA-wqgw-9xfh-qf2g
+GHSA-xcvg-w56q-r89m
