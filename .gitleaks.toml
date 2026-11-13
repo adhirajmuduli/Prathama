@@ -1,0 +1,8 @@
+# Gitleaks config. The only allowlisted path is the contract compatibility note:
+# its SHA-256 snapshot digest is a public content hash, not a credential, and
+# the generic-api-key rule matches any 64-hex string near "SHA-256:".
+[allowlist]
+description = "Public contract digests are not secrets"
+paths = [
+  '''contracts/COMPATIBILITY\.md''',
+]
