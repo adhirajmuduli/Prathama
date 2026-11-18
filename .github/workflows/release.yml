@@ -117,7 +117,7 @@ jobs:
           # layer at zero tolerance; the SARIF still lands in CodeQL.
           exit-code: "0"
       - name: upload the scan result
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-release.sarif
           category: trivy-release
